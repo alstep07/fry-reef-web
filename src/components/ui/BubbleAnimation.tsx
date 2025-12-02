@@ -24,26 +24,29 @@ export function BubbleAnimation() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Base brand colors - brighter but still clean
+    // Three shades of blue: light (whiter), medium, and more saturated
     const colors = [
-      "rgba(0, 82, 255, 0.18)", // baseBlue with brighter opacity
-      "rgba(229, 233, 255, 0.14)", // baseBlueLight with brighter opacity
-      "rgba(0, 82, 255, 0.12)", // lighter baseBlue
+      "rgba(180, 210, 255, 0.20)", // Light blue (whiter blue) - more visible
+      "rgba(100, 150, 255, 0.20)", // Medium blue - more visible
+      "rgba(0, 82, 255, 0.20)", // More saturated blue (baseBlue) - more visible
     ];
 
     // Create bubbles function
     const createBubbles = () => {
       const bubbles: Bubble[] = [];
-      const bubbleCount = Math.min(25, Math.floor((canvas.width * canvas.height) / 60000));
+      const baseBubbleCount = Math.min(40, Math.floor((canvas.width * canvas.height) / 40000));
+      const bubbleCount = Math.floor(baseBubbleCount * 1.5); // More bubbles
 
       for (let i = 0; i < bubbleCount; i++) {
+        // Depth opacity: closer bubbles are more opaque, farther bubbles are more transparent
+        const depthOpacity = Math.random() * 0.5 + 0.4; // Range: 0.4 to 0.9 (more visible)
         bubbles.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          radius: Math.random() * 35 + 15, // Smaller bubbles: 15-50px
+          radius: (Math.random() * 35 + 15) * 0.8, // 20% smaller: 12-40px
           vx: (Math.random() - 0.5) * 0.4, // Slower, smoother movement
           vy: (Math.random() - 0.5) * 0.4,
-          opacity: Math.random() * 0.3 + 0.2,
+          opacity: depthOpacity, // Individual bubble opacity for depth effect
           color: colors[Math.floor(Math.random() * colors.length)],
         });
       }
@@ -97,10 +100,12 @@ export function BubbleAnimation() {
         if (colorMatch) {
           const [, r, g, b, a] = colorMatch;
           const baseOpacity = parseFloat(a);
-          // Brighter gradient for more visibility
-          gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${baseOpacity * 1.0})`);
-          gradient.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, ${baseOpacity * 0.5})`);
-          gradient.addColorStop(0.9, `rgba(${r}, ${g}, ${b}, ${baseOpacity * 0.15})`);
+          // Apply depth opacity: multiply base color opacity by bubble's depth opacity
+          const finalOpacity = baseOpacity * bubble.opacity;
+          // Gradient with depth effect - closer bubbles are more visible
+          gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${finalOpacity * 1.0})`);
+          gradient.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, ${finalOpacity * 0.5})`);
+          gradient.addColorStop(0.9, `rgba(${r}, ${g}, ${b}, ${finalOpacity * 0.15})`);
           gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
         }
 

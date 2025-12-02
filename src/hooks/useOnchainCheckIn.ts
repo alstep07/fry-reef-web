@@ -118,6 +118,32 @@ export function useOnchainCheckIn(address?: string) {
     }
   }, [isSuccess, hash, refetch]);
 
+  // Filter out user rejection errors (don't show error if user cancelled)
+  const getFilteredError = () => {
+    if (!writeError) return null;
+
+    const errorMessage =
+      writeError instanceof Error
+        ? writeError.message.toLowerCase()
+        : String(writeError).toLowerCase();
+
+    // Check if error is user rejection/cancellation
+    const isUserRejection =
+      errorMessage.includes("user rejected") ||
+      errorMessage.includes("user denied") ||
+      errorMessage.includes("user cancelled") ||
+      errorMessage.includes("rejected") ||
+      errorMessage.includes("denied") ||
+      errorMessage.includes("cancelled") ||
+      errorMessage.includes("action rejected") ||
+      errorMessage.includes("transaction was rejected");
+
+    // Don't show error if user cancelled
+    if (isUserRejection) return null;
+
+    return writeError as Error;
+  };
+
   return {
     lastCheckInTimestamp: userInfo?.lastCheckIn
       ? Number(userInfo.lastCheckIn)
@@ -134,7 +160,7 @@ export function useOnchainCheckIn(address?: string) {
     isWriting,
     checkIn,
     isSuccess,
-    error: writeError ? (writeError as Error) : null,
+    error: getFilteredError(),
     isOnCorrectNetwork,
     switchToBaseSepolia,
   };

@@ -9,6 +9,7 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider } from "wagmi";
 import { base, baseSepolia } from "wagmi/chains";
+import { useState } from "react";
 
 // Basic config for Base & Base Sepolia following Base Learn stack
 // See: `https://docs.base.org/learn/welcome`
@@ -22,9 +23,20 @@ export const wagmiConfig = getDefaultConfig({
   ssr: true,
 });
 
-const queryClient = new QueryClient();
-
 export function Web3Providers({ children }: { children: React.ReactNode }) {
+  // Create QueryClient inside component to avoid re-initialization issues
+  // Use useState to ensure it's only created once per component instance
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 60 * 1000, // 1 minute
+          },
+        },
+      })
+  );
+
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
