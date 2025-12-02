@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useConnection } from "wagmi";
+import { useAccount } from "wagmi";
 import { useDailyCheckIn } from "@/hooks/useDailyCheckIn";
 import { saveCheckIn } from "@/utils/checkin";
 import { CardShell } from "@/components/ui/CardShell";
@@ -10,7 +10,7 @@ import { CheckInInfo } from "./CheckInInfo";
 import { CheckInEmptyState } from "./CheckInEmptyState";
 
 export function CheckInCard() {
-  const { address, isConnected } = useConnection();
+  const { address, isConnected } = useAccount();
   const [version, setVersion] = useState(0);
   const { lastCheckIn, todayCheckedIn } = useDailyCheckIn(address, version);
 

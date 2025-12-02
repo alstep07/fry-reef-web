@@ -1,10 +1,10 @@
 "use client";
 
-import { useConnection, useBalance } from "wagmi";
+import { useAccount, useBalance } from "wagmi";
 import { base } from "wagmi/chains";
 
 export function BalanceDisplay() {
-  const { address, isConnected } = useConnection();
+  const { address, isConnected } = useAccount();
   const { data, isLoading, isError } = useBalance({
     address,
     chainId: base.id,

@@ -5,7 +5,9 @@ const config: HardhatUserConfig = {
   solidity: "0.8.24",
   networks: {
     // Local Hardhat network
-    hardhat: {},
+    hardhat: {
+      chainId: 31337,
+    },
     // Base Sepolia testnet, align with Base Learn deployment docs: `https://docs.base.org/learn/welcome`
     baseSepolia: {
       url: process.env.BASE_SEPOLIA_RPC_URL || "",
