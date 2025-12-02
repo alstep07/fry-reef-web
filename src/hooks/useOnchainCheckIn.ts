@@ -50,16 +50,17 @@ export function useOnchainCheckIn(address?: string) {
   }) as { data: UserInfo | undefined; isLoading: boolean; refetch: () => void };
 
   // Check if checked in today - only on correct network
-  const { data: checkedInToday } = useReadContract({
-    address: contractAddress,
-    abi: dailyCheckInAbi,
-    functionName: "hasCheckedInToday",
-    args: userAddress ? [userAddress] : undefined,
-    chainId: DEFAULT_CHAIN_ID,
-    query: {
-      enabled: !!userAddress && !!contractAddress && isOnCorrectNetwork,
-    },
-  }) as { data: boolean | undefined };
+  const { data: checkedInToday, refetch: refetchCheckedInToday } =
+    useReadContract({
+      address: contractAddress,
+      abi: dailyCheckInAbi,
+      functionName: "hasCheckedInToday",
+      args: userAddress ? [userAddress] : undefined,
+      chainId: DEFAULT_CHAIN_ID,
+      query: {
+        enabled: !!userAddress && !!contractAddress && isOnCorrectNetwork,
+      },
+    }) as { data: boolean | undefined; refetch: () => void };
 
   // Write check-in
   const {
@@ -113,10 +114,11 @@ export function useOnchainCheckIn(address?: string) {
     if (isSuccess && hash) {
       const timer = setTimeout(() => {
         refetch();
+        refetchCheckedInToday();
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [isSuccess, hash, refetch]);
+  }, [isSuccess, hash, refetch, refetchCheckedInToday]);
 
   // Filter out user rejection errors (don't show error if user cancelled)
   const getFilteredError = () => {
