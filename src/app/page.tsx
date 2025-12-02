@@ -1,11 +1,14 @@
 "use client";
 
+import { useAccount } from "wagmi";
 import { CheckInCard } from "@/components/features/checkin/CheckInCard";
 import { WalletHeader } from "@/components/features/wallet/WalletHeader";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { BubbleAnimation } from "@/components/ui/BubbleAnimation";
 
 export default function Home() {
+  const { isConnected } = useAccount();
+
   return (
     <div className="relative min-h-screen text-slate-100 overflow-hidden">
       <BubbleAnimation />
@@ -15,8 +18,14 @@ export default function Home() {
           description="Breed, merge, evolve on Base"
           action={<WalletHeader />}
         />
-        <section className="flex flex-1 items-start justify-center pb-10">
-          <CheckInCard />
+        <section className="flex flex-1 items-center justify-center pb-10">
+          {!isConnected ? (
+            <p className="text-center text-lg text-slate-400">
+              Please connect your wallet
+            </p>
+          ) : (
+            <CheckInCard />
+          )}
         </section>
       </main>
     </div>
