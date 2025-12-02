@@ -1,0 +1,36 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/DailyCheckIn.sol": {
+      "content": "// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.24;\r\n\r\n/**\r\n * @title DailyCheckIn\r\n * @notice Contract for daily check-ins with BM (Best Month) streak tracking\r\n * @dev Tracks daily check-ins, current month streak, and best month streak\r\n */\r\ncontract DailyCheckIn {\r\n    struct UserInfo {\r\n        uint256 lastCheckIn; // timestamp of last check-in\r\n        uint256 totalCheckIns; // total number of check-ins\r\n        uint256 currentMonthStreak; // current month streak\r\n        uint256 bestMonthStreak; // best month streak ever\r\n        uint256 currentMonthStart; // timestamp when current month streak started\r\n        uint256 bestMonthTimestamp; // timestamp of the best month\r\n    }\r\n\r\n    mapping(address => UserInfo) public users;\r\n    \r\n    event CheckedIn(address indexed user, uint256 timestamp, uint256 currentStreak, uint256 bestStreak);\r\n\r\n    /**\r\n     * @notice Check in for today\r\n     * @dev Can only check in once per day. Resets streak if new month started.\r\n     */\r\n    function checkIn() external {\r\n        address user = msg.sender;\r\n        UserInfo storage userInfo = users[user];\r\n        \r\n        uint256 now_ = block.timestamp;\r\n        uint256 today = _getDayStart(now_);\r\n        uint256 lastCheckInDay = _getDayStart(userInfo.lastCheckIn);\r\n        \r\n        // Check if already checked in today\r\n        require(today > lastCheckInDay, \"Already checked in today\");\r\n        \r\n        // Get current month start\r\n        uint256 currentMonthStart = _getMonthStart(now_);\r\n        \r\n        // If new month started, reset current streak\r\n        if (userInfo.currentMonthStart < currentMonthStart) {\r\n            // Update best streak if current is better\r\n            if (userInfo.currentMonthStreak > userInfo.bestMonthStreak) {\r\n                userInfo.bestMonthStreak = userInfo.currentMonthStreak;\r\n                userInfo.bestMonthTimestamp = userInfo.currentMonthStart;\r\n            }\r\n            // Reset for new month\r\n            userInfo.currentMonthStreak = 1;\r\n            userInfo.currentMonthStart = currentMonthStart;\r\n        } else {\r\n            // Continue streak in same month\r\n            userInfo.currentMonthStreak += 1;\r\n        }\r\n        \r\n        // Update last check-in and total count\r\n        userInfo.lastCheckIn = now_;\r\n        userInfo.totalCheckIns += 1;\r\n        \r\n        // Update best streak if current exceeds it\r\n        if (userInfo.currentMonthStreak > userInfo.bestMonthStreak) {\r\n            userInfo.bestMonthStreak = userInfo.currentMonthStreak;\r\n            userInfo.bestMonthTimestamp = userInfo.currentMonthStart;\r\n        }\r\n        \r\n        emit CheckedIn(user, now_, userInfo.currentMonthStreak, userInfo.bestMonthStreak);\r\n    }\r\n\r\n    /**\r\n     * @notice Get user information\r\n     * @param user Address of the user\r\n     * @return UserInfo struct with all user data\r\n     */\r\n    function getUserInfo(address user) external view returns (UserInfo memory) {\r\n        return users[user];\r\n    }\r\n\r\n    /**\r\n     * @notice Check if user has checked in today\r\n     * @param user Address of the user\r\n     * @return true if checked in today, false otherwise\r\n     */\r\n    function hasCheckedInToday(address user) external view returns (bool) {\r\n        uint256 today = _getDayStart(block.timestamp);\r\n        uint256 lastCheckInDay = _getDayStart(users[user].lastCheckIn);\r\n        return today == lastCheckInDay && users[user].lastCheckIn > 0;\r\n    }\r\n\r\n    /**\r\n     * @notice Get the start of the day (00:00:00 UTC) for a given timestamp\r\n     * @param timestamp The timestamp\r\n     * @return Start of the day timestamp\r\n     */\r\n    function _getDayStart(uint256 timestamp) internal pure returns (uint256) {\r\n        // 86400 seconds in a day\r\n        return (timestamp / 86400) * 86400;\r\n    }\r\n\r\n    /**\r\n     * @notice Get the start of the month (first day, 00:00:00 UTC) for a given timestamp\r\n     * @param timestamp The timestamp\r\n     * @return Start of the month timestamp\r\n     */\r\n    function _getMonthStart(uint256 timestamp) internal pure returns (uint256) {\r\n        // Approximate: use 30 days per month\r\n        // For more precision, would need to use a library or calculate based on actual calendar\r\n        uint256 daysSinceEpoch = timestamp / 86400;\r\n        uint256 monthsSinceEpoch = daysSinceEpoch / 30;\r\n        return monthsSinceEpoch * 30 * 86400;\r\n    }\r\n}\r\n\r\n"
+    }
+  },
+  "settings": {
+    "evmVersion": "paris",
+    "optimizer": {
+      "enabled": false,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}

@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useAccount } from "wagmi";
-import { useDailyCheckIn } from "@/hooks/useDailyCheckIn";
-import { saveCheckIn } from "@/utils/checkin";
+import { useOnchainCheckIn } from "@/hooks/useOnchainCheckIn";
 import { CardShell } from "@/components/ui/CardShell";
 import { CheckInButton } from "./CheckInButton";
 import { CheckInInfo } from "./CheckInInfo";
@@ -11,14 +9,22 @@ import { CheckInEmptyState } from "./CheckInEmptyState";
 
 export function CheckInCard() {
   const { address, isConnected } = useAccount();
-  const [version, setVersion] = useState(0);
-  const { lastCheckIn, todayCheckedIn } = useDailyCheckIn(address, version);
+  const {
+    lastCheckInTimestamp,
+    totalCount,
+    currentMonthStreak,
+    bestMonthStreak,
+    checkedInToday,
+    isLoading,
+    isWriting,
+    checkIn,
+    error,
+    isSuccess,
+  } = useOnchainCheckIn(address);
 
-  const handleCheckIn = () => {
-    if (!address) return;
-    saveCheckIn(address);
-    setVersion((v) => v + 1);
-  };
+  const lastCheckIn = lastCheckInTimestamp
+    ? new Date(lastCheckInTimestamp * 1000).toISOString()
+    : null;
 
   return (
     <CardShell>
@@ -32,16 +38,48 @@ export function CheckInCard() {
           {address && (
             <>
               <CheckInInfo address={address} lastCheckIn={lastCheckIn} />
-              <div className="mt-2 flex flex-wrap items-center gap-3">
+              {totalCount > 0 && (
+                <div className="mt-3 space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400">Current BM Streak:</span>
+                    <span className="font-semibold text-baseBlue">
+                      {currentMonthStreak} days
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400">Best BM Streak:</span>
+                    <span className="font-semibold text-baseBlue">
+                      {bestMonthStreak} days
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400">Total Check-ins:</span>
+                    <span className="font-semibold text-slate-200">
+                      {totalCount}
+                    </span>
+                  </div>
+                </div>
+              )}
+              <div className="mt-4 flex flex-wrap items-center gap-3">
                 <CheckInButton
-                  onCheckIn={handleCheckIn}
-                  isCheckedIn={todayCheckedIn}
+                  onCheckIn={checkIn}
+                  isCheckedIn={checkedInToday}
+                  disabled={isWriting || isLoading}
                 />
               </div>
+              {error && (
+                <p className="mt-2 text-xs text-red-400">
+                  Error: {error instanceof Error ? error.message : "Transaction failed"}
+                </p>
+              )}
+              {isSuccess && (
+                <p className="mt-2 text-xs text-green-400">
+                  ✓ Check-in successful! Transaction confirmed on Base.
+                </p>
+              )}
               <p className="mt-3 text-xs text-slate-500">
-                This is a prototype. Check-ins are stored locally for now;
-                we&apos;ll move this onchain and attach badges/NFTs in future
-                iterations.
+                Check-ins are stored onchain on Base Sepolia. Your streak and
+                total count are permanently recorded on the blockchain.
               </p>
             </>
           )}
