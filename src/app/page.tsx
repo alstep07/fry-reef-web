@@ -1,14 +1,17 @@
 "use client";
 
 import { useAccount } from "wagmi";
-import { CheckInCard } from "@/components/features/checkin/CheckInCard";
+import { GameDashboard } from "@/components/features/game/GameDashboard";
 import { WalletHeader } from "@/components/features/wallet/WalletHeader";
 import { WalletConnectPrompt } from "@/components/features/wallet/WalletConnectPrompt";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { BubbleAnimation } from "@/components/ui/BubbleAnimation";
 
 export default function Home() {
-  const { isConnected } = useAccount();
+  const { isConnected, isConnecting, isReconnecting } = useAccount();
+
+  // Show loading state while connecting
+  const isLoading = isConnecting || isReconnecting;
 
   return (
     <div className="relative min-h-screen text-slate-100 overflow-hidden">
@@ -19,11 +22,15 @@ export default function Home() {
           description="Breed, merge, evolve on Base"
           action={<WalletHeader />}
         />
-        <section className="flex flex-1 items-center justify-center pb-10">
-          {!isConnected ? (
+        <section className="flex flex-1 items-start justify-center pt-8 pb-10">
+          {isLoading ? (
+            <div className="flex items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-baseBlue" />
+            </div>
+          ) : !isConnected ? (
             <WalletConnectPrompt />
           ) : (
-            <CheckInCard />
+            <GameDashboard />
           )}
         </section>
       </main>

@@ -13,8 +13,8 @@ export function WalletConnectPrompt() {
         className="w-64 h-64 sm:w-80 sm:h-80 object-contain"
         priority
       />
-      <p className="text-center text-2xl text-slate-400">
-        Please connect your wallet
+      <p className="text-center text-lg text-slate-200 max-w-md">
+        Connect wallet to start your underwater adventure
       </p>
     </div>
   );

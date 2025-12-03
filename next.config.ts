@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  webpack: (config, { isServer }) => {
+  webpack: (config) => {
     // Ignore test files from node_modules
     config.module = config.module || {};
     config.module.rules = config.module.rules || [];

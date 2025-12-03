@@ -18,7 +18,7 @@ export function BalanceDisplay() {
   if (isError || !data) {
     return (
       <span className="text-xs text-slate-400 sm:text-sm">
-        0.0000 ETH
+        0.000 ETH
       </span>
     );
   }
@@ -26,7 +26,7 @@ export function BalanceDisplay() {
   const formattedBalance = (
     Number(data.value) /
     10 ** data.decimals
-  ).toFixed(4);
+  ).toFixed(3);
 
   return (
     <span className="text-xs text-slate-200 sm:text-sm">
