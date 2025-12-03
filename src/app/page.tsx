@@ -6,6 +6,7 @@ import { WalletHeader } from "@/components/features/wallet/WalletHeader";
 import { WalletConnectPrompt } from "@/components/features/wallet/WalletConnectPrompt";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { BubbleAnimation } from "@/components/ui/BubbleAnimation";
+import { Footer } from "@/components/ui/Footer";
 
 export default function Home() {
   const { isConnected, isConnecting, isReconnecting } = useAccount();
@@ -14,9 +15,9 @@ export default function Home() {
   const isLoading = isConnecting || isReconnecting;
 
   return (
-    <div className="relative min-h-screen text-slate-100 overflow-hidden">
+    <div className="relative flex min-h-screen flex-col text-slate-100 overflow-hidden">
       <BubbleAnimation />
-      <main className="relative z-10 container mx-auto flex min-h-screen flex-col px-4 py-6 sm:px-6 sm:py-10 lg:max-w-5xl">
+      <main className="relative z-10 container mx-auto flex flex-1 flex-col px-4 py-6 sm:px-6 sm:py-10 lg:max-w-5xl">
         <PageHeader
           title="FryReef"
           description="Breed, merge, evolve on Base"
@@ -34,6 +35,7 @@ export default function Home() {
           )}
         </section>
       </main>
+      <Footer />
     </div>
   );
 }

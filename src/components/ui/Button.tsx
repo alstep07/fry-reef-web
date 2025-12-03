@@ -2,19 +2,19 @@
 
 import { ButtonHTMLAttributes, ReactNode } from "react";
 
-interface LiquidGlassButtonProps
+interface ButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
   variant?: "primary" | "secondary";
 }
 
-export function LiquidGlassButton({
+export function Button({
   children,
   variant = "primary",
   className = "",
   disabled,
   ...props
-}: LiquidGlassButtonProps) {
+}: ButtonProps) {
   const baseClasses =
     "relative inline-flex min-w-[160px] items-center justify-center overflow-hidden rounded-full px-5 py-2.5 text-sm font-medium text-white shadow-lg transition-all duration-300 cursor-pointer hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:shadow-none disabled:hover:scale-100";
 

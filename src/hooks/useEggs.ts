@@ -21,7 +21,7 @@ export function useEggs() {
     : undefined;
 
   // Get egg balance
-  const { data: balance, refetch: refetchBalance } = useReadContract({
+  const { data: balance, refetch: refetchBalance, isLoading: isBalanceLoading, isFetched: isBalanceFetched } = useReadContract({
     address: contractAddress,
     abi: eggNftAbi,
     functionName: "balanceOf",
@@ -110,11 +110,14 @@ export function useEggs() {
     refetchEggInfo();
   };
 
+  // Loading until first balance fetch completes
+  const isLoading = !isBalanceFetched || isBalanceLoading;
+
   return {
     eggs,
     eggCount,
     refetch,
-    isLoading: false,
+    isLoading,
   };
 }
 

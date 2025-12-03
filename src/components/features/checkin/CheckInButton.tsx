@@ -1,6 +1,6 @@
 "use client";
 
-import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
+import { Button } from "@/components/ui/Button";
 
 interface CheckInButtonProps {
   onCheckIn: () => void;
@@ -14,13 +14,13 @@ export function CheckInButton({
   disabled = false,
 }: CheckInButtonProps) {
   return (
-    <LiquidGlassButton
+    <Button
       onClick={onCheckIn}
       disabled={disabled || isCheckedIn}
       variant="primary"
     >
       {isCheckedIn ? "You are based" : "Say BM"}
-    </LiquidGlassButton>
+    </Button>
   );
 }
 

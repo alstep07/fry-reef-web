@@ -184,7 +184,7 @@ interface NestTabProps {
 
 export function NestTab({ onGoToReef }: NestTabProps) {
   const { address } = useAccount();
-  const { eggs, eggCount, refetch } = useEggs();
+  const { eggs, eggCount, refetch, isLoading: isEggsLoading } = useEggs();
   const { pearlShards, isWriting, isSuccess, startIncubation, hatchEgg } = useFryReef();
 
   // Modal state
@@ -300,7 +300,11 @@ export function NestTab({ onGoToReef }: NestTabProps) {
           )}
         </div>
 
-        {eggCount === 0 ? (
+        {isEggsLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-baseBlue" />
+          </div>
+        ) : eggCount === 0 ? (
           <div className="py-8 text-center">
             <div className="mb-4 flex justify-center">
               <Image

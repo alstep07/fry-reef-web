@@ -20,7 +20,7 @@ export function PageHeader({ title, description, action }: PageHeaderProps) {
             Beta
           </span>
         </div>
-        <p className="max-w-xl text-sm text-slate-400 sm:text-base">
+        <p className="max-w-xl text-xs text-slate-400 sm:text-sm">
           {description}
         </p>
       </div>

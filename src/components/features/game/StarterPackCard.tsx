@@ -2,7 +2,7 @@
 
 import { STARTER_PACK, RESOURCE_CONFIG, Resource } from "@/constants/gameConfig";
 import { CardShell } from "@/components/ui/CardShell";
-import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
+import { Button } from "@/components/ui/Button";
 
 interface StarterPackCardProps {
   onClaim: () => void;
@@ -50,9 +50,9 @@ export function StarterPackCard({
           </div>
         </div>
 
-        <LiquidGlassButton onClick={onClaim} disabled={isLoading}>
+        <Button onClick={onClaim} disabled={isLoading}>
           {isLoading ? "Claiming..." : "Claim Starter Pack"}
-        </LiquidGlassButton>
+        </Button>
 
         {error && (
           <p className="mt-4 text-sm text-red-400">
