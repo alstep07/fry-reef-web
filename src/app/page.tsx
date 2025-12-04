@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { GameDashboard } from "@/components/features/game/GameDashboard";
 import { WalletHeader } from "@/components/features/wallet/WalletHeader";
@@ -10,9 +11,24 @@ import { Footer } from "@/components/ui/Footer";
 
 export default function Home() {
   const { isConnected, isConnecting, isReconnecting } = useAccount();
+  const [showLoader, setShowLoader] = useState(true);
 
-  // Show loading state while connecting
-  const isLoading = isConnecting || isReconnecting;
+  // Timeout to prevent infinite loader - max 3 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoader(false);
+    }, 3000);
+
+    // Clear loader immediately if connection state is resolved
+    if (!isConnecting && !isReconnecting) {
+      setShowLoader(false);
+    }
+
+    return () => clearTimeout(timer);
+  }, [isConnecting, isReconnecting]);
+
+  // Show loading state while connecting (with timeout protection)
+  const isLoading = showLoader && (isConnecting || isReconnecting);
 
   return (
     <div className="relative flex min-h-screen flex-col text-slate-100 overflow-hidden">
