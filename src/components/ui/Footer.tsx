@@ -20,7 +20,7 @@ export function Footer() {
             rel="noopener noreferrer"
             className="text-sm text-slate-400 transition hover:text-white"
           >
-            Roadmap
+            Whitepaper
           </a>
           <a
             href="https://x.com/iwbamwc"
