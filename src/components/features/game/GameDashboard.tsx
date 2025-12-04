@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAccount } from "wagmi";
 import { useFryReef } from "@/hooks/useFryReef";
 import { StarterPackCard } from "./StarterPackCard";
@@ -13,6 +13,8 @@ type Tab = "checkin" | "nest" | "reef";
 export function GameDashboard() {
   const { address, isConnected } = useAccount();
   const [activeTab, setActiveTab] = useState<Tab>("checkin");
+  const [timedOut, setTimedOut] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const {
     currentStreak,
     totalCheckIns,
@@ -28,12 +30,30 @@ export function GameDashboard() {
     switchToBaseSepolia,
   } = useFryReef();
 
+  // Timeout protection for initial load - max 5 seconds
+  useEffect(() => {
+    // Start timer only on mount
+    timerRef.current = setTimeout(() => {
+      setTimedOut(true);
+    }, 5000);
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
+
   if (!isConnected || !address) {
     return null;
   }
 
-  // Show loading spinner while fetching initial data
-  if (isLoading && !starterPackClaimed) {
+  // Determine if we should show loading
+  const dataLoaded = starterPackClaimed !== undefined;
+  const shouldShowLoader = !timedOut && !dataLoaded && isLoading;
+
+  // Show loading spinner while fetching initial data (with timeout protection)
+  if (shouldShowLoader) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-baseBlue" />
