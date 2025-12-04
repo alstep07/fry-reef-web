@@ -38,8 +38,15 @@ function FishCard({ tokenId, rarity, pendingDust, onLayEgg, isLoading, canLayEgg
         style={{ backgroundColor: config.color }}
       />
 
-      {/* Token ID - top right */}
-      <span className="absolute top-3 right-3 rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] text-slate-400">#{tokenId}</span>
+      {/* Token ID - top left */}
+      <span className="absolute top-3 left-3 rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] text-slate-400">#{tokenId}</span>
+
+      {/* Pending dust - top right with floating animation */}
+      {pendingDust > 0 && (
+        <span className="absolute top-3 right-3 animate-float rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-400">
+          +{pendingDust} ✨
+        </span>
+      )}
 
       {/* Fish Image */}
       <div className="relative mx-auto mb-2 sm:mb-3 h-16 w-16 sm:h-20 sm:w-20">
@@ -65,24 +72,23 @@ function FishCard({ tokenId, rarity, pendingDust, onLayEgg, isLoading, canLayEgg
         </div>
 
         {/* Dust stats */}
-        <div className="mt-1 sm:mt-2 flex items-center justify-center gap-2 text-xs text-slate-400">
+        <div className="mt-1 sm:mt-2 text-xs text-slate-400">
           <span>✨ {dustPerDay}/day</span>
-          {pendingDust > 0 && (
-            <>
-              <span className="text-slate-600">•</span>
-              <span className="text-amber-400/80">+{pendingDust}</span>
-            </>
-          )}
         </div>
 
         {/* Lay Egg button */}
         <button
           onClick={() => onLayEgg(tokenId)}
           disabled={isLoading || !canLayEgg}
-          className="mt-2 w-full cursor-pointer rounded-lg bg-purple-500/80 px-3 py-2 text-xs font-medium text-white transition hover:bg-purple-500 disabled:cursor-not-allowed disabled:bg-slate-600"
+          className="mt-2 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-purple-500/80 px-3 py-2 text-xs font-medium text-white transition hover:bg-purple-500 disabled:cursor-not-allowed disabled:bg-slate-600"
           title={!canLayEgg ? `Need ${EGG_LAYING.spawnDustCost} Spawn Dust` : "Create a new egg"}
         >
-          {isLoading ? "..." : `Lay Egg (${EGG_LAYING.spawnDustCost} ✨)`}
+          {isLoading ? "..." : (
+            <>
+              <span>Lay Egg</span>
+              <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]">{EGG_LAYING.spawnDustCost} ✨</span>
+            </>
+          )}
         </button>
       </div>
     </div>

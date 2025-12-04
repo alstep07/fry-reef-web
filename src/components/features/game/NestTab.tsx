@@ -72,8 +72,8 @@ function EggCard({ egg, onIncubate, onHatch, isLoading, pearlShards }: EggCardPr
 
   return (
     <div className={`group relative rounded-xl sm:rounded-2xl border p-3 sm:p-4 backdrop-blur-sm ${getStatusStyle()}`}>
-      {/* Token ID - top right */}
-      <span className="absolute top-3 right-3 rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] text-slate-400">#{tokenId}</span>
+      {/* Token ID - top left */}
+      <span className="absolute top-3 left-3 rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] text-slate-400">#{tokenId}</span>
 
       {/* Status badge */}
       {isReadyToHatch && (
@@ -141,13 +141,21 @@ function EggCard({ egg, onIncubate, onHatch, isLoading, pearlShards }: EggCardPr
           <button
             onClick={() => onIncubate(tokenId)}
             disabled={isLoading || pearlShards < INCUBATION.pearlShardCost}
-            className="mt-2 w-full cursor-pointer rounded-lg bg-baseBlue/80 px-3 py-2 text-xs font-medium text-white transition hover:bg-baseBlue disabled:cursor-not-allowed disabled:bg-slate-600"
+            className="mt-2 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-baseBlue/80 px-3 py-2 text-xs font-medium text-white transition hover:bg-baseBlue disabled:cursor-not-allowed disabled:bg-slate-600"
           >
-            {pearlShards < INCUBATION.pearlShardCost
-              ? `Need ${INCUBATION.pearlShardCost} 💎`
-              : isLoading
-                ? "..."
-                : `Incubate (${INCUBATION.pearlShardCost} 💎)`}
+            {pearlShards < INCUBATION.pearlShardCost ? (
+              <>
+                <span>Need</span>
+                <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]">{INCUBATION.pearlShardCost} 💎</span>
+              </>
+            ) : isLoading ? (
+              "..."
+            ) : (
+              <>
+                <span>Incubate</span>
+                <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]">{INCUBATION.pearlShardCost} 💎</span>
+              </>
+            )}
           </button>
         ) : (
           <>
