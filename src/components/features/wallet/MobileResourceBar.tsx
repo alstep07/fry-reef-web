@@ -6,8 +6,8 @@ import { useFryReef } from "@/hooks/useFryReef";
 import { RESOURCE_CONFIG, Resource } from "@/constants/gameConfig";
 
 export function MobileResourceBar() {
-  const { address, isConnected, isConnecting, isReconnecting } = useAccount();
-  const { pearlShards, spawnDust, starterPackClaimed, isLoading } = useFryReef();
+  const { address, isConnected } = useAccount();
+  const { pearlShards, spawnDust, starterPackClaimed } = useFryReef();
 
   const { data: balanceData, isLoading: isBalanceLoading } = useBalance({
     address,
@@ -21,10 +21,7 @@ export function MobileResourceBar() {
     ? (Number(balanceData.value) / 10 ** balanceData.decimals).toFixed(3)
     : "-.--";
 
-  // Only show when connected
-  const showBar = isConnected && !isConnecting && !isReconnecting;
-
-  if (!showBar) return null;
+  if (!isConnected) return null;
 
   return (
     <div className="flex sm:hidden items-center justify-center mt-2">
@@ -38,7 +35,7 @@ export function MobileResourceBar() {
         </div>
 
         {/* Resources - only show after starter pack claimed */}
-        {starterPackClaimed && !isLoading && (
+        {starterPackClaimed && (
           <>
             <div className="h-4 w-px bg-white/20" />
             <div className="flex items-center gap-1.5">

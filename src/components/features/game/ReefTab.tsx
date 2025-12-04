@@ -192,13 +192,6 @@ export function ReefTab() {
           ))}
         </div>
       )}
-
-      {/* Info footer */}
-      {fishCount > 0 && (
-        <div className="mt-3 sm:mt-4 rounded-lg bg-white/5 p-3 text-xs text-slate-400">
-          <p>💡 Fish generate Spawn Dust daily. Collect dust and use {EGG_LAYING.spawnDustCost} ✨ to lay a new egg!</p>
-        </div>
-      )}
     </div>
   );
 }
