@@ -75,12 +75,12 @@ function EggCard({ egg, onIncubate, onHatch, isLoading, pearlShards }: EggCardPr
       {/* Status badge */}
       {isReadyToHatch && (
         <div className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-green-500 px-1.5 sm:px-2 py-0.5 text-[8px] sm:text-[10px] font-bold text-white shadow-lg">
-          READY
+          Ready to hatch
         </div>
       )}
       {info.isIncubating && !isReadyToHatch && (
         <div className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-baseBlue px-1.5 sm:px-2 py-0.5 text-[8px] sm:text-[10px] font-bold text-white shadow-lg whitespace-nowrap">
-          INCUBATING
+          Incubating
         </div>
       )}
 
