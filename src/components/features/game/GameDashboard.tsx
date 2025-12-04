@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import { useFryReef } from "@/hooks/useFryReef";
 import { StarterPackCard } from "./StarterPackCard";
@@ -10,11 +11,30 @@ import { DAILY_CHECKIN } from "@/constants/gameConfig";
 
 type Tab = "checkin" | "nest" | "reef";
 
+const validTabs: Tab[] = ["checkin", "nest", "reef"];
+
 export function GameDashboard() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { address, isConnected } = useAccount();
-  const [activeTab, setActiveTab] = useState<Tab>("checkin");
+  
+  // Get tab from URL or default to "checkin"
+  const tabFromUrl = searchParams.get("tab") as Tab | null;
+  const activeTab: Tab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "checkin";
   const [timedOut, setTimedOut] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Update URL when tab changes
+  const setActiveTab = (tab: Tab) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === "checkin") {
+      params.delete("tab");
+    } else {
+      params.set("tab", tab);
+    }
+    const query = params.toString();
+    router.push(query ? `/?${query}` : "/", { scroll: false });
+  };
   const {
     currentStreak,
     totalCheckIns,
