@@ -23,7 +23,7 @@ export function Footer() {
             Whitepaper
           </a>
           <a
-            href="https://x.com/iwbamwc"
+            href="https://x.com/ReefFry"
             target="_blank"
             rel="noopener noreferrer"
             className="text-slate-400 transition hover:text-white"
