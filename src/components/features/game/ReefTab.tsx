@@ -43,7 +43,7 @@ function FishCard({ tokenId, rarity, pendingDust, onLayEgg, isLoading, canLayEgg
 
       {/* Pending dust - top right with floating animation */}
       {pendingDust > 0 && (
-        <span className="absolute top-3 right-3 animate-float rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-400">
+        <span className="absolute top-3.5 right-3 animate-float rounded-full px-1.5 py-0.5 text-[10px] font-medium text-amber-400">
           +{pendingDust} ✨
         </span>
       )}
