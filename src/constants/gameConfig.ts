@@ -69,7 +69,7 @@ export const FISH_IMAGES = {
 /**
  * Egg image path
  */
-export const EGG_IMAGE = "/images/egg/egg.webp";
+export const EGG_IMAGE = "/images/egg/egg.png";
 
 /**
  * Get fish image by rarity

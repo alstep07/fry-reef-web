@@ -306,13 +306,13 @@ export function NestTab({ onGoToReef }: NestTabProps) {
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-baseBlue" />
           </div>
         ) : eggCount === 0 ? (
-          <div className="py-6 sm:py-8 text-center">
-            <div className="mb-3 sm:mb-4 flex justify-center">
+          <div className="py-6 sm:py-4 text-center">
+            <div className="mb-2 sm:mb-4 flex justify-center">
               <Image
                 src={EGG_IMAGE}
                 alt="Egg"
-                width={140}
-                height={140}
+                width={160}
+                height={160}
                 className="object-contain opacity-50"
               />
             </div>

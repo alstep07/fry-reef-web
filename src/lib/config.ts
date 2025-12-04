@@ -8,9 +8,23 @@ const projectId =
 export const wagmiConfig = createConfig({
   chains: [base, baseSepolia],
   connectors: [
-    injected(),
-    coinbaseWallet({ appName: "FryReef" }),
-    walletConnect({ projectId }),
+    injected({
+      shimDisconnect: true,
+    }),
+    coinbaseWallet({
+      appName: "FryReef",
+      preference: "all", // shows both mobile app and browser extension
+    }),
+    walletConnect({
+      projectId,
+      showQrModal: true,
+      metadata: {
+        name: "FryReef",
+        description: "Breed, merge, evolve on Base",
+        url: "https://fryreef.com",
+        icons: ["https://fryreef.com/favicon.ico"],
+      },
+    }),
   ],
   storage: createStorage({
     storage: cookieStorage,
