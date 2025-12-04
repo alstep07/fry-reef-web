@@ -165,7 +165,15 @@ export function ReefTab() {
         </div>
       ) : fishCount === 0 ? (
         <div className="py-8 text-center">
-          <div className="mb-4 text-6xl">🐠</div>
+          <div className="mb-4 flex justify-center">
+            <Image
+              src="/images/common/coral.webp"
+              alt="Coral"
+              width={180}
+              height={180}
+              className="object-contain opacity-50"
+            />
+          </div>
           <h3 className="mb-2 text-base font-medium text-white">No Fish Yet</h3>
           <p className="text-sm text-slate-400">
             Hatch eggs in the Nest to get your first fish!
