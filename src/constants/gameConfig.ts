@@ -125,7 +125,7 @@ export const RESOURCE_CONFIG = {
   [Resource.PearlShard]: {
     name: "Pearl Shard",
     description: "Used to incubate eggs into fish",
-    icon: "🫧",
+    icon: "💎",
   },
   [Resource.SpawnDust]: {
     name: "Spawn Dust",
