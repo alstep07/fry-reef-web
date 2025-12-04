@@ -1,10 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { headers } from "next/headers";
-import { cookieToInitialState } from "wagmi";
 import "./globals.css";
 import { Web3Providers } from "@/lib/web3";
-import { wagmiConfig } from "@/lib/config";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,20 +30,15 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const initialState = cookieToInitialState(
-    wagmiConfig,
-    (await headers()).get("cookie")
-  );
-
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <Web3Providers initialState={initialState}>{children}</Web3Providers>
+        <Web3Providers>{children}</Web3Providers>
       </body>
     </html>
   );
