@@ -16,7 +16,7 @@ const faqData: FAQItem[] = [
   {
     question: "What are Pearl Shards?",
     answer:
-      "Pearl Shards 🫧 are used to incubate eggs. You need 1 Pearl Shard to start incubation. Earn them by completing a 7-day check-in streak or from the Starter Pack.",
+      "Pearl Shards 💎 are used to incubate eggs. You need 1 Pearl Shard to start incubation. Earn them by completing a 7-day check-in streak or from the Starter Pack.",
   },
   {
     question: "What is Spawn Dust?",
