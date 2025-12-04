@@ -9,13 +9,13 @@
 
 /* Fullscreen background for iOS Safari */
 html {
-  background: #000;
+  background: radial-gradient(circle at top, #020617 0, #020617 40%, #000 100%);
   min-height: 100%;
   min-height: -webkit-fill-available;
 }
 
 body {
-  background: radial-gradient(circle at top, #020617 0, #020617 40%, #000 100%);
+  background: transparent;
   color: #e5e7eb;
   min-height: 100vh;
   min-height: -webkit-fill-available;
