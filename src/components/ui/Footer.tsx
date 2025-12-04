@@ -10,10 +10,18 @@ export function Footer() {
         <div className="flex items-center gap-4">
           <Link
             href="/faq"
-            className="text-md text-slate-400 transition hover:text-white"
+            className="text-sm text-slate-400 transition hover:text-white"
           >
             FAQ
           </Link>
+          <a
+            href="https://www.notion.so/FryReef-Roadmap-2bdde4de81e4804c9b87ea83d0a730d5"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-slate-400 transition hover:text-white"
+          >
+            Roadmap
+          </a>
           <a
             href="https://x.com/iwbamwc"
             target="_blank"
