@@ -5,6 +5,7 @@ import { useAccount } from "wagmi";
 import { useFryReef } from "@/hooks/useFryReef";
 import { StarterPackCard } from "./StarterPackCard";
 import { NestTab } from "./NestTab";
+import { ReefTab } from "./ReefTab";
 import { DAILY_CHECKIN } from "@/constants/gameConfig";
 
 type Tab = "checkin" | "nest" | "reef";
@@ -55,7 +56,7 @@ export function GameDashboard() {
   const tabs = [
     { id: "checkin" as Tab, label: "Tasks", icon: "📅" },
     { id: "nest" as Tab, label: "Nest", icon: "🟠" },
-    { id: "reef" as Tab, label: "Reef", icon: "🐠" },
+    { id: "reef" as Tab, label: "Reef", icon: "🪸" },
   ];
 
   return (
@@ -85,7 +86,7 @@ export function GameDashboard() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`cursor-pointer rounded-full px-4 py-2 text-sm font-medium transition ${activeTab === tab.id
+              className={`cursor-pointer rounded-full pl-3 pr-4 py-2 text-sm font-medium transition ${activeTab === tab.id
                 ? "bg-baseBlue text-white shadow-lg"
                 : "text-slate-400 hover:text-white"
                 }`}
@@ -117,13 +118,14 @@ export function GameDashboard() {
               <div className="mt-2">
                 <div className="h-2 overflow-hidden rounded-full bg-white/10">
                   <div
-                    className="h-full bg-baseBlue transition-all"
+                    className="h-full transition-all"
                     style={{
                       width: `${((currentStreak % DAILY_CHECKIN.streakForReward) / DAILY_CHECKIN.streakForReward) * 100}%`,
+                      background: "linear-gradient(90deg, #E8D5E2 0%, #F5E6EA 30%, #FFFFFF 50%, #E0F4F8 70%, #D4E5ED 100%)",
                     }}
                   />
                 </div>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-2 text-xs text-slate-400">
                   {currentStreak % DAILY_CHECKIN.streakForReward === 0
                     ? "🎉 Claim your Pearl Shard!"
                     : `${DAILY_CHECKIN.streakForReward - (currentStreak % DAILY_CHECKIN.streakForReward)} days until next Pearl Shard`}
@@ -156,15 +158,7 @@ export function GameDashboard() {
 
       {activeTab === "nest" && <NestTab onGoToReef={() => setActiveTab("reef")} />}
 
-      {activeTab === "reef" && (
-        <div className="rounded-2xl border border-white/5 bg-white/5 p-8 text-center backdrop-blur-sm">
-          <div className="mb-4 text-5xl">🐠</div>
-          <h3 className="mb-2 text-lg font-semibold text-white">Reef</h3>
-          <p className="text-sm text-slate-400">
-            Your fish will appear here. Hatch eggs to get fish!
-          </p>
-        </div>
-      )}
+      {activeTab === "reef" && <ReefTab />}
     </div>
   );
 }

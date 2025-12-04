@@ -19,7 +19,7 @@ interface EggCardProps {
 }
 
 function EggCard({ egg, onIncubate, onHatch, isLoading, pearlShards }: EggCardProps) {
-  const { tokenId, info, canHatch } = egg;
+  const { tokenId, info } = egg;
 
   // Calculate time remaining and progress
   const calculateTimeAndProgress = () => {
@@ -60,22 +60,25 @@ function EggCard({ egg, onIncubate, onHatch, isLoading, pearlShards }: EggCardPr
     return `${String(hours).padStart(2, "0")}h ${String(mins).padStart(2, "0")}m ${String(secs).padStart(2, "0")}s`;
   };
 
+  // Check if ready to hatch (use local timeLeft for real-time updates)
+  const isReadyToHatch = info.isIncubating && timeLeft <= 0;
+
   // Status styling
   const getStatusStyle = () => {
-    if (canHatch) return "border-green-500/30 bg-green-500/5";
+    if (isReadyToHatch) return "border-green-500/30 bg-green-500/5";
     if (info.isIncubating) return "border-baseBlue/30 bg-baseBlue/5";
     return "border-white/10 bg-white/5";
   };
 
   return (
-    <div className={`group relative rounded-2xl border p-4 backdrop-blur-sm transition-all hover:scale-[1.02] ${getStatusStyle()}`}>
+    <div className={`group relative rounded-2xl border p-4 backdrop-blur-sm ${getStatusStyle()}`}>
       {/* Status badge */}
-      {canHatch && (
+      {isReadyToHatch && (
         <div className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-green-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-lg">
           READY
         </div>
       )}
-      {info.isIncubating && !canHatch && (
+      {info.isIncubating && !isReadyToHatch && (
         <div className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-baseBlue px-2 py-0.5 text-[10px] font-bold text-white shadow-lg">
           INCUBATING
         </div>
@@ -84,10 +87,10 @@ function EggCard({ egg, onIncubate, onHatch, isLoading, pearlShards }: EggCardPr
       {/* Egg Visual */}
       <div className="relative mx-auto mb-3 h-20 w-20">
         {/* Glow effect */}
-        {canHatch && (
+        {isReadyToHatch && (
           <div className="absolute inset-0 animate-pulse rounded-full bg-green-500/20 blur-xl" />
         )}
-        {info.isIncubating && !canHatch && (
+        {info.isIncubating && !isReadyToHatch && (
           <div className="absolute inset-0 rounded-full bg-baseBlue/10 blur-lg" />
         )}
 
@@ -103,7 +106,7 @@ function EggCard({ egg, onIncubate, onHatch, isLoading, pearlShards }: EggCardPr
         </div>
 
         {/* Progress ring for incubating eggs */}
-        {info.isIncubating && !canHatch && (
+        {info.isIncubating && !isReadyToHatch && (
           <div className="absolute inset-0 flex items-center justify-center">
             <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
               <circle
@@ -145,24 +148,21 @@ function EggCard({ egg, onIncubate, onHatch, isLoading, pearlShards }: EggCardPr
                 ? "..."
                 : `Incubate (${INCUBATION.pearlShardCost} 🫧)`}
           </button>
-        ) : canHatch ? (
-          <button
-            onClick={() => onHatch(tokenId)}
-            disabled={isLoading}
-            className="mt-2 w-full cursor-pointer rounded-lg bg-green-500 px-3 py-2 text-xs font-medium text-white transition hover:bg-green-400 disabled:cursor-not-allowed disabled:bg-slate-600"
-          >
-            {isLoading ? "..." : "Hatch"}
-          </button>
         ) : (
-          <div className="mt-2">
-            <p className="text-xs tabular-nums text-slate-300">{formatTime(timeLeft)}</p>
-            <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/10">
-              <div
-                className="h-full bg-baseBlue transition-all"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
+          <>
+            {timeLeft > 0 && (
+              <p className="mt-1 text-[10px] tabular-nums text-slate-400">{formatTime(timeLeft)}</p>
+            )}
+            <button
+              onClick={() => onHatch(tokenId)}
+              disabled={isLoading || timeLeft > 0}
+              className={`mt-2 w-full cursor-pointer rounded-lg px-3 py-2 text-xs font-medium text-white transition disabled:cursor-not-allowed disabled:bg-slate-600 ${
+                timeLeft <= 0 ? "bg-green-500 hover:bg-green-400" : "bg-slate-600"
+              }`}
+            >
+              {isLoading ? "..." : "Hatch 🐣"}
+            </button>
+          </>
         )}
       </div>
     </div>

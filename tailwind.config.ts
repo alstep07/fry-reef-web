@@ -7,6 +7,9 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        mono: ["var(--font-geist-mono)", "monospace"],
+      },
       colors: {
         baseBlue: "#0052FF",
         baseBlueLight: "#E5E9FF",

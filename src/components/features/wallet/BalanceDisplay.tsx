@@ -17,7 +17,7 @@ export function BalanceDisplay() {
 
   if (isError || !data) {
     return (
-      <span className="text-xs text-slate-400 sm:text-sm">
+      <span className="font-mono text-xs text-slate-400">
         0.000 ETH
       </span>
     );
@@ -29,7 +29,7 @@ export function BalanceDisplay() {
   ).toFixed(3);
 
   return (
-    <span className="text-xs text-slate-200 sm:text-sm">
+    <span className="font-mono text-xs text-slate-200">
       {formattedBalance} {data.symbol}
     </span>
   );

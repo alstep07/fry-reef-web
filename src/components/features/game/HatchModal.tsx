@@ -67,10 +67,12 @@ export function HatchModal({ isOpen, rarity, fishId, onClose, onGoToReef }: Hatc
             className="absolute inset-0 animate-pulse rounded-full blur-2xl"
             style={{ backgroundColor: `${config.color}30` }}
           />
-          {/* Fish placeholder - replace with actual image when available */}
-          <div className="relative flex h-full w-full items-center justify-center text-8xl">
-            🐠
-          </div>
+          <Image
+            src={fishImage}
+            alt={`${config.name} fish`}
+            fill
+            className="object-contain drop-shadow-lg"
+          />
         </div>
 
         {/* Rarity Badge */}
