@@ -3,22 +3,18 @@
 import "@rainbow-me/rainbowkit/styles.css";
 
 import { useState, type ReactNode } from "react";
-import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { WagmiProvider } from "wagmi";
-import { base, baseSepolia } from "wagmi/chains";
+import { WagmiProvider, type State } from "wagmi";
+import { baseSepolia } from "wagmi/chains";
+import { wagmiConfig } from "./config";
 
-const projectId =
-  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "YOUR_WALLETCONNECT_PROJECT_ID";
+type Props = {
+  children: ReactNode;
+  initialState?: State;
+};
 
-export const wagmiConfig = getDefaultConfig({
-  appName: "FryReef",
-  projectId,
-  chains: [base, baseSepolia],
-  ssr: true,
-});
-
-export function Web3Providers({ children }: { children: ReactNode }) {
+export function Web3Providers({ children, initialState }: Props) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -32,12 +28,9 @@ export function Web3Providers({ children }: { children: ReactNode }) {
   );
 
   return (
-    <WagmiProvider config={wagmiConfig} reconnectOnMount={true}>
+    <WagmiProvider config={wagmiConfig} initialState={initialState}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider
-          modalSize="compact"
-          initialChain={baseSepolia}
-        >
+        <RainbowKitProvider modalSize="compact" initialChain={baseSepolia}>
           {children}
         </RainbowKitProvider>
       </QueryClientProvider>
