@@ -161,7 +161,7 @@ export function ReefTab() {
       {/* Fish Grid */}
       {isFishLoading ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 animate-pulse">
-          {[1, 2, 3].map((i) => (
+          {[1, 2].map((i) => (
             <div key={i} className="rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
               <div className="mx-auto mb-2 sm:mb-3 h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-white/10" />
               <div className="flex flex-col items-center gap-2">
