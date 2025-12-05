@@ -2,7 +2,7 @@
 
 import "@rainbow-me/rainbowkit/styles.css";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   RainbowKitProvider,
   connectorsForWallets,
@@ -15,7 +15,7 @@ import {
   injectedWallet,
 } from "@rainbow-me/rainbowkit/wallets";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { WagmiProvider, createConfig, createStorage, http, fallback } from "wagmi";
+import { WagmiProvider, createConfig, createStorage, http } from "wagmi";
 import { base, baseSepolia } from "wagmi/chains";
 
 const projectId =
@@ -24,6 +24,15 @@ const projectId =
 type Props = {
   children: ReactNode;
 };
+
+// Base Sepolia RPC configuration
+// Priority: 1. Infura API key, 2. Custom RPC URL, 3. Default RPC
+const infuraApiKey = process.env.NEXT_PUBLIC_INFURA_API_KEY;
+const customRpcUrl = process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL;
+
+const baseSepoliaRpcUrl = infuraApiKey
+  ? `https://base-sepolia.infura.io/v3/${infuraApiKey}`
+  : customRpcUrl || undefined; // undefined will use default chain RPC
 
 // Create connectors once outside component to keep stable reference
 const connectors = connectorsForWallets(
@@ -45,28 +54,13 @@ const connectors = connectorsForWallets(
   }
 );
 
-// Base Sepolia RPC endpoints with fallback
-// Use environment variable if available, otherwise use public RPCs
-const baseSepoliaRpcUrl = process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL;
-const baseSepoliaRpcUrls = baseSepoliaRpcUrl
-  ? [baseSepoliaRpcUrl]
-  : [
-      "https://base-sepolia-rpc.publicnode.com", // PublicNode (CORS-friendly)
-      "https://sepolia.base.org", // Official Base RPC
-    ];
-
 // Create config once outside component
 const wagmiConfig = createConfig({
   connectors,
   chains: [base, baseSepolia],
   transports: {
     [base.id]: http(),
-    [baseSepolia.id]: baseSepoliaRpcUrls.length === 1
-      ? http(baseSepoliaRpcUrls[0])
-      : fallback(
-          baseSepoliaRpcUrls.map((url) => http(url)),
-          { rank: false }
-        ),
+    [baseSepolia.id]: baseSepoliaRpcUrl ? http(baseSepoliaRpcUrl) : http(),
   },
   storage: createStorage({
     storage: typeof window !== "undefined" ? window.localStorage : undefined,
