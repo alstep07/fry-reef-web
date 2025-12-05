@@ -25,6 +25,15 @@ type Props = {
   children: ReactNode;
 };
 
+// Base Sepolia RPC configuration
+// Priority: 1. Infura API key, 2. Custom RPC URL, 3. Default RPC
+const infuraApiKey = process.env.NEXT_PUBLIC_INFURA_API_KEY;
+const customRpcUrl = process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL;
+
+const baseSepoliaRpcUrl = infuraApiKey
+  ? `https://base-sepolia.infura.io/v3/${infuraApiKey}`
+  : customRpcUrl || undefined; // undefined will use default chain RPC
+
 // Create connectors once outside component to keep stable reference
 const connectors = connectorsForWallets(
   [
@@ -51,7 +60,7 @@ const wagmiConfig = createConfig({
   chains: [base, baseSepolia],
   transports: {
     [base.id]: http(),
-    [baseSepolia.id]: http(),
+    [baseSepolia.id]: baseSepoliaRpcUrl ? http(baseSepoliaRpcUrl) : http(),
   },
   storage: createStorage({
     storage: typeof window !== "undefined" ? window.localStorage : undefined,
