@@ -21,24 +21,33 @@ interface EggCardProps {
 function EggCard({ egg, onIncubate, onHatch, isLoading, pearlShards }: EggCardProps) {
   const { tokenId, info } = egg;
 
-  // Calculate time remaining and progress
-  const calculateTimeAndProgress = () => {
+  // Initialize with safe values to avoid hydration mismatch
+  const [{ timeLeft, progress }, setTimeData] = useState(() => {
+    // On server or initial render, use safe default
     if (!info.isIncubating) return { timeLeft: 0, progress: 0 };
-    const elapsed = Date.now() / 1000 - Number(info.incubationStartedAt);
-    const total = INCUBATION.durationSeconds;
-    const timeLeft = Math.max(0, total - elapsed);
-    const progress = Math.min(100, (elapsed / total) * 100);
-    return { timeLeft, progress };
-  };
+    // For incubating eggs, start with full time (will be calculated in useEffect)
+    return { timeLeft: INCUBATION.durationSeconds, progress: 0 };
+  });
 
-  const [{ timeLeft, progress }, setTimeData] = useState(() => calculateTimeAndProgress());
-
-  // Update every second when incubating
+  // Update every second when incubating (only runs on client)
   useEffect(() => {
     if (!info.isIncubating) {
       setTimeData({ timeLeft: 0, progress: 0 });
       return;
     }
+
+    // Calculate time remaining and progress
+    const calculateTimeAndProgress = () => {
+      const startedAt = Number(info.incubationStartedAt);
+      if (startedAt === 0) {
+        return { timeLeft: INCUBATION.durationSeconds, progress: 0 };
+      }
+      const elapsed = Date.now() / 1000 - startedAt;
+      const total = INCUBATION.durationSeconds;
+      const timeLeft = Math.max(0, total - elapsed);
+      const progress = Math.min(100, (elapsed / total) * 100);
+      return { timeLeft, progress };
+    };
 
     // Initial calculation
     setTimeData(calculateTimeAndProgress());
@@ -299,7 +308,7 @@ export function NestTab({ onGoToReef }: NestTabProps) {
         onClose={handleCloseModal}
         onGoToReef={handleGoToReef}
       />
-      <div className="rounded-2xl border border-white/5 bg-white/5 p-4 sm:p-6 backdrop-blur-sm">
+      <div className="rounded-2xl border min-h-[200px] border-white/5 bg-white/5 p-4 sm:p-6 backdrop-blur-sm">
         <div className="mb-3 sm:mb-4 flex items-center justify-between">
           <h2 className="text-lg sm:text-xl font-semibold text-white">Nest</h2>
           {eggCount > 0 && (
@@ -310,8 +319,15 @@ export function NestTab({ onGoToReef }: NestTabProps) {
         </div>
 
         {isEggsLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-baseBlue" />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 animate-pulse">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
+                <div className="mx-auto mb-2 sm:mb-3 h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-white/10" />
+                <div className="flex flex-col items-center gap-2">
+                  <div className="h-8 w-full rounded-lg bg-white/10" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : eggCount === 0 ? (
           <div className="py-6 sm:py-4 text-center">
@@ -319,12 +335,11 @@ export function NestTab({ onGoToReef }: NestTabProps) {
               <Image
                 src={EGG_IMAGE}
                 alt="Egg"
-                width={160}
-                height={160}
+                width={120}
+                height={120}
                 className="object-contain opacity-50"
               />
             </div>
-            <h3 className="mb-1 sm:mb-2 text-base sm:text-lg font-medium text-white">No Eggs Yet</h3>
             <p className="text-sm text-slate-400">
               Claim your starter pack or breed fish to get eggs!
             </p>

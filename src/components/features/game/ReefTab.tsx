@@ -160,8 +160,17 @@ export function ReefTab() {
 
       {/* Fish Grid */}
       {isFishLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-baseBlue" />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 animate-pulse">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
+              <div className="mx-auto mb-2 sm:mb-3 h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-white/10" />
+              <div className="flex flex-col items-center gap-2">
+                <div className="h-4 w-16 rounded-full bg-white/10" />
+                <div className="h-3 w-12 rounded bg-white/5" />
+                <div className="h-8 w-full rounded-lg bg-white/10 mt-1" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : fishCount === 0 ? (
         <div className="py-6 sm:py-8 text-center">

@@ -298,8 +298,8 @@ export function useFryReef() {
     currentStreak: userInfo?.currentStreak ? Number(userInfo.currentStreak) : 0,
     totalCheckIns: userInfo?.totalCheckIns ? Number(userInfo.totalCheckIns) : 0,
     
-    // Starter pack
-    starterPackClaimed: starterPackClaimedData ?? false,
+    // Starter pack - keep undefined until data loads
+    starterPackClaimed: starterPackClaimedData,
     claimStarterPack,
     
     // Check-in

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import { useFryReef } from "@/hooks/useFryReef";
@@ -13,18 +12,54 @@ type Tab = "checkin" | "nest" | "reef";
 
 const validTabs: Tab[] = ["checkin", "nest", "reef"];
 
+// Skeleton component for loading state
+function DashboardSkeleton() {
+  return (
+    <div className="w-full max-w-2xl space-y-4 sm:space-y-6 animate-pulse">
+      {/* Tabs skeleton */}
+      <div className="flex justify-center w-full">
+        <div className="flex w-full sm:inline-flex sm:w-auto rounded-full bg-white/5 p-1 sm:p-1.5 backdrop-blur-sm">
+          <div className="flex-1 sm:flex-initial rounded-full bg-white/10 px-4 sm:px-5 py-2.5 sm:py-2">
+            <div className="h-5 w-14 sm:w-16" />
+          </div>
+          <div className="flex-1 sm:flex-initial rounded-full px-4 sm:px-5 py-2.5 sm:py-2">
+            <div className="h-5 w-12 sm:w-14" />
+          </div>
+          <div className="flex-1 sm:flex-initial rounded-full px-4 sm:px-5 py-2.5 sm:py-2">
+            <div className="h-5 w-12 sm:w-14" />
+          </div>
+        </div>
+      </div>
+
+      {/* Card skeleton */}
+      <div className="rounded-2xl border border-white/5 bg-white/5 p-4 sm:p-6 backdrop-blur-sm">
+        <div className="h-6 w-32 rounded bg-white/10 mb-4" />
+        <div className="space-y-3">
+          <div className="flex justify-between">
+            <div className="h-4 w-24 rounded bg-white/5" />
+            <div className="h-4 w-20 rounded bg-white/10" />
+          </div>
+          <div className="flex justify-between">
+            <div className="h-4 w-28 rounded bg-white/5" />
+            <div className="h-4 w-8 rounded bg-white/10" />
+          </div>
+        </div>
+        <div className="flex justify-center mt-6">
+          <div className="h-10 w-28 rounded-full bg-white/10" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function GameDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { address, isConnected } = useAccount();
   
-  // Get tab from URL or default to "checkin"
   const tabFromUrl = searchParams.get("tab") as Tab | null;
   const activeTab: Tab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "checkin";
-  const [timedOut, setTimedOut] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Update URL when tab changes
   const setActiveTab = (tab: Tab) => {
     const params = new URLSearchParams(searchParams.toString());
     if (tab === "checkin") {
@@ -35,6 +70,7 @@ export function GameDashboard() {
     const query = params.toString();
     router.push(query ? `/?${query}` : "/", { scroll: false });
   };
+
   const {
     currentStreak,
     totalCheckIns,
@@ -50,39 +86,19 @@ export function GameDashboard() {
     switchToBaseSepolia,
   } = useFryReef();
 
-  // Timeout protection for initial load - max 5 seconds
-  useEffect(() => {
-    // Start timer only on mount
-    timerRef.current = setTimeout(() => {
-      setTimedOut(true);
-    }, 5000);
-
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    };
-  }, []);
-
+  // Not connected - render nothing (page.tsx handles this)
   if (!isConnected || !address) {
     return null;
   }
 
-  // Determine if we should show loading
-  const dataLoaded = starterPackClaimed !== undefined;
-  const shouldShowLoader = !timedOut && !dataLoaded && isLoading;
-
-  // Show loading spinner while fetching initial data (with timeout protection)
-  if (shouldShowLoader) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-baseBlue" />
-      </div>
-    );
+  // Data not loaded yet - show skeleton
+  // starterPackClaimed is undefined until data loads
+  if (starterPackClaimed === undefined) {
+    return <DashboardSkeleton />;
   }
 
-  // Show starter pack claim if not claimed
-  if (!starterPackClaimed) {
+  // User hasn't claimed starter pack yet
+  if (starterPackClaimed === false) {
     return (
       <StarterPackCard
         onClaim={claimStarterPack}
