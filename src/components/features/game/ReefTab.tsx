@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useFish } from "@/hooks/useFish";
 import { useFryReef } from "@/hooks/useFryReef";
-import { Rarity, RARITY_CONFIG, getFishImage, EGG_LAYING } from "@/constants/gameConfig";
+import { Rarity, RARITY_CONFIG, getFishImage, EGG_LAYING, MERGE } from "@/constants/gameConfig";
 import { FishRarity } from "@/contracts/fishNft";
+import { LayEggModal } from "./LayEggModal";
+import { MergeModal } from "./MergeModal";
 
 // Map contract rarity to our enum
 const rarityMap: Record<number, Rarity> = {
@@ -21,14 +23,19 @@ interface FishCardProps {
   rarity: Rarity;
   pendingDust: number;
   onLayEgg: (tokenId: number) => void;
+  onMerge: (tokenId: number) => void;
   isLoading: boolean;
   canLayEgg: boolean;
+  canMerge: boolean;
+  mergeCost: number;
 }
 
-function FishCard({ tokenId, rarity, pendingDust, onLayEgg, isLoading, canLayEgg }: FishCardProps) {
+function FishCard({ tokenId, rarity, pendingDust, onLayEgg, onMerge, isLoading, canLayEgg, canMerge, mergeCost }: FishCardProps) {
   const config = RARITY_CONFIG[rarity];
   const fishImage = getFishImage(rarity);
   const dustPerDay = config.spawnDustPerDay;
+  const mergeConfig = MERGE[rarity as keyof typeof MERGE];
+  const canMergeThis = mergeConfig !== undefined && canMerge;
 
   return (
     <div className="group relative rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4 backdrop-blur-sm">
@@ -76,11 +83,28 @@ function FishCard({ tokenId, rarity, pendingDust, onLayEgg, isLoading, canLayEgg
           <span>✨ {dustPerDay}/day</span>
         </div>
 
+        {/* Merge button */}
+        {canMergeThis && (
+          <button
+            onClick={() => onMerge(tokenId)}
+            disabled={isLoading || !canMerge}
+            className="mt-2 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-blue-500/80 px-3 py-2 text-xs font-medium text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-slate-600"
+            title={!canMerge ? `Need ${mergeCost} Spawn Dust` : "Merge with another fish"}
+          >
+            {isLoading ? "..." : (
+              <>
+                <span>Merge</span>
+                <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]">{mergeCost} ✨</span>
+              </>
+            )}
+          </button>
+        )}
+
         {/* Lay Egg button */}
         <button
           onClick={() => onLayEgg(tokenId)}
           disabled={isLoading || !canLayEgg}
-          className="mt-2 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-purple-500/80 px-3 py-2 text-xs font-medium text-white transition hover:bg-purple-500 disabled:cursor-not-allowed disabled:bg-slate-600"
+          className={`mt-2 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-purple-500/80 px-3 py-2 text-xs font-medium text-white transition hover:bg-purple-500 disabled:cursor-not-allowed disabled:bg-slate-600 ${canMergeThis ? "" : "mt-2"}`}
           title={!canLayEgg ? `Need ${EGG_LAYING.spawnDustCost} Spawn Dust` : "Create a new egg"}
         >
           {isLoading ? "..." : (
@@ -95,16 +119,40 @@ function FishCard({ tokenId, rarity, pendingDust, onLayEgg, isLoading, canLayEgg
   );
 }
 
-export function ReefTab() {
+interface ReefTabProps {
+  onGoToNest?: () => void;
+}
+
+export function ReefTab({ onGoToNest }: ReefTabProps) {
   const { fish, fishCount, totalPendingDust, isLoading: isFishLoading, refetch } = useFish();
   const { 
     spawnDust, 
     collectSpawnDust, 
-    layEgg, 
+    layEgg,
+    mergeFish,
     isWriting, 
     isSuccess,
     refetchUserInfo,
   } = useFryReef();
+
+  // Modal state
+  const [showLayEggModal, setShowLayEggModal] = useState(false);
+  const [showMergeModal, setShowMergeModal] = useState(false);
+  const [selectedFishForMerge, setSelectedFishForMerge] = useState<{ tokenId: number; rarity: Rarity } | null>(null);
+  const [pendingLayEgg, setPendingLayEgg] = useState(false);
+  const [prevIsWriting, setPrevIsWriting] = useState(false);
+
+  // Show modal when egg is successfully laid
+  useEffect(() => {
+    // Detect when transaction completes (isWriting goes from true to false)
+    if (prevIsWriting && !isWriting && pendingLayEgg) {
+      if (isSuccess) {
+        setShowLayEggModal(true);
+      }
+      setPendingLayEgg(false);
+    }
+    setPrevIsWriting(isWriting);
+  }, [isWriting, prevIsWriting, pendingLayEgg, isSuccess]);
 
   // Refetch after successful transaction
   useEffect(() => {
@@ -122,13 +170,69 @@ export function ReefTab() {
   };
 
   const handleLayEgg = async (fishId: number) => {
+    setPendingLayEgg(true);
     await layEgg(fishId);
   };
 
+  const handleCloseModal = () => {
+    setShowLayEggModal(false);
+  };
+
+  const handleGoToNest = () => {
+    handleCloseModal();
+    onGoToNest?.();
+  };
+
+  const handleMerge = (fishId: number) => {
+    const fishData = fish.find((f) => f.tokenId === fishId);
+    if (fishData) {
+      setSelectedFishForMerge({
+        tokenId: fishId,
+        rarity: rarityMap[fishData.info.rarity] || Rarity.Common,
+      });
+      setShowMergeModal(true);
+    }
+  };
+
+  const handleMergeConfirm = async (fishId1: number, fishId2: number) => {
+    await mergeFish(fishId1, fishId2);
+    setShowMergeModal(false);
+    setSelectedFishForMerge(null);
+  };
+
+  const handleCloseMergeModal = () => {
+    setShowMergeModal(false);
+    setSelectedFishForMerge(null);
+  };
+
   const canLayEgg = spawnDust >= EGG_LAYING.spawnDustCost;
+  
+  // Prepare available fish for merge modal
+  const availableFishForMerge = fish.map((f) => ({
+    tokenId: f.tokenId,
+    rarity: rarityMap[f.info.rarity] || Rarity.Common,
+  }));
 
   return (
-    <div className="rounded-2xl border border-white/5 bg-white/5 p-4 sm:p-6 backdrop-blur-sm">
+    <>
+      <LayEggModal
+        isOpen={showLayEggModal}
+        onClose={handleCloseModal}
+        onGoToNest={handleGoToNest}
+      />
+      {selectedFishForMerge && (
+        <MergeModal
+          isOpen={showMergeModal}
+          selectedFishId={selectedFishForMerge.tokenId}
+          selectedRarity={selectedFishForMerge.rarity}
+          availableFish={availableFishForMerge}
+          spawnDust={spawnDust}
+          onClose={handleCloseMergeModal}
+          onMerge={handleMergeConfirm}
+          isLoading={isWriting}
+        />
+      )}
+      <div className="rounded-2xl border border-white/5 bg-white/5 p-4 sm:p-6 backdrop-blur-sm">
       {/* Header */}
       <div className="mb-3 sm:mb-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 sm:gap-3">
@@ -190,20 +294,31 @@ export function ReefTab() {
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {fish.map((f) => (
-            <FishCard
-              key={f.tokenId}
-              tokenId={f.tokenId}
-              rarity={rarityMap[f.info.rarity] || Rarity.Common}
-              pendingDust={f.pendingDust}
-              onLayEgg={handleLayEgg}
-              isLoading={isWriting}
-              canLayEgg={canLayEgg}
-            />
-          ))}
+          {fish.map((f) => {
+            const rarity = rarityMap[f.info.rarity] || Rarity.Common;
+            const mergeConfig = MERGE[rarity as keyof typeof MERGE];
+            const canMerge = mergeConfig ? spawnDust >= mergeConfig.spawnDustCost : false;
+            const mergeCost = mergeConfig?.spawnDustCost || 0;
+            
+            return (
+              <FishCard
+                key={f.tokenId}
+                tokenId={f.tokenId}
+                rarity={rarity}
+                pendingDust={f.pendingDust}
+                onLayEgg={handleLayEgg}
+                onMerge={handleMerge}
+                isLoading={isWriting}
+                canLayEgg={canLayEgg}
+                canMerge={canMerge}
+                mergeCost={mergeCost}
+              />
+            );
+          })}
         </div>
       )}
     </div>
+    </>
   );
 }
 

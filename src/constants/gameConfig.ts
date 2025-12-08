@@ -111,6 +111,36 @@ export const EGG_LAYING = {
 } as const;
 
 /**
+ * Merge settings (Fish → Fish)
+ */
+export const MERGE = {
+  [Rarity.Common]: {
+    spawnDustCost: 50,
+    pearlShardsReward: 1,
+    eggsReward: 0,
+    nextRarity: Rarity.Rare,
+  },
+  [Rarity.Rare]: {
+    spawnDustCost: 100,
+    pearlShardsReward: 1,
+    eggsReward: 1,
+    nextRarity: Rarity.Epic,
+  },
+  [Rarity.Epic]: {
+    spawnDustCost: 200,
+    pearlShardsReward: 2,
+    eggsReward: 1,
+    nextRarity: Rarity.Legendary,
+  },
+  [Rarity.Legendary]: {
+    spawnDustCost: 400,
+    pearlShardsReward: 3,
+    eggsReward: 2,
+    nextRarity: Rarity.Mythic,
+  },
+} as const;
+
+/**
  * Resource types
  */
 export enum Resource {

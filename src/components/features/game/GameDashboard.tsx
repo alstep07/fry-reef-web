@@ -6,11 +6,12 @@ import { useFryReef } from "@/hooks/useFryReef";
 import { StarterPackCard } from "./StarterPackCard";
 import { NestTab } from "./NestTab";
 import { ReefTab } from "./ReefTab";
+import { MergeTab } from "./MergeTab";
 import { DAILY_CHECKIN } from "@/constants/gameConfig";
 
-type Tab = "checkin" | "nest" | "reef";
+type Tab = "checkin" | "nest" | "reef" | "merge";
 
-const validTabs: Tab[] = ["checkin", "nest", "reef"];
+const validTabs: Tab[] = ["checkin", "nest", "reef", "merge"];
 
 // Skeleton component for loading state
 function DashboardSkeleton() {
@@ -21,6 +22,9 @@ function DashboardSkeleton() {
         <div className="flex w-full sm:inline-flex sm:w-auto rounded-full bg-white/5 p-1 sm:p-1.5 backdrop-blur-sm">
           <div className="flex-1 sm:flex-initial rounded-full bg-white/10 px-4 sm:px-5 py-2.5 sm:py-2">
             <div className="h-5 w-14 sm:w-16" />
+          </div>
+          <div className="flex-1 sm:flex-initial rounded-full px-4 sm:px-5 py-2.5 sm:py-2">
+            <div className="h-5 w-12 sm:w-14" />
           </div>
           <div className="flex-1 sm:flex-initial rounded-full px-4 sm:px-5 py-2.5 sm:py-2">
             <div className="h-5 w-12 sm:w-14" />
@@ -113,6 +117,7 @@ export function GameDashboard() {
     { id: "checkin" as Tab, label: "Tasks", icon: "📅" },
     { id: "nest" as Tab, label: "Nest", icon: "🟠" },
     { id: "reef" as Tab, label: "Reef", icon: "🐟" },
+    { id: "evolution" as Tab, label: "Evolution", icon: "🧬" },
   ];
 
   return (
@@ -214,7 +219,9 @@ export function GameDashboard() {
 
       {activeTab === "nest" && <NestTab onGoToReef={() => setActiveTab("reef")} />}
 
-      {activeTab === "reef" && <ReefTab />}
+      {activeTab === "reef" && <ReefTab onGoToNest={() => setActiveTab("nest")} />}
+
+      {activeTab === "merge" && <MergeTab onGoToReef={() => setActiveTab("reef")} />}
     </div>
   );
 }

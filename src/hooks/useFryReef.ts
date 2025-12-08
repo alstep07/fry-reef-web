@@ -248,6 +248,33 @@ export function useFryReef() {
     }
   };
 
+  // Merge fish
+  const mergeFish = async (fishId1: number, fishId2: number) => {
+    if (!contractAddress || !address) return;
+
+    if (!isOnCorrectNetwork) {
+      try {
+        await switchChain({ chainId: baseSepolia.id });
+        return;
+      } catch (error) {
+        console.error("Failed to switch network:", error);
+        return;
+      }
+    }
+
+    try {
+      writeContract({
+        address: contractAddress,
+        abi: fryReefAbi,
+        functionName: "mergeFish",
+        args: [BigInt(fishId1), BigInt(fishId2)],
+        chainId: DEFAULT_CHAIN_ID,
+      });
+    } catch (error) {
+      console.error("Merge fish error:", error);
+    }
+  };
+
   // Switch network helper
   const switchToBaseSepolia = async () => {
     try {
@@ -313,6 +340,7 @@ export function useFryReef() {
     startIncubation,
     hatchEgg,
     layEgg,
+    mergeFish,
     
     // Refetch
     refetchUserInfo,
