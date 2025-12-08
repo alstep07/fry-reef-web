@@ -48,6 +48,19 @@ export const fryReefAbi = [
       { indexed: false, name: "pearlShards", type: "uint256" },
     ],
   },
+  {
+    type: "event",
+    name: "FishMerged",
+    inputs: [
+      { indexed: true, name: "user", type: "address" },
+      { indexed: false, name: "fishId1", type: "uint256" },
+      { indexed: false, name: "fishId2", type: "uint256" },
+      { indexed: false, name: "newFishId", type: "uint256" },
+      { indexed: false, name: "newRarity", type: "uint8" },
+      { indexed: false, name: "pearlShardsReward", type: "uint256" },
+      { indexed: false, name: "eggsReward", type: "uint256" },
+    ],
+  },
   // Read functions
   {
     type: "function",
@@ -139,6 +152,16 @@ export const fryReefAbi = [
     type: "function",
     name: "collectSpawnDust",
     inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "mergeFish",
+    inputs: [
+      { name: "_fishId1", type: "uint256" },
+      { name: "_fishId2", type: "uint256" },
+    ],
     outputs: [],
     stateMutability: "nonpayable",
   },

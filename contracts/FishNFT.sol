@@ -86,6 +86,37 @@ contract FishNFT is ERC721, ERC721Enumerable, Ownable {
         return tokenId;
     }
 
+    /**
+     * @notice Mint a new fish with specified rarity (for merge)
+     * @param _to Address to mint to
+     * @param _rarity The rarity of the fish to mint
+     * @return tokenId The minted token ID
+     */
+    function mergeMint(address _to, Rarity _rarity) external onlyGameContract returns (uint256) {
+        uint256 tokenId = _nextTokenId++;
+        
+        _safeMint(_to, tokenId);
+
+        fish[tokenId] = FishInfo({
+            rarity: _rarity,
+            mintedAt: block.timestamp,
+            lastDustCollectedAt: block.timestamp
+        });
+
+        emit FishMinted(_to, tokenId, _rarity);
+        return tokenId;
+    }
+
+    /**
+     * @notice Burn a fish (for merge)
+     * @param _tokenId The fish token ID to burn
+     */
+    function burn(uint256 _tokenId) external onlyGameContract {
+        require(_exists(_tokenId), "Fish does not exist");
+        _burn(_tokenId);
+        delete fish[_tokenId];
+    }
+
     // ============ Spawn Dust ============
 
     /**

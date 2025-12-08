@@ -23,6 +23,12 @@ contract FryReef {
     uint256 public constant INCUBATION_DURATION = 1 days;
     uint256 public constant INCUBATION_COST = 1; // Pearl Shards
     uint256 public constant EGG_LAYING_COST = 100; // Spawn Dust
+    
+    // Merge costs (Spawn Dust)
+    uint256 public constant MERGE_COMMON_COST = 50;
+    uint256 public constant MERGE_RARE_COST = 100;
+    uint256 public constant MERGE_EPIC_COST = 200;
+    uint256 public constant MERGE_LEGENDARY_COST = 400;
 
     // ============ State ============
     struct UserInfo {
@@ -41,6 +47,7 @@ contract FryReef {
     event StreakReward(address indexed user, uint256 pearlShards);
     event StarterPackClaimed(address indexed user, uint256 eggId, uint256 pearlShards, uint256 spawnDust);
     event ResourcesUpdated(address indexed user, uint256 pearlShards, uint256 spawnDust);
+    event FishMerged(address indexed user, uint256 fishId1, uint256 fishId2, uint256 newFishId, FishNFT.Rarity newRarity, uint256 pearlShardsReward, uint256 eggsReward);
 
     // ============ Constructor ============
     constructor(address _eggNFT, address _fishNFT) {
@@ -190,6 +197,86 @@ contract FryReef {
      */
     function getPendingSpawnDust(address _user) external view returns (uint256) {
         return fishNFT.getPendingSpawnDust(_user);
+    }
+
+    // ============ Merge (Fish → Fish) ============
+
+    /**
+     * @notice Merge two fish of the same rarity into a fish of the next rarity
+     * @param _fishId1 First fish token ID
+     * @param _fishId2 Second fish token ID
+     */
+    function mergeFish(uint256 _fishId1, uint256 _fishId2) external {
+        UserInfo storage user = users[msg.sender];
+        
+        // Check ownership
+        require(fishNFT.ownerOf(_fishId1) == msg.sender, "Not fish owner");
+        require(fishNFT.ownerOf(_fishId2) == msg.sender, "Not fish owner");
+        require(_fishId1 != _fishId2, "Cannot merge same fish");
+        
+        // Get fish info
+        FishNFT.FishInfo memory fish1 = fishNFT.getFishInfo(_fishId1);
+        FishNFT.FishInfo memory fish2 = fishNFT.getFishInfo(_fishId2);
+        
+        // Check same rarity
+        require(fish1.rarity == fish2.rarity, "Fish must be same rarity");
+        
+        // Check rarity is not Mythic (max rarity)
+        require(fish1.rarity != FishNFT.Rarity.Mythic, "Cannot merge Mythic");
+        
+        // Determine merge cost and rewards
+        uint256 mergeCost;
+        uint256 pearlShardsReward;
+        uint256 eggsReward;
+        FishNFT.Rarity newRarity;
+        
+        if (fish1.rarity == FishNFT.Rarity.Common) {
+            mergeCost = MERGE_COMMON_COST;
+            pearlShardsReward = 1;
+            eggsReward = 0;
+            newRarity = FishNFT.Rarity.Rare;
+        } else if (fish1.rarity == FishNFT.Rarity.Rare) {
+            mergeCost = MERGE_RARE_COST;
+            pearlShardsReward = 1;
+            eggsReward = 1;
+            newRarity = FishNFT.Rarity.Epic;
+        } else if (fish1.rarity == FishNFT.Rarity.Epic) {
+            mergeCost = MERGE_EPIC_COST;
+            pearlShardsReward = 2;
+            eggsReward = 1;
+            newRarity = FishNFT.Rarity.Legendary;
+        } else if (fish1.rarity == FishNFT.Rarity.Legendary) {
+            mergeCost = MERGE_LEGENDARY_COST;
+            pearlShardsReward = 3;
+            eggsReward = 2;
+            newRarity = FishNFT.Rarity.Mythic;
+        } else {
+            revert("Invalid rarity for merge");
+        }
+        
+        // Check user has enough Spawn Dust
+        require(user.spawnDust >= mergeCost, "Not enough Spawn Dust");
+        
+        // Burn both fish
+        fishNFT.burn(_fishId1);
+        fishNFT.burn(_fishId2);
+        
+        // Deduct Spawn Dust
+        user.spawnDust -= mergeCost;
+        
+        // Add Pearl Shards reward
+        user.pearlShards += pearlShardsReward;
+        
+        // Mint new fish with next rarity
+        uint256 newFishId = fishNFT.mergeMint(msg.sender, newRarity);
+        
+        // Mint eggs reward
+        for (uint256 i = 0; i < eggsReward; i++) {
+            eggNFT.mint(msg.sender);
+        }
+        
+        emit FishMerged(msg.sender, _fishId1, _fishId2, newFishId, newRarity, pearlShardsReward, eggsReward);
+        emit ResourcesUpdated(msg.sender, user.pearlShards, user.spawnDust);
     }
 
     // ============ View Functions ============

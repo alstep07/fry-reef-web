@@ -859,8 +859,8 @@
       ]
     },
     "C:\\Users\\Oleksandr\\Desktop\\projects\\personal\\based-repo\\contracts\\FryReef.sol": {
-      "lastModificationDate": 1764766893041,
-      "contentHash": "6e33a837440facc56bc84198feb35ce0",
+      "lastModificationDate": 1765184097081,
+      "contentHash": "d2cf61de6075b9df2c458a2014710b41",
       "sourceName": "contracts/FryReef.sol",
       "solcConfig": {
         "version": "0.8.24",
@@ -905,8 +905,8 @@
       ]
     },
     "C:\\Users\\Oleksandr\\Desktop\\projects\\personal\\based-repo\\contracts\\FishNFT.sol": {
-      "lastModificationDate": 1764754498747,
-      "contentHash": "87874627cccbf341a102257f9718d9e1",
+      "lastModificationDate": 1765184097082,
+      "contentHash": "170891d38f9751606015bc5451654eb2",
       "sourceName": "contracts/FishNFT.sol",
       "solcConfig": {
         "version": "0.8.24",
