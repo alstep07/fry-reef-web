@@ -34,7 +34,7 @@ function FishCard({ tokenId, rarity, pendingDust, onLayEgg, onMerge, isLoading, 
   const config = RARITY_CONFIG[rarity];
   const fishImage = getFishImage(rarity);
   const dustPerDay = config.spawnDustPerDay;
-  const mergeConfig = MERGE[rarity];
+  const mergeConfig = MERGE[rarity as keyof typeof MERGE];
   const canMergeThis = mergeConfig !== undefined && canMerge;
 
   return (
@@ -296,7 +296,7 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {fish.map((f) => {
             const rarity = rarityMap[f.info.rarity] || Rarity.Common;
-            const mergeConfig = MERGE[rarity];
+            const mergeConfig = MERGE[rarity as keyof typeof MERGE];
             const canMerge = mergeConfig ? spawnDust >= mergeConfig.spawnDustCost : false;
             const mergeCost = mergeConfig?.spawnDustCost || 0;
             

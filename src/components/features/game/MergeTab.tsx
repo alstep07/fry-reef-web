@@ -127,7 +127,7 @@ export function MergeTab({ onGoToReef }: MergeTabProps) {
       return { isValid: false, reason: "Fish must be same rarity" };
     }
 
-    const mergeConfig = MERGE[fish1.rarity];
+    const mergeConfig = MERGE[fish1.rarity as keyof typeof MERGE];
     if (!mergeConfig) {
       return { isValid: false, reason: "Cannot merge this rarity" };
     }

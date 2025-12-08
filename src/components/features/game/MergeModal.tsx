@@ -41,7 +41,7 @@ export function MergeModal({
 
   if (!isOpen) return null;
 
-  const mergeConfig = MERGE[selectedRarity];
+  const mergeConfig = MERGE[selectedRarity as keyof typeof MERGE];
   if (!mergeConfig) return null; // Mythic cannot be merged
 
   const canMerge = spawnDust >= mergeConfig.spawnDustCost;
