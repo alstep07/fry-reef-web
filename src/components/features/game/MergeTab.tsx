@@ -27,10 +27,9 @@ interface MergeTabProps {
 }
 
 export function MergeTab({ onGoToReef }: MergeTabProps) {
-  const { fish, isLoading: isFishLoading, refetch } = useFish();
+  const { fish, totalPendingDust, isLoading: isFishLoading, refetch } = useFish();
   const {
     spawnDust,
-    totalPendingDust,
     collectSpawnDust,
     mergeFish,
     isWriting,
@@ -225,23 +224,23 @@ export function MergeTab({ onGoToReef }: MergeTabProps) {
             <p className="mb-2 text-xs sm:text-sm text-slate-400">
               Selected: {selectedFish.length}/2
             </p>
-            {selectedFish.length === 2 && mergeValidation.isValid && (
+            {selectedFish.length === 2 && mergeValidation.isValid && mergeValidation.mergeConfig && (
               <div className="mt-2 space-y-2">
                 <div className="flex items-center justify-between text-xs sm:text-sm">
                   <span className="text-slate-400">Cost:</span>
                   <span className="text-white">
-                    ✨ {mergeValidation.mergeConfig?.spawnDustCost}
+                    ✨ {mergeValidation.mergeConfig.spawnDustCost}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs sm:text-sm">
                   <span className="text-slate-400">Rewards:</span>
                   <div className="flex items-center gap-2">
-                    {mergeValidation.mergeConfig?.pearlShardsReward > 0 && (
+                    {mergeValidation.mergeConfig.pearlShardsReward > 0 && (
                       <span className="text-white">
                         💎 +{mergeValidation.mergeConfig.pearlShardsReward}
                       </span>
                     )}
-                    {mergeValidation.mergeConfig?.eggsReward > 0 && (
+                    {mergeValidation.mergeConfig.eggsReward > 0 && (
                       <span className="text-white">
                         🟠 +{mergeValidation.mergeConfig.eggsReward}
                       </span>
