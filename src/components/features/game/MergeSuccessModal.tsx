@@ -7,6 +7,7 @@ import { Rarity, RARITY_CONFIG, getFishImage } from "@/constants/gameConfig";
 interface MergeSuccessModalProps {
   isOpen: boolean;
   newRarity: Rarity;
+  rewards: { pearlShards: number; eggs: number } | null;
   onClose: () => void;
   onGoToReef: () => void;
 }
@@ -14,6 +15,7 @@ interface MergeSuccessModalProps {
 export function MergeSuccessModal({
   isOpen,
   newRarity,
+  rewards,
   onClose,
   onGoToReef,
 }: MergeSuccessModalProps) {
@@ -72,6 +74,27 @@ export function MergeSuccessModal({
             {config.name}
           </div>
         </div>
+
+        {/* Rewards */}
+        {rewards && (rewards.pearlShards > 0 || rewards.eggs > 0) && (
+          <div className="mb-3 sm:mb-4 rounded-lg bg-white/5 p-3">
+            <p className="mb-2 text-xs sm:text-sm text-slate-400">You received:</p>
+            <div className="flex items-center justify-center gap-4 text-sm">
+              {rewards.pearlShards > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-lg">💎</span>
+                  <span className="text-white font-semibold">+{rewards.pearlShards} Pearl Shards</span>
+                </div>
+              )}
+              {rewards.eggs > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-lg">🟠</span>
+                  <span className="text-white font-semibold">+{rewards.eggs} Egg{rewards.eggs > 1 ? 's' : ''}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex gap-2 sm:gap-3">

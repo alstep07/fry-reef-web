@@ -30,59 +30,60 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
   const { fish, totalPendingDust, isLoading: isFishLoading, refetch } = useFish();
   const {
     spawnDust,
-    collectSpawnDust,
     mergeFish,
     isWriting,
     isSuccess,
+    error,
     refetchUserInfo,
+    resetWrite,
   } = useFryReef();
 
   const [selectedFish, setSelectedFish] = useState<SelectedFish[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [mergedRarity, setMergedRarity] = useState<Rarity | null>(null);
   const [prevIsWriting, setPrevIsWriting] = useState(false);
-  const [pendingMerge, setPendingMerge] = useState<{
-    fish1: number;
-    fish2: number;
-    rarity: Rarity;
-  } | null>(null);
+  const [mergeRewards, setMergeRewards] = useState<{ pearlShards: number; eggs: number } | null>(null);
+  const [isMerging, setIsMerging] = useState(false);
 
-  // Handle automatic merge after collecting dust
-  useEffect(() => {
-    if (pendingMerge && !isWriting && isSuccess) {
-      // Wait a bit for the contract state to update after dust collection
-      const timer = setTimeout(() => {
-        // Dust should be collected now, merge the fish
-        mergeFish(pendingMerge.fish1, pendingMerge.fish2);
-        setPendingMerge(null);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [pendingMerge, isWriting, isSuccess, mergeFish]);
 
-  // Show success modal after merge (not after dust collection)
+  // Show success modal after merge transaction completes
   useEffect(() => {
-    if (prevIsWriting && !isWriting && isSuccess) {
-      // Only show success modal if we have mergedRarity and we're not waiting for dust collection
-      if (mergedRarity && !pendingMerge) {
-        setShowSuccessModal(true);
-        setSelectedFish([]);
+    // Check if we just finished writing (transaction completed) and we were merging
+    if (prevIsWriting && !isWriting && isMerging) {
+      if (isSuccess) {
+        // Success: show modal
+        if (mergedRarity && mergeRewards) {
+          // Clear selected fish immediately to reset button state
+          setSelectedFish([]);
+          // Small delay to ensure state is updated before showing modal
+          const timer = setTimeout(() => {
+            setShowSuccessModal(true);
+          }, 500);
+          return () => clearTimeout(timer);
+        }
+      } else {
+        // Error: reset merging state
+        setIsMerging(false);
         setMergedRarity(null);
+        setMergeRewards(null);
       }
+      // Reset write state to clear any errors
+      resetWrite?.();
     }
     setPrevIsWriting(isWriting);
-  }, [isWriting, prevIsWriting, isSuccess, mergedRarity, pendingMerge]);
+  }, [isWriting, prevIsWriting, isSuccess, isMerging, mergedRarity, mergeRewards, resetWrite]);
 
-  // Refetch after successful transaction
+  // Refetch after successful merge transaction
   useEffect(() => {
-    if (isSuccess) {
+    if (prevIsWriting && !isWriting && isSuccess && isMerging) {
+      // Refetch data after merge to update spawnDust and fish list
       const timer = setTimeout(() => {
         refetch();
         refetchUserInfo();
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [isSuccess, refetch, refetchUserInfo]);
+  }, [isWriting, prevIsWriting, isSuccess, isMerging, refetch, refetchUserInfo]);
 
   // Prepare fish data with rarity
   const fishWithRarity = useMemo(() => {
@@ -131,9 +132,8 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
       return { isValid: false, reason: "Cannot merge this rarity" };
     }
 
-    // Check if user has enough Spawn Dust (including pending)
-    const totalSpawnDust = spawnDust + totalPendingDust;
-    if (totalSpawnDust < mergeConfig.spawnDustCost) {
+    // Check if user has enough Spawn Dust (only claimed dust can be used)
+    if (spawnDust < mergeConfig.spawnDustCost) {
       return {
         isValid: false,
         reason: `Need ${mergeConfig.spawnDustCost} Spawn Dust`,
@@ -145,50 +145,37 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
       mergeConfig,
       nextRarity: mergeConfig.nextRarity,
     };
-  }, [selectedFish, spawnDust, totalPendingDust]);
+  }, [selectedFish, spawnDust]);
 
   // Handle merge
   const handleMerge = async () => {
-    if (!mergeValidation.isValid || selectedFish.length !== 2) return;
+    if (!mergeValidation.isValid || selectedFish.length !== 2 || isWriting || isMerging) return;
 
     const [fish1, fish2] = selectedFish;
-    setMergedRarity(mergeValidation.nextRarity || null);
-
-    // First, collect all pending Spawn Dust if any
-    if (totalPendingDust > 0) {
-      // Set pending merge to trigger after dust collection
-      setPendingMerge({
-        fish1: fish1.tokenId,
-        fish2: fish2.tokenId,
-        rarity: mergeValidation.nextRarity!,
+    const nextRarity = mergeValidation.nextRarity || null;
+    const mergeConfig = mergeValidation.mergeConfig;
+    
+    // Set merging flag and save merge info before transaction
+    setIsMerging(true);
+    setMergedRarity(nextRarity);
+    if (mergeConfig) {
+      setMergeRewards({
+        pearlShards: mergeConfig.pearlShardsReward,
+        eggs: mergeConfig.eggsReward,
       });
-      // Collect dust - merge will happen automatically after success
-      collectSpawnDust();
-      return;
     }
 
-    // If no pending dust, merge directly
+    // Merge directly - user should claim dust before merging
     mergeFish(fish1.tokenId, fish2.tokenId);
   };
 
-  // Handle merge after collecting dust
-  useEffect(() => {
-    if (
-      isSuccess &&
-      !isWriting &&
-      selectedFish.length === 2 &&
-      totalPendingDust === 0 &&
-      mergedRarity
-    ) {
-      // Dust collection completed, now merge
-      const [fish1, fish2] = selectedFish;
-      mergeFish(fish1.tokenId, fish2.tokenId);
-    }
-  }, [isSuccess, isWriting, totalPendingDust, selectedFish, mergedRarity, mergeFish]);
+
 
   const handleCloseSuccessModal = () => {
     setShowSuccessModal(false);
     setMergedRarity(null);
+    setMergeRewards(null);
+    setIsMerging(false);
   };
 
   const handleGoToReef = () => {
@@ -202,6 +189,7 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
         <MergeSuccessModal
           isOpen={showSuccessModal}
           newRarity={mergedRarity}
+          rewards={mergeRewards}
           onClose={handleCloseSuccessModal}
           onGoToReef={handleGoToReef}
         />
@@ -404,10 +392,10 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
               >
                 {isWriting ? (
                   "Merging..."
-                ) : !mergeValidation.isValid ? (
-                  mergeValidation.reason
                 ) : selectedFish.length < 2 ? (
                   "Select 2 fish"
+                ) : !mergeValidation.isValid ? (
+                  mergeValidation.reason
                 ) : (
                   <>
                     Merge for ✨ {mergeValidation.mergeConfig?.spawnDustCost}
@@ -416,11 +404,30 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
               </button>
             </div>
 
-            {/* Validation Message */}
-            {selectedFish.length === 2 && !mergeValidation.isValid && (
-              <p className="mt-2 text-center text-xs text-red-400">
-                {mergeValidation.reason}
-              </p>
+            {/* Warning about unclaimed dust from selected fish */}
+            {selectedFish.length === 2 && (() => {
+              const selectedPendingDust = selectedFish.reduce((sum, fish) => {
+                const fishData = fishWithRarity.find(f => f.tokenId === fish.tokenId);
+                return sum + (fishData?.pendingDust || 0);
+              }, 0);
+              
+              return selectedPendingDust > 0 ? (
+                <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
+                  <p className="text-xs text-amber-400">
+                    ⚠️ Warning: Selected fish have {selectedPendingDust} unclaimed Spawn Dust. 
+                    Claim it before merging, or it will be lost when the fish are merged.
+                  </p>
+                </div>
+              ) : null;
+            })()}
+
+            {/* Error Message */}
+            {error && (
+              <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3">
+                <p className="text-xs text-red-400">
+                  {error.message || "Transaction failed. Please try again."}
+                </p>
+              </div>
             )}
           </>
         )}

@@ -111,11 +111,6 @@ export function MergeModal({
               </span>
             </div>
           </div>
-          {!canMerge && (
-            <p className="mt-2 text-xs text-red-400">
-              Need {mergeConfig.spawnDustCost - spawnDust} more Spawn Dust
-            </p>
-          )}
         </div>
 
         {/* Rewards */}
