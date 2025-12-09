@@ -11,24 +11,34 @@ const hre = require("hardhat");
  */
 
 async function main() {
-  const args = process.argv.slice(2);
+  // Get arguments from environment variables first
+  let toAddress = process.env.MINT_TO || null;
+  let rarity = process.env.MINT_RARITY ? parseInt(process.env.MINT_RARITY) : null;
+  let amount = process.env.MINT_AMOUNT ? parseInt(process.env.MINT_AMOUNT) : 1;
   
-  // Parse arguments
-  let toAddress = null;
-  let rarity = null;
-  let amount = 1;
+  console.log("Environment variables:");
+  console.log("  MINT_TO:", toAddress || "not set");
+  console.log("  MINT_RARITY:", rarity !== null ? rarity : "not set");
+  console.log("  MINT_AMOUNT:", amount);
   
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--to" && args[i + 1]) {
-      toAddress = args[i + 1];
-      i++;
-    } else if (args[i] === "--rarity" && args[i + 1]) {
-      rarity = parseInt(args[i + 1]);
-      i++;
-    } else if (args[i] === "--amount" && args[i + 1]) {
-      amount = parseInt(args[i + 1]);
-      i++;
-    }
+  // If env vars not set, show usage
+  if (!toAddress || rarity === null) {
+    console.log("\n📖 Usage with environment variables (PowerShell):");
+    console.log('  $env:MINT_TO="0x..."; $env:MINT_RARITY="0"; $env:MINT_AMOUNT="1"; npx hardhat run scripts/mintFish.js --network baseSepolia');
+    console.log("\n📖 Usage with environment variables (Bash):");
+    console.log('  MINT_TO=0x... MINT_RARITY=0 MINT_AMOUNT=1 npx hardhat run scripts/mintFish.js --network baseSepolia');
+    console.log("\nRarity values:");
+    console.log("  0 = Common");
+    console.log("  1 = Rare");
+    console.log("  2 = Epic");
+    console.log("  3 = Legendary");
+    console.log("  4 = Mythic");
+    console.log("\nExamples:");
+    console.log("  # Mint 1 Common fish");
+    console.log('  $env:MINT_TO="0x1234..."; $env:MINT_RARITY="0"; npx hardhat run scripts/mintFish.js --network baseSepolia');
+    console.log("\n  # Mint 5 Rare fish");
+    console.log('  $env:MINT_TO="0x1234..."; $env:MINT_RARITY="1"; $env:MINT_AMOUNT="5"; npx hardhat run scripts/mintFish.js --network baseSepolia');
+    process.exit(0);
   }
 
   // Get deployer account

@@ -11,29 +11,17 @@ const hre = require("hardhat");
  */
 
 async function main() {
-  const args = process.argv.slice(2);
+  // Get arguments from environment variables
+  let fromAddress = process.env.TRANSFER_FROM || null;
+  let toAddress = process.env.TRANSFER_TO || null;
+  let tokenId = process.env.TRANSFER_TOKEN_ID ? parseInt(process.env.TRANSFER_TOKEN_ID) : null;
+  let tokenIds = process.env.TRANSFER_TOKEN_IDS ? process.env.TRANSFER_TOKEN_IDS.split(",").map(id => parseInt(id.trim())) : null;
   
-  // Parse arguments
-  let fromAddress = null;
-  let toAddress = null;
-  let tokenId = null;
-  let tokenIds = null;
-  
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--from" && args[i + 1]) {
-      fromAddress = args[i + 1];
-      i++;
-    } else if (args[i] === "--to" && args[i + 1]) {
-      toAddress = args[i + 1];
-      i++;
-    } else if (args[i] === "--tokenId" && args[i + 1]) {
-      tokenId = parseInt(args[i + 1]);
-      i++;
-    } else if (args[i] === "--tokenIds" && args[i + 1]) {
-      tokenIds = args[i + 1].split(",").map(id => parseInt(id.trim()));
-      i++;
-    }
-  }
+  console.log("Environment variables:");
+  console.log("  TRANSFER_FROM:", fromAddress || "not set");
+  console.log("  TRANSFER_TO:", toAddress || "not set");
+  console.log("  TRANSFER_TOKEN_ID:", tokenId !== null ? tokenId : "not set");
+  console.log("  TRANSFER_TOKEN_IDS:", tokenIds ? tokenIds.join(", ") : "not set");
 
   // Get deployer account
   const [deployer] = await hre.ethers.getSigners();
@@ -59,16 +47,16 @@ async function main() {
 
   // If no arguments provided, show usage
   if (!fromAddress || !toAddress || (!tokenId && !tokenIds)) {
-    console.log("\n📖 Usage:");
+    console.log("\n📖 Usage with environment variables (PowerShell):");
     console.log("  # Transfer single fish:");
-    console.log("  npx hardhat run scripts/transferFish.js --network baseSepolia -- --from <fromAddress> --to <toAddress> --tokenId <tokenId>");
+    console.log('  $env:TRANSFER_FROM="0x..."; $env:TRANSFER_TO="0x..."; $env:TRANSFER_TOKEN_ID="5"; npx hardhat run scripts/transferFish.js --network baseSepolia');
     console.log("\n  # Transfer multiple fish:");
-    console.log("  npx hardhat run scripts/transferFish.js --network baseSepolia -- --from <fromAddress> --to <toAddress> --tokenIds <id1,id2,id3>");
+    console.log('  $env:TRANSFER_FROM="0x..."; $env:TRANSFER_TO="0x..."; $env:TRANSFER_TOKEN_IDS="1,2,3"; npx hardhat run scripts/transferFish.js --network baseSepolia');
     console.log("\nExamples:");
     console.log("  # Transfer fish #5 from 0x1234... to 0x5678...");
-    console.log("  npx hardhat run scripts/transferFish.js --network baseSepolia -- --from 0x1234... --to 0x5678... --tokenId 5");
+    console.log('  $env:TRANSFER_FROM="0x1234..."; $env:TRANSFER_TO="0x5678..."; $env:TRANSFER_TOKEN_ID="5"; npx hardhat run scripts/transferFish.js --network baseSepolia');
     console.log("\n  # Transfer fish #1, #2, #3 from 0x1234... to 0x5678...");
-    console.log("  npx hardhat run scripts/transferFish.js --network baseSepolia -- --from 0x1234... --to 0x5678... --tokenIds 1,2,3");
+    console.log('  $env:TRANSFER_FROM="0x1234..."; $env:TRANSFER_TO="0x5678..."; $env:TRANSFER_TOKEN_IDS="1,2,3"; npx hardhat run scripts/transferFish.js --network baseSepolia');
     process.exit(0);
   }
 
@@ -105,17 +93,27 @@ async function main() {
       console.log("\n⏳ Transferring...");
       const tx = await fishNFT.adminTransfer(fromAddress, toAddress, tokenId);
       console.log("  Transaction hash:", tx.hash);
+      console.log("  Waiting for confirmation...");
       const receipt = await tx.wait();
       console.log("  ✅ Transaction confirmed in block:", receipt.blockNumber);
+      console.log("  Gas used:", receipt.gasUsed.toString());
+      
+      // Wait a bit for state to update
+      console.log("  Waiting for state to update...");
+      await new Promise(resolve => setTimeout(resolve, 3000));
       
       // Verify transfer
       const newOwner = await fishNFT.ownerOf(tokenId);
-      console.log("  New owner:", newOwner);
+      console.log("\n  Verification:");
+      console.log("    Expected owner:", toAddress);
+      console.log("    Actual owner:", newOwner);
       
       if (newOwner.toLowerCase() === toAddress.toLowerCase()) {
         console.log("\n✅ Success! Fish transferred successfully.");
       } else {
         console.error("\n❌ Error: Transfer verification failed!");
+        console.error("   Expected:", toAddress);
+        console.error("   Got:", newOwner);
       }
     } else if (tokenIds && tokenIds.length > 0) {
       // Batch transfer
@@ -139,19 +137,32 @@ async function main() {
       console.log("\n⏳ Transferring batch...");
       const tx = await fishNFT.adminTransferBatch(fromAddress, toAddress, tokenIds);
       console.log("  Transaction hash:", tx.hash);
+      console.log("  Waiting for confirmation...");
       const receipt = await tx.wait();
       console.log("  ✅ Transaction confirmed in block:", receipt.blockNumber);
+      console.log("  Gas used:", receipt.gasUsed.toString());
+      
+      // Wait a bit for state to update
+      console.log("\n  Waiting for state to update...");
+      await new Promise(resolve => setTimeout(resolve, 3000));
       
       // Verify transfers
       console.log("\n  Verifying transfers...");
       let allSuccess = true;
       for (const id of tokenIds) {
         const newOwner = await fishNFT.ownerOf(id);
-        if (newOwner.toLowerCase() !== toAddress.toLowerCase()) {
-          console.error(`  ❌ Fish #${id}: Transfer verification failed!`);
+        const expectedLower = toAddress.toLowerCase();
+        const actualLower = newOwner.toLowerCase();
+        
+        console.log(`  Fish #${id}:`);
+        console.log(`    Expected owner: ${toAddress}`);
+        console.log(`    Actual owner: ${newOwner}`);
+        
+        if (actualLower !== expectedLower) {
+          console.error(`    ❌ Transfer verification failed!`);
           allSuccess = false;
         } else {
-          console.log(`  ✅ Fish #${id}: Transferred successfully`);
+          console.log(`    ✅ Transferred successfully`);
         }
       }
       

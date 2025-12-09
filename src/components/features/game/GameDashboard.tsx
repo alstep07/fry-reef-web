@@ -6,12 +6,12 @@ import { useFryReef } from "@/hooks/useFryReef";
 import { StarterPackCard } from "./StarterPackCard";
 import { NestTab } from "./NestTab";
 import { ReefTab } from "./ReefTab";
-import { MergeTab } from "./MergeTab";
+import { EvolutionTab } from "./EvolutionTab";
 import { DAILY_CHECKIN } from "@/constants/gameConfig";
 
-type Tab = "checkin" | "nest" | "reef" | "merge";
+type Tab = "checkin" | "nest" | "reef" | "evolution";
 
-const validTabs: Tab[] = ["checkin", "nest", "reef", "merge"];
+const validTabs: Tab[] = ["checkin", "nest", "reef", "evolution"];
 
 // Skeleton component for loading state
 function DashboardSkeleton() {
@@ -221,7 +221,7 @@ export function GameDashboard() {
 
       {activeTab === "reef" && <ReefTab onGoToNest={() => setActiveTab("nest")} />}
 
-      {activeTab === "merge" && <MergeTab onGoToReef={() => setActiveTab("reef")} />}
+      {activeTab === "evolution" && <EvolutionTab onGoToReef={() => setActiveTab("reef")} />}
     </div>
   );
 }

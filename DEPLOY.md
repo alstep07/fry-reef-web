@@ -54,6 +54,63 @@ npm run dev
 - **Network**: Base Sepolia (Chain ID: 84532)
 - **Gas Used**: 536,146
 
+## Admin Functions (Testing)
+
+After deployment, the contract owner can mint and transfer fish for testing purposes.
+
+### Mint Fish
+
+Mint fish with specified rarity to any address:
+
+**PowerShell:**
+```powershell
+# Mint 1 Common fish
+$env:MINT_TO="0xYourAddress"; $env:MINT_RARITY="0"; npx hardhat run scripts/mintFish.js --network baseSepolia
+
+# Mint 5 Rare fish
+$env:MINT_TO="0xYourAddress"; $env:MINT_RARITY="1"; $env:MINT_AMOUNT="5"; npx hardhat run scripts/mintFish.js --network baseSepolia
+```
+
+**Bash:**
+```bash
+# Mint 1 Common fish
+MINT_TO=0xYourAddress MINT_RARITY=0 npx hardhat run scripts/mintFish.js --network baseSepolia
+
+# Mint 5 Rare fish
+MINT_TO=0xYourAddress MINT_RARITY=1 MINT_AMOUNT=5 npx hardhat run scripts/mintFish.js --network baseSepolia
+```
+
+**Rarity values:**
+- `0` = Common
+- `1` = Rare
+- `2` = Epic
+- `3` = Legendary
+- `4` = Mythic
+
+### Transfer Fish
+
+Transfer fish from one address to another (admin only):
+
+**PowerShell:**
+```powershell
+# Transfer single fish
+$env:TRANSFER_FROM="0xFromAddress"; $env:TRANSFER_TO="0xToAddress"; $env:TRANSFER_TOKEN_ID="5"; npx hardhat run scripts/transferFish.js --network baseSepolia
+
+# Transfer multiple fish
+$env:TRANSFER_FROM="0xFromAddress"; $env:TRANSFER_TO="0xToAddress"; $env:TRANSFER_TOKEN_IDS="1,2,3"; npx hardhat run scripts/transferFish.js --network baseSepolia
+```
+
+**Bash:**
+```bash
+# Transfer single fish
+TRANSFER_FROM=0xFromAddress TRANSFER_TO=0xToAddress TRANSFER_TOKEN_ID=5 npx hardhat run scripts/transferFish.js --network baseSepolia
+
+# Transfer multiple fish
+TRANSFER_FROM=0xFromAddress TRANSFER_TO=0xToAddress TRANSFER_TOKEN_IDS=1,2,3 npx hardhat run scripts/transferFish.js --network baseSepolia
+```
+
+**Note:** Only the contract owner (deployer) can use these admin functions.
+
 ## Project Structure
 
 See [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md) for detailed information about the codebase organization.
