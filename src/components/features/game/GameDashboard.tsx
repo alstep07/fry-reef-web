@@ -6,12 +6,12 @@ import { useFryReef } from "@/hooks/useFryReef";
 import { StarterPackCard } from "./StarterPackCard";
 import { NestTab } from "./NestTab";
 import { ReefTab } from "./ReefTab";
-import { MergeTab } from "./MergeTab";
+import { EvolutionTab } from "./EvolutionTab";
 import { DAILY_CHECKIN } from "@/constants/gameConfig";
 
-type Tab = "checkin" | "nest" | "reef" | "merge";
+type Tab = "checkin" | "nest" | "reef" | "evolution";
 
-const validTabs: Tab[] = ["checkin", "nest", "reef", "merge"];
+const validTabs: Tab[] = ["checkin", "nest", "reef", "evolution"];
 
 // Skeleton component for loading state
 function DashboardSkeleton() {
@@ -147,13 +147,14 @@ export function GameDashboard() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 sm:flex-initial cursor-pointer rounded-full px-4 sm:px-5 py-2.5 sm:py-2 text-sm font-medium transition ${activeTab === tab.id
+              className={`flex-1 sm:flex-initial cursor-pointer rounded-full px-3 sm:px-5 py-2.5 sm:py-2 text-sm font-medium transition ${activeTab === tab.id
                 ? "bg-baseBlue text-white shadow-lg"
                 : "text-slate-400 hover:text-white"
                 }`}
+              title={tab.label}
             >
-              <span className="mr-1.5">{tab.icon}</span>
-              {tab.label}
+              <span className="sm:mr-1.5">{tab.icon}</span>
+              <span className="hidden sm:inline">{tab.label}</span>
             </button>
           ))}
         </div>
@@ -221,7 +222,7 @@ export function GameDashboard() {
 
       {activeTab === "reef" && <ReefTab onGoToNest={() => setActiveTab("nest")} />}
 
-      {activeTab === "merge" && <MergeTab onGoToReef={() => setActiveTab("reef")} />}
+      {activeTab === "evolution" && <EvolutionTab onGoToReef={() => setActiveTab("reef")} />}
     </div>
   );
 }

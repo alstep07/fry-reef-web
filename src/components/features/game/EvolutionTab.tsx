@@ -22,11 +22,11 @@ interface SelectedFish {
   rarity: Rarity;
 }
 
-interface MergeTabProps {
+interface EvolutionTabProps {
   onGoToReef?: () => void;
 }
 
-export function MergeTab({ onGoToReef }: MergeTabProps) {
+export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
   const { fish, totalPendingDust, isLoading: isFishLoading, refetch } = useFish();
   const {
     spawnDust,
