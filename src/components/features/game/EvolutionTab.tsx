@@ -6,7 +6,6 @@ import { useFish } from "@/hooks/useFish";
 import { useFryReef } from "@/hooks/useFryReef";
 import { Rarity, RARITY_CONFIG, getFishImage, MERGE } from "@/constants/gameConfig";
 import { FishRarity } from "@/contracts/fishNft";
-import { MergeSuccessModal } from "./MergeSuccessModal";
 
 // Map contract rarity to our enum
 const rarityMap: Record<number, Rarity> = {
@@ -39,51 +38,24 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
   } = useFryReef();
 
   const [selectedFish, setSelectedFish] = useState<SelectedFish[]>([]);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [mergedRarity, setMergedRarity] = useState<Rarity | null>(null);
   const [prevIsWriting, setPrevIsWriting] = useState(false);
-  const [mergeRewards, setMergeRewards] = useState<{ pearlShards: number; eggs: number } | null>(null);
-  const [isMerging, setIsMerging] = useState(false);
 
-
-  // Show success modal after merge transaction completes
+  // Refetch and clear selection after successful merge transaction
   useEffect(() => {
-    // Check if we just finished writing (transaction completed) and we were merging
-    if (prevIsWriting && !isWriting && isMerging) {
-      if (isSuccess) {
-        // Success: show modal
-        if (mergedRarity && mergeRewards) {
-          // Clear selected fish immediately to reset button state
-          setSelectedFish([]);
-          // Small delay to ensure state is updated before showing modal
-          const timer = setTimeout(() => {
-            setShowSuccessModal(true);
-          }, 500);
-          return () => clearTimeout(timer);
-        }
-      } else {
-        // Error: reset merging state
-        setIsMerging(false);
-        setMergedRarity(null);
-        setMergeRewards(null);
-      }
-      // Reset write state to clear any errors
+    if (prevIsWriting && !isWriting && isSuccess) {
+      // Clear selected fish
+      setSelectedFish([]);
+      // Reset write state
       resetWrite?.();
-    }
-    setPrevIsWriting(isWriting);
-  }, [isWriting, prevIsWriting, isSuccess, isMerging, mergedRarity, mergeRewards, resetWrite]);
-
-  // Refetch after successful merge transaction
-  useEffect(() => {
-    if (prevIsWriting && !isWriting && isSuccess && isMerging) {
       // Refetch data after merge to update spawnDust and fish list
       const timer = setTimeout(() => {
         refetch();
         refetchUserInfo();
-      }, 2000);
+      }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [isWriting, prevIsWriting, isSuccess, isMerging, refetch, refetchUserInfo]);
+    setPrevIsWriting(isWriting);
+  }, [isWriting, prevIsWriting, isSuccess, refetch, refetchUserInfo, resetWrite]);
 
   // Prepare fish data with rarity
   const fishWithRarity = useMemo(() => {
@@ -149,53 +121,15 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
 
   // Handle merge
   const handleMerge = async () => {
-    if (!mergeValidation.isValid || selectedFish.length !== 2 || isWriting || isMerging) return;
+    if (!mergeValidation.isValid || selectedFish.length !== 2 || isWriting) return;
 
     const [fish1, fish2] = selectedFish;
-    const nextRarity = mergeValidation.nextRarity || null;
-    const mergeConfig = mergeValidation.mergeConfig;
-    
-    // Set merging flag and save merge info before transaction
-    setIsMerging(true);
-    setMergedRarity(nextRarity);
-    if (mergeConfig) {
-      setMergeRewards({
-        pearlShards: mergeConfig.pearlShardsReward,
-        eggs: mergeConfig.eggsReward,
-      });
-    }
-
     // Merge directly - user should claim dust before merging
     mergeFish(fish1.tokenId, fish2.tokenId);
   };
 
-
-
-  const handleCloseSuccessModal = () => {
-    setShowSuccessModal(false);
-    setMergedRarity(null);
-    setMergeRewards(null);
-    setIsMerging(false);
-  };
-
-  const handleGoToReef = () => {
-    handleCloseSuccessModal();
-    onGoToReef?.();
-  };
-
   return (
-    <>
-      {mergedRarity && (
-        <MergeSuccessModal
-          isOpen={showSuccessModal}
-          newRarity={mergedRarity}
-          rewards={mergeRewards}
-          onClose={handleCloseSuccessModal}
-          onGoToReef={handleGoToReef}
-        />
-      )}
-
-      <div className="rounded-2xl border border-white/5 bg-white/5 p-4 sm:p-6 backdrop-blur-sm">
+    <div className="rounded-2xl border border-white/5 bg-white/5 p-4 sm:p-6 backdrop-blur-sm">
         {/* Header */}
         <div className="mb-4">
           <h2 className="text-lg sm:text-xl font-semibold text-white mb-2">
@@ -432,7 +366,6 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
           </>
         )}
       </div>
-    </>
   );
 }
 
