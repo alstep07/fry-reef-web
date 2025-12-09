@@ -39,12 +39,16 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
 
   const [selectedFish, setSelectedFish] = useState<SelectedFish[]>([]);
   const [prevIsWriting, setPrevIsWriting] = useState(false);
+  const [isMerging, setIsMerging] = useState(false);
 
   // Refetch and clear selection after successful merge transaction
   useEffect(() => {
-    if (prevIsWriting && !isWriting && isSuccess) {
+    // Only refetch if we were merging and transaction just completed successfully
+    if (isMerging && prevIsWriting && !isWriting && isSuccess) {
       // Clear selected fish
       setSelectedFish([]);
+      // Reset merging flag
+      setIsMerging(false);
       // Reset write state
       resetWrite?.();
       // Refetch data after merge to update spawnDust and fish list
@@ -54,8 +58,13 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
       }, 1500);
       return () => clearTimeout(timer);
     }
+    // Reset merging flag if transaction failed
+    if (isMerging && prevIsWriting && !isWriting && !isSuccess) {
+      setIsMerging(false);
+      resetWrite?.();
+    }
     setPrevIsWriting(isWriting);
-  }, [isWriting, prevIsWriting, isSuccess, refetch, refetchUserInfo, resetWrite]);
+  }, [isWriting, prevIsWriting, isSuccess, isMerging, refetch, refetchUserInfo, resetWrite]);
 
   // Prepare fish data with rarity
   const fishWithRarity = useMemo(() => {
@@ -121,9 +130,11 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
 
   // Handle merge
   const handleMerge = async () => {
-    if (!mergeValidation.isValid || selectedFish.length !== 2 || isWriting) return;
+    if (!mergeValidation.isValid || selectedFish.length !== 2 || isWriting || isMerging) return;
 
     const [fish1, fish2] = selectedFish;
+    // Set merging flag before transaction
+    setIsMerging(true);
     // Merge directly - user should claim dust before merging
     mergeFish(fish1.tokenId, fish2.tokenId);
   };
