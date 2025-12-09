@@ -1,5 +1,6 @@
 "use client";
 
+import { useTransition } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import { useFryReef } from "@/hooks/useFryReef";
@@ -60,19 +61,22 @@ export function GameDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { address, isConnected } = useAccount();
+  const [isPending, startTransition] = useTransition();
   
   const tabFromUrl = searchParams.get("tab") as Tab | null;
   const activeTab: Tab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "checkin";
 
   const setActiveTab = (tab: Tab) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (tab === "checkin") {
-      params.delete("tab");
-    } else {
-      params.set("tab", tab);
-    }
-    const query = params.toString();
-    router.push(query ? `/?${query}` : "/", { scroll: false });
+    startTransition(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (tab === "checkin") {
+        params.delete("tab");
+      } else {
+        params.set("tab", tab);
+      }
+      const query = params.toString();
+      router.replace(query ? `/?${query}` : "/", { scroll: false });
+    });
   };
 
   const {
@@ -161,8 +165,9 @@ export function GameDashboard() {
       </div>
 
       {/* Tab Content */}
-      {activeTab === "checkin" && (
-        <div className="rounded-2xl border border-white/5 bg-white/5 p-4 sm:p-6 backdrop-blur-sm">
+      <div className={activeTab === "checkin" ? "" : "hidden"}>
+        {activeTab === "checkin" && (
+          <div className="rounded-2xl border border-white/5 bg-white/5 p-4 sm:p-6 backdrop-blur-sm">
           <h2 className="mb-3 sm:mb-4 text-lg sm:text-xl font-semibold text-white">Daily Check-in</h2>
 
           <div className="mb-3 sm:mb-4 space-y-2 text-sm">
@@ -215,14 +220,21 @@ export function GameDashboard() {
               Transaction failed. Please try again.
             </p>
           )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
-      {activeTab === "nest" && <NestTab onGoToReef={() => setActiveTab("reef")} />}
+      <div className={activeTab === "nest" ? "" : "hidden"}>
+        <NestTab onGoToReef={() => setActiveTab("reef")} />
+      </div>
 
-      {activeTab === "reef" && <ReefTab onGoToNest={() => setActiveTab("nest")} />}
+      <div className={activeTab === "reef" ? "" : "hidden"}>
+        <ReefTab onGoToNest={() => setActiveTab("nest")} />
+      </div>
 
-      {activeTab === "evolution" && <EvolutionTab onGoToReef={() => setActiveTab("reef")} />}
+      <div className={activeTab === "evolution" ? "" : "hidden"}>
+        <EvolutionTab onGoToReef={() => setActiveTab("reef")} />
+      </div>
     </div>
   );
 }
