@@ -1,11 +1,14 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useAccount, useReadContract } from "wagmi";
 import Image from "next/image";
 import { useFish } from "@/hooks/useFish";
 import { useFryReef } from "@/hooks/useFryReef";
 import { Rarity, RARITY_CONFIG, getFishImage, MERGE } from "@/constants/gameConfig";
-import { FishRarity } from "@/contracts/fishNft";
+import { FishRarity, fishNftAbi, FISH_NFT_ADDRESS } from "@/contracts/fishNft";
+import { baseSepolia } from "wagmi/chains";
+import { MergeSuccessModal } from "./MergeSuccessModal";
 
 // Map contract rarity to our enum
 const rarityMap: Record<number, Rarity> = {
@@ -26,6 +29,7 @@ interface EvolutionTabProps {
 }
 
 export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
+  const { address } = useAccount();
   const { fish, totalPendingDust, isLoading: isFishLoading, refetch } = useFish();
   const {
     spawnDust,
@@ -38,36 +42,185 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
   } = useFryReef();
 
   const [selectedFish, setSelectedFish] = useState<SelectedFish[]>([]);
+  
+  // Log selectedFish changes
+  useEffect(() => {
+    console.log('[EvolutionTab] selectedFish state changed:', selectedFish);
+  }, [selectedFish]);
   const [prevIsWriting, setPrevIsWriting] = useState(false);
   const [isMerging, setIsMerging] = useState(false);
+  
+  // Modal state
+  const [showMergeSuccessModal, setShowMergeSuccessModal] = useState(false);
+  const [mergedFishId, setMergedFishId] = useState<number | null>(null);
+  const [mergedRarity, setMergedRarity] = useState<Rarity | null>(null);
+  const [mergeRewards, setMergeRewards] = useState<{ pearlShards: number; eggs: number } | null>(null);
+  const [pendingMerge, setPendingMerge] = useState(false);
 
-  // Refetch and clear selection after successful merge transaction
+  // Get user's fish to detect new ones after merge
+  const { data: fishIds, refetch: refetchFish } = useReadContract({
+    address: FISH_NFT_ADDRESS as `0x${string}`,
+    abi: fishNftAbi,
+    functionName: "getFishByOwner",
+    args: address ? [address] : undefined,
+    chainId: baseSepolia.id,
+    query: {
+      enabled: !!address && !!FISH_NFT_ADDRESS,
+    },
+  });
+
+  // Track fish IDs before merge (to detect new fish after merge)
+  const [fishIdsBefore, setFishIdsBefore] = useState<number[] | null>(null);
+
+  // Detect when transaction completes (like ReefTab - track isWriting change)
   useEffect(() => {
-    // Only refetch if we were merging and transaction just completed successfully
-    if (isMerging && prevIsWriting && !isWriting && isSuccess) {
-      // Clear selected fish
-      setSelectedFish([]);
-      // Reset merging flag
-      setIsMerging(false);
-      // Reset write state
-      resetWrite?.();
-      // Refetch data after merge to update spawnDust and fish list
-      const timer = setTimeout(() => {
-        refetch();
-        refetchUserInfo();
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-    // Reset merging flag if transaction failed
-    if (isMerging && prevIsWriting && !isWriting && !isSuccess) {
-      setIsMerging(false);
-      resetWrite?.();
+    console.log('[EvolutionTab] Transaction completion effect:', { 
+      prevIsWriting, 
+      isWriting, 
+      isSuccess, 
+      isMerging, 
+      pendingMerge 
+    });
+    
+    // Detect when transaction completes (isWriting goes from true to false)
+    if (prevIsWriting && !isWriting && pendingMerge) {
+      console.log('[EvolutionTab] Transaction completed (isWriting changed)');
+      if (isSuccess) {
+        console.log('[EvolutionTab] Transaction SUCCESS - clearing selection and starting refetch');
+        // CRITICAL: Clear selected fish IMMEDIATELY when transaction succeeds
+        setSelectedFish([]);
+        setIsMerging(false);
+        
+        // Start refetching immediately
+        const timer = setTimeout(() => {
+          console.log('[EvolutionTab] Refetching data after 2s delay');
+          refetchFish();
+          refetch();
+          refetchUserInfo();
+        }, 2000);
+        
+        return () => clearTimeout(timer);
+      } else {
+        console.log('[EvolutionTab] Transaction FAILED - resetting state');
+        setIsMerging(false);
+        setPendingMerge(false);
+        setFishIdsBefore(null);
+        resetWrite?.();
+      }
     }
     setPrevIsWriting(isWriting);
-  }, [isWriting, prevIsWriting, isSuccess, isMerging, refetch, refetchUserInfo, resetWrite]);
+  }, [isWriting, prevIsWriting, isSuccess, isMerging, pendingMerge, refetch, refetchFish, refetchUserInfo, resetWrite]);
+
+  // Also refetch fishIds more aggressively when transaction succeeds and we're waiting for new fish
+  useEffect(() => {
+    console.log('[EvolutionTab] Polling effect:', { isSuccess, pendingMerge });
+    if (isSuccess && pendingMerge) {
+      console.log('[EvolutionTab] Starting aggressive polling for new fish');
+      // Poll fishIds more frequently to detect new fish quickly
+      const interval = setInterval(() => {
+        console.log('[EvolutionTab] Polling refetchFish');
+        refetchFish();
+      }, 500); // Check every 500ms
+      
+      // Stop polling after 10 seconds
+      const timeout = setTimeout(() => {
+        console.log('[EvolutionTab] Stopping polling after 10s');
+        clearInterval(interval);
+      }, 10000);
+      
+      return () => {
+        clearInterval(interval);
+        clearTimeout(timeout);
+      };
+    }
+  }, [isSuccess, pendingMerge, refetchFish]);
+
+  // Detect new fish after merge (similar to Hatch logic)
+  useEffect(() => {
+    console.log('[EvolutionTab] Detect new fish effect:', { 
+      pendingMerge, 
+      fishIds: fishIds ? (fishIds as bigint[]).length : null,
+      fishIdsBefore: fishIdsBefore ? fishIdsBefore.length : null 
+    });
+    
+    if (pendingMerge && fishIds && fishIdsBefore !== null) {
+      const currentFishIds = (fishIds as bigint[]).map(id => Number(id));
+      const beforeFishIds = new Set(fishIdsBefore);
+      
+      console.log('[EvolutionTab] Comparing fish IDs:', {
+        current: currentFishIds,
+        before: Array.from(beforeFishIds)
+      });
+      
+      // Find new fish ID (exists in current but not in before)
+      const newFishId = currentFishIds.find(id => !beforeFishIds.has(id));
+      
+      if (newFishId !== undefined) {
+        console.log('[EvolutionTab] NEW FISH DETECTED!', { newFishId });
+        // New fish merged!
+        setMergedFishId(newFishId);
+        setPendingMerge(false);
+        setFishIdsBefore(null);
+        // Refetch immediately when fish detected
+        refetch();
+      } else {
+        console.log('[EvolutionTab] No new fish found yet');
+      }
+    }
+  }, [fishIds, pendingMerge, fishIdsBefore, refetch]);
+
+  // Get fish info when we have a new fish ID
+  const { data: fishInfo } = useReadContract({
+    address: FISH_NFT_ADDRESS as `0x${string}`,
+    abi: fishNftAbi,
+    functionName: "getFishInfo",
+    args: mergedFishId !== null ? [BigInt(mergedFishId)] : undefined,
+    chainId: baseSepolia.id,
+    query: {
+      enabled: mergedFishId !== null,
+    },
+  });
+
+  // Show modal when we have fish info and calculate rewards
+  useEffect(() => {
+    console.log('[EvolutionTab] Show modal effect:', { 
+      hasFishInfo: !!fishInfo, 
+      mergedFishId 
+    });
+    
+    if (fishInfo && mergedFishId !== null) {
+      const info = fishInfo as { rarity: number };
+      const newRarity = rarityMap[info.rarity] || Rarity.Common;
+      console.log('[EvolutionTab] Fish info received:', { mergedFishId, newRarity, info });
+      
+      setMergedRarity(newRarity);
+      
+      // Calculate rewards based on the previous rarity (one level below)
+      // We need to find which rarity was merged to get this one
+      let rewards = { pearlShards: 0, eggs: 0 };
+      if (newRarity === Rarity.Rare) {
+        rewards = { pearlShards: MERGE[Rarity.Common].pearlShardsReward, eggs: MERGE[Rarity.Common].eggsReward };
+      } else if (newRarity === Rarity.Epic) {
+        rewards = { pearlShards: MERGE[Rarity.Rare].pearlShardsReward, eggs: MERGE[Rarity.Rare].eggsReward };
+      } else if (newRarity === Rarity.Legendary) {
+        rewards = { pearlShards: MERGE[Rarity.Epic].pearlShardsReward, eggs: MERGE[Rarity.Epic].eggsReward };
+      } else if (newRarity === Rarity.Mythic) {
+        rewards = { pearlShards: MERGE[Rarity.Legendary].pearlShardsReward, eggs: MERGE[Rarity.Legendary].eggsReward };
+      }
+      
+      console.log('[EvolutionTab] Showing merge success modal with rewards:', rewards);
+      setMergeRewards(rewards);
+      setShowMergeSuccessModal(true);
+      // Reset merging flag
+      setIsMerging(false);
+      resetWrite?.();
+    }
+  }, [fishInfo, mergedFishId, resetWrite]);
+
 
   // Prepare fish data with rarity
   const fishWithRarity = useMemo(() => {
+    console.log('[EvolutionTab] fishWithRarity memo updated, fish count:', fish.length, 'fish IDs:', fish.map(f => f.tokenId));
     return fish.map((f) => ({
       tokenId: f.tokenId,
       rarity: rarityMap[f.info.rarity] || Rarity.Common,
@@ -83,17 +236,16 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
 
   // Toggle fish selection
   const toggleFish = (tokenId: number, rarity: Rarity) => {
+    console.log('[EvolutionTab] toggleFish called:', { tokenId, rarity });
     setSelectedFish((prev) => {
       const isSelected = prev.some((f) => f.tokenId === tokenId);
-      if (isSelected) {
-        return prev.filter((f) => f.tokenId !== tokenId);
-      } else {
-        // Max 2 fish can be selected
-        if (prev.length >= 2) {
-          return prev;
-        }
-        return [...prev, { tokenId, rarity }];
-      }
+      const newSelection = isSelected
+        ? prev.filter((f) => f.tokenId !== tokenId)
+        : prev.length >= 2
+        ? prev
+        : [...prev, { tokenId, rarity }];
+      console.log('[EvolutionTab] Selected fish updated:', newSelection);
+      return newSelection;
     });
   };
 
@@ -130,17 +282,61 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
 
   // Handle merge
   const handleMerge = async () => {
+    console.log('[EvolutionTab] handleMerge called:', { 
+      isValid: mergeValidation.isValid, 
+      selectedFish: selectedFish.length, 
+      isWriting, 
+      isMerging 
+    });
+    
     if (!mergeValidation.isValid || selectedFish.length !== 2 || isWriting || isMerging) return;
 
     const [fish1, fish2] = selectedFish;
+    // Store current fish IDs before merge (to detect new fish after merge)
+    const currentFishIds = fishIds ? (fishIds as bigint[]).map(id => Number(id)) : [];
+    console.log('[EvolutionTab] Storing fish IDs before merge:', currentFishIds);
+    setFishIdsBefore(currentFishIds);
+    setPendingMerge(true);
     // Set merging flag before transaction
     setIsMerging(true);
+    console.log('[EvolutionTab] Calling mergeFish:', { fish1: fish1.tokenId, fish2: fish2.tokenId });
     // Merge directly - user should claim dust before merging
     mergeFish(fish1.tokenId, fish2.tokenId);
   };
 
+  const handleCloseModal = () => {
+    console.log('[EvolutionTab] Closing merge success modal');
+    setShowMergeSuccessModal(false);
+    setMergedFishId(null);
+    setMergedRarity(null);
+    setMergeRewards(null);
+    // Ensure selected fish are cleared and refetch data
+    setSelectedFish([]);
+    setIsMerging(false);
+    // Force refetch all data
+    console.log('[EvolutionTab] Force refetching all data on modal close');
+    refetchFish();
+    refetch();
+    refetchUserInfo();
+  };
+
+  const handleGoToReef = () => {
+    handleCloseModal();
+    onGoToReef?.();
+  };
+
   return (
-    <div className="rounded-2xl border border-white/5 bg-white/5 p-4 sm:p-6 backdrop-blur-sm">
+    <>
+      {mergedRarity && (
+        <MergeSuccessModal
+          isOpen={showMergeSuccessModal}
+          newRarity={mergedRarity}
+          rewards={mergeRewards}
+          onClose={handleCloseModal}
+          onGoToReef={handleGoToReef}
+        />
+      )}
+      <div className="rounded-2xl border border-white/5 bg-white/5 p-4 sm:p-6 backdrop-blur-sm">
         {/* Header */}
         <div className="mb-4">
           <h2 className="text-lg sm:text-xl font-semibold text-white mb-2">
@@ -377,6 +573,7 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
           </>
         )}
       </div>
+    </>
   );
 }
 
