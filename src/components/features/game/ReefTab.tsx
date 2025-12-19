@@ -228,7 +228,13 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {fish.map((f) => {
+          {[...fish]
+            .sort((a, b) => {
+              // Sort by rarity (higher rarity first: Mythic -> Legendary -> Epic -> Rare -> Common)
+              // rarity is a number: 0=Common, 1=Rare, 2=Epic, 3=Legendary, 4=Mythic
+              return b.info.rarity - a.info.rarity;
+            })
+            .map((f) => {
             const rarity = rarityMap[f.info.rarity] || Rarity.Common;
             
             return (

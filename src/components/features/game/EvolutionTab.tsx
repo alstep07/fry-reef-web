@@ -132,7 +132,13 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
   }, [fish]);
 
   const mergeableFish = useMemo(() => {
-    return fishWithRarity.filter(f => f.rarity !== Rarity.Mythic);
+    return fishWithRarity
+      .filter(f => f.rarity !== Rarity.Mythic)
+      .sort((a, b) => {
+        // Sort by rarity (higher rarity first: Legendary -> Epic -> Rare -> Common)
+        // Use the numeric rarity from info for sorting
+        return b.info.rarity - a.info.rarity;
+      });
   }, [fishWithRarity]);
 
   const mergeValidation = useMemo(() => {
@@ -312,11 +318,10 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
                 return (
                   <label
                     key={f.tokenId}
-                    className={`group relative cursor-pointer rounded-xl border-2 transition ${
-                      isSelected
-                        ? "border-blue-500 bg-blue-500/10"
-                        : "border-white/10 bg-white/5 hover:border-white/20"
-                    }`}
+                    className={`group relative cursor-pointer rounded-xl border-2 transition ${isSelected
+                      ? "border-blue-500 bg-blue-500/10"
+                      : "border-white/10 bg-white/5 hover:border-white/20"
+                      }`}
                   >
                     <input
                       type="checkbox"
@@ -401,11 +406,10 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
                   isWriting ||
                   pendingMerge
                 }
-                className={`w-full cursor-pointer rounded-xl px-4 py-3 text-sm font-medium text-white shadow-lg transition ${
-                  mergeValidation.isValid && selectedFish.length === 2
-                    ? "bg-baseBlue hover:bg-baseBlue/80"
-                    : "cursor-not-allowed bg-slate-600"
-                } disabled:cursor-not-allowed`}
+                className={`w-full cursor-pointer rounded-xl px-4 py-3 text-sm font-medium text-white shadow-lg transition ${mergeValidation.isValid && selectedFish.length === 2
+                  ? "bg-baseBlue hover:bg-baseBlue/80"
+                  : "cursor-not-allowed bg-slate-600"
+                  } disabled:cursor-not-allowed`}
               >
                 {isWriting ? (
                   "Merging..."
@@ -427,11 +431,11 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
                 const fishData = fishWithRarity.find(f => f.tokenId === fish.tokenId);
                 return sum + (fishData?.pendingDust || 0);
               }, 0);
-              
+
               return selectedPendingDust > 0 ? (
                 <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
                   <p className="text-xs text-amber-400">
-                    ⚠️ Warning: Selected fish have {selectedPendingDust} unclaimed Spawn Dust. 
+                    ⚠️ Warning: Selected fish have {selectedPendingDust} unclaimed Spawn Dust.
                     Claim it before merging, or it will be lost when the fish are merged.
                   </p>
                 </div>
