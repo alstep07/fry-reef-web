@@ -123,12 +123,29 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
   }, [fishInfo, mergedFishId]);
 
   const fishWithRarity = useMemo(() => {
-    return fish.map(f => ({
-      tokenId: f.tokenId,
-      rarity: rarityMap[f.info.rarity] || Rarity.Common,
-      info: f.info,
-      pendingDust: f.pendingDust,
-    }));
+    return fish
+      .filter(f => {
+        // Check if fish has valid data (not burned)
+        // Invalid fish have both mintedAt and lastDustCollectedAt equal to 0
+        const hasValidData = f.info.mintedAt > 0 || f.info.lastDustCollectedAt > 0;
+        return hasValidData;
+      })
+      .map(f => ({
+        tokenId: f.tokenId,
+        rarity: rarityMap[f.info.rarity] || Rarity.Common,
+        info: f.info,
+        pendingDust: f.pendingDust,
+      }));
+  }, [fish]);
+
+  // Fish that are invalid (burned - both mintedAt and lastDustCollectedAt are 0)
+  const invalidFish = useMemo(() => {
+    return fish.filter(f => {
+      // Invalid fish have both fields equal to 0
+      const mintedAtZero = f.info.mintedAt === BigInt(0) || Number(f.info.mintedAt) === 0;
+      const lastDustZero = f.info.lastDustCollectedAt === BigInt(0) || Number(f.info.lastDustCollectedAt) === 0;
+      return mintedAtZero && lastDustZero;
+    });
   }, [fish]);
 
   const mergeableFish = useMemo(() => {
@@ -394,6 +411,20 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
                   </label>
                 );
               })}
+
+              {/* Skeleton cards for invalid fish (burned but still in old data) */}
+              {invalidFish.map((f) => (
+                <div
+                  key={f.tokenId}
+                  className="rounded-xl border border-white/10 bg-white/5 p-2 sm:p-3 animate-pulse"
+                >
+                  <div className="mx-auto mb-1.5 sm:mb-2 h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-white/10" />
+                  <div className="text-center">
+                    <div className="h-3 w-12 mx-auto mb-1 rounded bg-white/5" />
+                    <div className="h-4 w-16 mx-auto mt-1 rounded-full bg-white/5" />
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* Merge Button */}

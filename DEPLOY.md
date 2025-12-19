@@ -97,7 +97,7 @@ Transfer fish from one address to another (admin only):
 $env:TRANSFER_FROM="0xFromAddress"; $env:TRANSFER_TO="0xToAddress"; $env:TRANSFER_TOKEN_ID="5"; npx hardhat run scripts/transferFish.js --network baseSepolia
 
 # Transfer multiple fish
-$env:TRANSFER_FROM="0xFromAddress"; $env:TRANSFER_TO="0xToAddress"; $env:TRANSFER_TOKEN_IDS="1,2,3"; npx hardhat run scripts/transferFish.js --network baseSepolia
+$env:TRANSFER_FROM="0xC88fA5aB592d2EAC7350c6444CF08012f6d22357"; $env:TRANSFER_TO="0x31437C81fCc48c50DfE7c89E928b81CFA4931Cf0"; $env:TRANSFER_TOKEN_IDS="1,2,3"; npx hardhat run scripts/transferFish.js --network baseSepolia
 ```
 
 **Bash:**
@@ -106,7 +106,7 @@ $env:TRANSFER_FROM="0xFromAddress"; $env:TRANSFER_TO="0xToAddress"; $env:TRANSFE
 TRANSFER_FROM=0xFromAddress TRANSFER_TO=0xToAddress TRANSFER_TOKEN_ID=5 npx hardhat run scripts/transferFish.js --network baseSepolia
 
 # Transfer multiple fish
-TRANSFER_FROM=0x9Ff507683E602590ad1eD484cb3D62CBb564f99A TRANSFER_TO=0xC88fA5aB592d2EAC7350c6444CF08012f6d22357 TRANSFER_TOKEN_IDS=15,16 npx hardhat run scripts/transferFish.js --network baseSepolia
+TRANSFER_FROM=0x9Ff507683E602590ad1eD484cb3D62CBb564f99A TRANSFER_TO=0x31437C81fCc48c50DfE7c89E928b81CFA4931Cf0 TRANSFER_TOKEN_IDS=15,16 npx hardhat run scripts/transferFish.js --network baseSepolia
 ```
 
 **Note:** Only the contract owner (deployer) can use these admin functions.
