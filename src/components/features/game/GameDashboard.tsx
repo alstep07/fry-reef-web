@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import { useFryReef } from "@/hooks/useFryReef";
@@ -8,6 +8,7 @@ import { StarterPackCard } from "./StarterPackCard";
 import { NestTab } from "./NestTab";
 import { ReefTab } from "./ReefTab";
 import { EvolutionTab } from "./EvolutionTab";
+import { StreakRewardModal } from "./StreakRewardModal";
 import { DAILY_CHECKIN } from "@/constants/gameConfig";
 
 type Tab = "checkin" | "nest" | "reef" | "evolution";
@@ -62,7 +63,7 @@ export function GameDashboard() {
   const searchParams = useSearchParams();
   const { address, isConnected } = useAccount();
   const [isPending, startTransition] = useTransition();
-  
+
   const tabFromUrl = searchParams.get("tab") as Tab | null;
   const activeTab: Tab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "checkin";
 
@@ -93,6 +94,49 @@ export function GameDashboard() {
     isOnCorrectNetwork,
     switchToBaseSepolia,
   } = useFryReef();
+
+  // Track streak reward modal
+  const [showStreakReward, setShowStreakReward] = useState(false);
+  const previousStreakRef = useRef<number>(currentStreak);
+  const pendingCheckInRef = useRef<boolean>(false);
+
+  // Save streak before check-in
+  const handleCheckIn = () => {
+    previousStreakRef.current = currentStreak;
+    pendingCheckInRef.current = true;
+    checkIn();
+  };
+
+  // Track when check-in completes and check if reward was earned
+  useEffect(() => {
+    // When check-in succeeds and we're waiting for it
+    if (isSuccess && pendingCheckInRef.current && !isWriting && !isLoading) {
+      // Wait a bit for data to refetch from blockchain
+      const timer = setTimeout(() => {
+        const previousStreak = previousStreakRef.current;
+        const newStreak = currentStreak;
+
+        // Check if new streak is a multiple of 7 and previous wasn't
+        if (
+          newStreak > 0 &&
+          newStreak % DAILY_CHECKIN.streakForReward === 0 &&
+          previousStreak % DAILY_CHECKIN.streakForReward !== 0
+        ) {
+          setShowStreakReward(true);
+        }
+
+        previousStreakRef.current = newStreak;
+        pendingCheckInRef.current = false;
+      }, 2000); // Wait for data to refetch
+
+      return () => clearTimeout(timer);
+    }
+
+    // Reset pending flag if transaction failed
+    if (!isSuccess && !isWriting) {
+      pendingCheckInRef.current = false;
+    }
+  }, [isSuccess, isWriting, isLoading, currentStreak]);
 
   // Not connected - render nothing (page.tsx handles this)
   if (!isConnected || !address) {
@@ -168,58 +212,67 @@ export function GameDashboard() {
       <div className={activeTab === "checkin" ? "" : "hidden"}>
         {activeTab === "checkin" && (
           <div className="rounded-2xl border border-white/5 bg-white/5 p-4 sm:p-6 backdrop-blur-sm">
-          <h2 className="mb-3 sm:mb-4 text-lg sm:text-xl font-semibold text-white">Daily Check-in</h2>
+            <h2 className="mb-3 sm:mb-4 text-lg sm:text-xl font-semibold text-white">Daily Check-in</h2>
 
-          <div className="mb-3 sm:mb-4 space-y-2 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">Current Streak:</span>
-              <span className="font-semibold text-white">
-                {currentStreak} / {DAILY_CHECKIN.streakForReward} days
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">Total Check-ins:</span>
-              <span className="font-semibold text-white">{totalCheckIns}</span>
-            </div>
-            {currentStreak > 0 && (
-              <div className="mt-2">
-                <div className="h-1.5 sm:h-2 overflow-hidden rounded-full bg-white/10">
-                  <div
-                    className="h-full transition-all"
-                    style={{
-                      width: `${((currentStreak % DAILY_CHECKIN.streakForReward) / DAILY_CHECKIN.streakForReward) * 100}%`,
-                      background: "linear-gradient(90deg, #E8D5E2 0%, #F5E6EA 30%, #FFFFFF 50%, #E0F4F8 70%, #D4E5ED 100%)",
-                    }}
-                  />
-                </div>
-                <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-slate-400">
-                  {currentStreak % DAILY_CHECKIN.streakForReward === 0
-                    ? "🎉 Claim your Pearl Shard!"
-                    : `${DAILY_CHECKIN.streakForReward - (currentStreak % DAILY_CHECKIN.streakForReward)} days until next Pearl Shard`}
-                </p>
+            <div className="mb-3 sm:mb-4 space-y-2 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Current Streak:</span>
+                <span className="font-semibold text-white">
+                  {currentStreak > 0 ? (
+                    <>
+                      {currentStreak} day{currentStreak !== 1 ? "s" : ""}
+                      <span className="ml-1.5 text-xs font-normal text-slate-400">
+                        ({currentStreak % DAILY_CHECKIN.streakForReward || DAILY_CHECKIN.streakForReward}/{DAILY_CHECKIN.streakForReward})
+                      </span>
+                    </>
+                  ) : (
+                    "0 days"
+                  )}
+                </span>
               </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Total Check-ins:</span>
+                <span className="font-semibold text-white">{totalCheckIns}</span>
+              </div>
+              {currentStreak > 0 && (
+                <div className="mt-2">
+                  <div className="h-1.5 sm:h-2 overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full transition-all"
+                      style={{
+                        width: `${((currentStreak % DAILY_CHECKIN.streakForReward) / DAILY_CHECKIN.streakForReward) * 100}%`,
+                        background: "linear-gradient(90deg, #E8D5E2 0%, #F5E6EA 30%, #FFFFFF 50%, #E0F4F8 70%, #D4E5ED 100%)",
+                      }}
+                    />
+                  </div>
+                  <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-slate-400">
+                    {currentStreak % DAILY_CHECKIN.streakForReward === 0
+                      ? "🎉 Claim your Pearl Shard!"
+                      : `${DAILY_CHECKIN.streakForReward - (currentStreak % DAILY_CHECKIN.streakForReward)} days until next Pearl Shard`}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-center">
+              <button
+                onClick={handleCheckIn}
+                disabled={checkedInToday || isWriting || isLoading || !isOnCorrectNetwork}
+                className="cursor-pointer rounded-full bg-baseBlue px-5 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base font-medium text-white shadow-lg transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:bg-slate-600 disabled:shadow-none"
+              >
+                {checkedInToday
+                  ? "✓ Checked in today"
+                  : isWriting || isLoading
+                    ? "Checking in..."
+                    : "Check-in"}
+              </button>
+            </div>
+
+            {error && (
+              <p className="mt-2 sm:mt-3 text-center text-[10px] sm:text-xs text-red-400">
+                Transaction failed. Please try again.
+              </p>
             )}
-          </div>
-
-          <div className="flex justify-center">
-            <button
-              onClick={checkIn}
-              disabled={checkedInToday || isWriting || isLoading || !isOnCorrectNetwork}
-              className="cursor-pointer rounded-full bg-baseBlue px-5 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base font-medium text-white shadow-lg transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:bg-slate-600 disabled:shadow-none"
-            >
-              {checkedInToday
-                ? "✓ Checked in today"
-                : isWriting || isLoading
-                  ? "Checking in..."
-                  : "Check-in"}
-            </button>
-          </div>
-
-          {error && (
-            <p className="mt-2 sm:mt-3 text-center text-[10px] sm:text-xs text-red-400">
-              Transaction failed. Please try again.
-            </p>
-          )}
           </div>
         )}
       </div>
@@ -235,6 +288,14 @@ export function GameDashboard() {
       <div className={activeTab === "evolution" ? "" : "hidden"}>
         <EvolutionTab onGoToReef={() => setActiveTab("reef")} />
       </div>
+
+      {/* Streak Reward Modal */}
+      <StreakRewardModal
+        isOpen={showStreakReward}
+        pearlShards={DAILY_CHECKIN.pearlShardReward}
+        streak={currentStreak}
+        onClose={() => setShowStreakReward(false)}
+      />
     </div>
   );
 }

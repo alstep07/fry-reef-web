@@ -123,16 +123,39 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
   }, [fishInfo, mergedFishId]);
 
   const fishWithRarity = useMemo(() => {
-    return fish.map(f => ({
-      tokenId: f.tokenId,
-      rarity: rarityMap[f.info.rarity] || Rarity.Common,
-      info: f.info,
-      pendingDust: f.pendingDust,
-    }));
+    return fish
+      .filter(f => {
+        // Check if fish has valid data (not burned)
+        // Invalid fish have both mintedAt and lastDustCollectedAt equal to 0
+        const hasValidData = f.info.mintedAt > 0 || f.info.lastDustCollectedAt > 0;
+        return hasValidData;
+      })
+      .map(f => ({
+        tokenId: f.tokenId,
+        rarity: rarityMap[f.info.rarity] || Rarity.Common,
+        info: f.info,
+        pendingDust: f.pendingDust,
+      }));
+  }, [fish]);
+
+  // Fish that are invalid (burned - both mintedAt and lastDustCollectedAt are 0)
+  const invalidFish = useMemo(() => {
+    return fish.filter(f => {
+      // Invalid fish have both fields equal to 0
+      const mintedAtZero = f.info.mintedAt === BigInt(0) || Number(f.info.mintedAt) === 0;
+      const lastDustZero = f.info.lastDustCollectedAt === BigInt(0) || Number(f.info.lastDustCollectedAt) === 0;
+      return mintedAtZero && lastDustZero;
+    });
   }, [fish]);
 
   const mergeableFish = useMemo(() => {
-    return fishWithRarity.filter(f => f.rarity !== Rarity.Mythic);
+    return fishWithRarity
+      .filter(f => f.rarity !== Rarity.Mythic)
+      .sort((a, b) => {
+        // Sort by rarity (higher rarity first: Legendary -> Epic -> Rare -> Common)
+        // Use the numeric rarity from info for sorting
+        return b.info.rarity - a.info.rarity;
+      });
   }, [fishWithRarity]);
 
   const mergeValidation = useMemo(() => {
@@ -312,11 +335,10 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
                 return (
                   <label
                     key={f.tokenId}
-                    className={`group relative cursor-pointer rounded-xl border-2 transition ${
-                      isSelected
-                        ? "border-blue-500 bg-blue-500/10"
-                        : "border-white/10 bg-white/5 hover:border-white/20"
-                    }`}
+                    className={`group relative cursor-pointer rounded-xl border-2 transition ${isSelected
+                      ? "border-blue-500 bg-blue-500/10"
+                      : "border-white/10 bg-white/5 hover:border-white/20"
+                      }`}
                   >
                     <input
                       type="checkbox"
@@ -389,6 +411,20 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
                   </label>
                 );
               })}
+
+              {/* Skeleton cards for invalid fish (burned but still in old data) */}
+              {invalidFish.map((f) => (
+                <div
+                  key={f.tokenId}
+                  className="rounded-xl border border-white/10 bg-white/5 p-2 sm:p-3 animate-pulse"
+                >
+                  <div className="mx-auto mb-1.5 sm:mb-2 h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-white/10" />
+                  <div className="text-center">
+                    <div className="h-3 w-12 mx-auto mb-1 rounded bg-white/5" />
+                    <div className="h-4 w-16 mx-auto mt-1 rounded-full bg-white/5" />
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* Merge Button */}
@@ -401,11 +437,10 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
                   isWriting ||
                   pendingMerge
                 }
-                className={`w-full cursor-pointer rounded-xl px-4 py-3 text-sm font-medium text-white shadow-lg transition ${
-                  mergeValidation.isValid && selectedFish.length === 2
-                    ? "bg-baseBlue hover:bg-baseBlue/80"
-                    : "cursor-not-allowed bg-slate-600"
-                } disabled:cursor-not-allowed`}
+                className={`w-full cursor-pointer rounded-xl px-4 py-3 text-sm font-medium text-white shadow-lg transition ${mergeValidation.isValid && selectedFish.length === 2
+                  ? "bg-baseBlue hover:bg-baseBlue/80"
+                  : "cursor-not-allowed bg-slate-600"
+                  } disabled:cursor-not-allowed`}
               >
                 {isWriting ? (
                   "Merging..."
@@ -427,11 +462,11 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
                 const fishData = fishWithRarity.find(f => f.tokenId === fish.tokenId);
                 return sum + (fishData?.pendingDust || 0);
               }, 0);
-              
+
               return selectedPendingDust > 0 ? (
                 <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
                   <p className="text-xs text-amber-400">
-                    ⚠️ Warning: Selected fish have {selectedPendingDust} unclaimed Spawn Dust. 
+                    ⚠️ Warning: Selected fish have {selectedPendingDust} unclaimed Spawn Dust.
                     Claim it before merging, or it will be lost when the fish are merged.
                   </p>
                 </div>
