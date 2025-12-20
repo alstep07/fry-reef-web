@@ -21,6 +21,7 @@ interface FishCardProps {
   tokenId: number;
   rarity: Rarity;
   pendingDust: number;
+  timeUntilNextEgg: number; // Time in seconds until next egg can be laid
   onLayEgg: (tokenId: number) => void;
   onSelect?: (tokenId: number) => void;
   isSelected?: boolean;
@@ -29,10 +30,26 @@ interface FishCardProps {
   isReleaseMode?: boolean;
 }
 
-function FishCard({ tokenId, rarity, pendingDust, onLayEgg, onSelect, isSelected, isLoading, canLayEgg, isReleaseMode }: FishCardProps) {
+function FishCard({ tokenId, rarity, pendingDust, timeUntilNextEgg, onLayEgg, onSelect, isSelected, isLoading, canLayEgg, isReleaseMode }: FishCardProps) {
   const config = RARITY_CONFIG[rarity];
   const fishImage = getFishImage(rarity);
   const dustPerDay = config.spawnDustPerDay;
+
+  // Calculate progress for egg laying (24 hours = 86400 seconds)
+  const EGG_COOLDOWN_SECONDS = 24 * 60 * 60; // 86400 seconds = 1 day
+  const canLayEggByTime = timeUntilNextEgg === 0;
+  const progress = canLayEggByTime ? 100 : Math.max(0, Math.min(100, ((EGG_COOLDOWN_SECONDS - timeUntilNextEgg) / EGG_COOLDOWN_SECONDS) * 100));
+
+  // Format time remaining
+  const formatTime = (seconds: number) => {
+    if (seconds <= 0) return "Ready";
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    if (hours > 0) return `${hours}h ${mins}m`;
+    if (mins > 0) return `${mins}m ${secs}s`;
+    return `${secs}s`;
+  };
 
   return (
     <div
@@ -108,23 +125,53 @@ function FishCard({ tokenId, rarity, pendingDust, onLayEgg, onSelect, isSelected
         </div>
 
         {/* Action buttons */}
-        <div className="mt-2 flex gap-1.5">
-          {/* Lay Egg button */}
-          <button
-            onClick={() => onLayEgg(tokenId)}
-            disabled={isLoading || !canLayEgg}
-            className="flex flex-1 cursor-pointer items-center justify-center gap-1 rounded-lg bg-purple-500/80 px-2 py-1.5 text-[10px] font-medium text-white transition hover:bg-purple-500 disabled:cursor-not-allowed disabled:bg-slate-600"
-            title={!canLayEgg ? `Need ${EGG_LAYING.spawnDustCost} Spawn Dust` : "Create a new egg"}
-          >
-            {isLoading ? "..." : (
-              <>
-                <span className="hidden sm:inline">Lay Egg</span>
-                <span className="rounded-full bg-white/20 px-1 py-0.5 text-[9px]">{EGG_LAYING.spawnDustCost}✨</span>
-              </>
-            )}
-          </button>
-
-        </div>
+        {!isReleaseMode && (
+          <div className="mt-2 space-y-1.5">
+            {/* Lay Egg button with progress */}
+            <div className="relative">
+              <button
+                onClick={() => onLayEgg(tokenId)}
+                disabled={isLoading || !canLayEgg || !canLayEggByTime}
+                className={`relative flex w-full cursor-pointer items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-medium text-white transition overflow-hidden ${canLayEggByTime && canLayEgg
+                  ? "bg-purple-500/80 hover:bg-purple-500"
+                  : "bg-slate-600/60 hover:bg-slate-600/80"
+                  } disabled:cursor-not-allowed`}
+                title={!canLayEgg ? `Need ${EGG_LAYING.spawnDustCost} Spawn Dust` : !canLayEggByTime ? `Cooldown: ${formatTime(timeUntilNextEgg)}` : "Create a new egg"}
+              >
+                {/* Progress bar background - gray when not ready, purple when ready */}
+                {canLayEggByTime && canLayEgg ? (
+                  // Full and ready - solid purple
+                  <div className="absolute inset-0 bg-purple-500/80" />
+                ) : (
+                  // Not ready - gray progress bar (darker gray for filled portion)
+                  <>
+                    {/* Background (lighter gray) */}
+                    <div className="absolute inset-0 bg-slate-600/40" />
+                    {/* Progress (darker gray) */}
+                    <div
+                      className="absolute inset-0 bg-slate-500/60 transition-all duration-300"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </>
+                )}
+                <span className="relative z-10">
+                  {isLoading ? "..." : (
+                    <>
+                      <span className="hidden sm:inline">Lay Egg</span>
+                      <span className="rounded-full bg-white/20 px-1 py-0.5 text-[9px]">{EGG_LAYING.spawnDustCost}✨</span>
+                    </>
+                  )}
+                </span>
+              </button>
+              {/* Time remaining indicator */}
+              {!canLayEggByTime && (
+                <div className="mt-1 text-center">
+                  <span className="text-[9px] text-slate-400">{formatTime(timeUntilNextEgg)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -227,7 +274,7 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
     onGoToNest?.();
   };
 
-  const canLayEgg = spawnDust >= EGG_LAYING.spawnDustCost;
+  const hasEnoughDust = spawnDust >= EGG_LAYING.spawnDustCost;
 
   return (
     <>
@@ -436,11 +483,12 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
                       tokenId={f.tokenId}
                       rarity={rarity}
                       pendingDust={f.pendingDust}
+                      timeUntilNextEgg={f.timeUntilNextEgg}
                       onLayEgg={handleLayEgg}
                       onSelect={isReleaseMode ? toggleFishForRelease : undefined}
                       isSelected={isReleaseMode && selectedFishForRelease.includes(f.tokenId)}
                       isLoading={isWriting}
-                      canLayEgg={canLayEgg}
+                      canLayEgg={hasEnoughDust}
                       isReleaseMode={isReleaseMode}
                     />
                   );

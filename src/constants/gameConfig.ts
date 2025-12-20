@@ -84,7 +84,7 @@ export function getFishImage(rarity: Rarity): string {
 export const STARTER_PACK = {
   eggs: 1,
   pearlShards: 2,
-  spawnDust: 50,
+  spawnDust: 100,
 } as const;
 
 /**

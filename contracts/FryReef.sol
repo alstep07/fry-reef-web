@@ -19,7 +19,7 @@ contract FryReef {
     uint256 public constant PEARL_SHARD_REWARD = 1;
     uint256 public constant STARTER_PACK_EGGS = 1;
     uint256 public constant STARTER_PACK_PEARL_SHARDS = 2;
-    uint256 public constant STARTER_PACK_SPAWN_DUST = 50;
+    uint256 public constant STARTER_PACK_SPAWN_DUST = 100;
     uint256 public constant INCUBATION_DURATION = 1 days;
     uint256 public constant INCUBATION_COST = 1; // Pearl Shards
     uint256 public constant EGG_LAYING_COST = 100; // Spawn Dust
@@ -195,8 +195,10 @@ contract FryReef {
         UserInfo storage user = users[msg.sender];
         require(user.spawnDust >= EGG_LAYING_COST, "Not enough Spawn Dust");
         require(fishNFT.ownerOf(_fishId) == msg.sender, "Not fish owner");
+        require(fishNFT.canLayEgg(_fishId), "Fish cannot lay egg yet (24h cooldown)");
 
         user.spawnDust -= EGG_LAYING_COST;
+        fishNFT.updateLastEggLaidAt(_fishId);
         eggNFT.mint(msg.sender);
 
         emit ResourcesUpdated(msg.sender, user.pearlShards, user.spawnDust);
@@ -437,6 +439,24 @@ contract FryReef {
     function getReefCapacity(address _user) external view returns (uint256) {
         UserInfo storage user = users[_user];
         return user.reefCapacity == 0 ? INITIAL_REEF_CAPACITY : user.reefCapacity;
+    }
+
+    /**
+     * @notice Get time remaining until fish can lay next egg (in seconds)
+     * @param _fishId The fish token ID
+     * @return timeRemaining Time in seconds until next egg can be laid (0 if ready)
+     */
+    function getTimeUntilNextEgg(uint256 _fishId) external view returns (uint256) {
+        return fishNFT.getTimeUntilNextEgg(_fishId);
+    }
+
+    /**
+     * @notice Check if fish can lay an egg
+     * @param _fishId The fish token ID
+     * @return canLay True if fish can lay an egg
+     */
+    function canLayEgg(uint256 _fishId) external view returns (bool) {
+        return fishNFT.canLayEgg(_fishId);
     }
 
     // ============ Internal ============
