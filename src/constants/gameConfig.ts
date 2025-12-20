@@ -60,7 +60,7 @@ export const RARITY_CONFIG = {
  */
 export const FISH_IMAGES = {
   [Rarity.Common]: "/images/fish/common.webp",
-  [Rarity.Rare]: "/images/fish/rare.webp",
+  [Rarity.Rare]: "/images/fish/rare.png",
   [Rarity.Epic]: "/images/fish/epic.webp",
   [Rarity.Legendary]: "/images/fish/legendary.webp",
   [Rarity.Mythic]: "/images/fish/mythic.webp",

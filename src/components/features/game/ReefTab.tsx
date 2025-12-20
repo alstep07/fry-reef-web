@@ -252,12 +252,10 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
     setShowReleaseConfirmModal(true);
   };
 
-  const confirmRelease = async () => {
+  const confirmRelease = () => {
     if (selectedFishForRelease.length === 0) return;
     setShowReleaseConfirmModal(false);
-    await burnFish(selectedFishForRelease);
-    setSelectedFishForRelease([]);
-    setIsReleaseMode(false);
+    burnFish(selectedFishForRelease);
   };
 
   const cancelReleaseMode = () => {
@@ -276,6 +274,13 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
 
   const hasEnoughDust = spawnDust >= EGG_LAYING.spawnDustCost;
 
+  // Calculate total spawn dust production per day from all fish
+  const totalDustPerDay = fish.reduce((total, f) => {
+    const rarity = rarityMap[f.info.rarity] || Rarity.Common;
+    const config = RARITY_CONFIG[rarity];
+    return total + config.spawnDustPerDay;
+  }, 0);
+
   return (
     <>
       <LayEggModal
@@ -288,6 +293,11 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
         <div className="mb-3 sm:mb-4 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 sm:gap-3">
             <h2 className="text-lg sm:text-xl font-semibold text-white">Reef</h2>
+            {fishCount > 0 && (
+              <span className="text-xs sm:text-sm text-slate-400">
+                ✨ {totalDustPerDay}/day
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -296,19 +306,24 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
               <button
                 onClick={() => setIsReleaseMode(true)}
                 disabled={fishCount === 0}
-                className="flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium text-white transition cursor-pointer bg-red-700/60 hover:bg-red-700/80 disabled:cursor-not-allowed disabled:bg-slate-600/50 disabled:hover:bg-slate-600/50"
+                className="flex items-center gap-1 rounded-full px-1.5 py-1.5 sm:px-2.5 sm:py-1.5 text-xs font-medium text-white transition cursor-pointer bg-red-700/60 hover:bg-red-700/80 disabled:cursor-not-allowed disabled:bg-slate-600/50 disabled:hover:bg-slate-600/50"
               >
-                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-4 w-4 sm:h-3.5 sm:w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                 </svg>
-                <span>Release</span>
+                <span className="hidden sm:inline">Release</span>
               </button>
             ) : (
               <button
                 onClick={cancelReleaseMode}
-                className="flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium text-white transition cursor-pointer bg-slate-600/50 hover:bg-slate-600/80"
+                className="flex items-center gap-1 rounded-full px-1.5 py-1.5 sm:px-2.5 sm:py-1.5 text-xs font-medium text-white transition cursor-pointer bg-slate-600/50 hover:bg-slate-600/80"
               >
-                <span>Cancel</span>
+                <span className="hidden sm:inline">Cancel</span>
+                <span className="sm:hidden">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </span>
               </button>
             )}
 
@@ -316,15 +331,17 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
             <button
               onClick={handleCollectAll}
               disabled={isWriting || totalPendingDust === 0 || isReleaseMode}
-              className="flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium text-white transition cursor-pointer bg-amber-500/50 hover:bg-amber-500/80 disabled:cursor-not-allowed disabled:bg-slate-600/50 disabled:hover:bg-slate-600/50"
+              className="flex items-center gap-1 rounded-full px-1.5 py-1.5 sm:px-2.5 sm:py-1.5 text-xs font-medium text-white transition cursor-pointer bg-amber-500/50 hover:bg-amber-500/80 disabled:cursor-not-allowed disabled:bg-slate-600/50 disabled:hover:bg-slate-600/50"
             >
               {isWriting ? (
-                "..."
+                <span className="hidden sm:inline">...</span>
               ) : (
                 <>
-                  <span>Collect</span>
-                  <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]">
-                    +{totalPendingDust} ✨
+                  <span className="hidden sm:inline">Collect</span>
+                  <span className="sm:hidden">+</span>
+                  <span className="rounded-full sm:bg-white/20 sm:px-1.5 sm:py-0.5 text-[10px]">
+                    <span className="hidden sm:inline">+</span>
+                    {totalPendingDust} ✨
                   </span>
                 </>
               )}
@@ -353,22 +370,38 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
             <div className="flex items-center gap-2">
               <span className="text-xs sm:text-sm font-semibold text-white">Capacity</span>
             </div>
-            <span className="text-xs sm:text-sm font-bold text-white">
-              {isReleaseMode && selectedFishForRelease.length > 0 ? (
-                <>
-                  <span className="text-blue-400">{fishCount - selectedFishForRelease.length}</span>
-                  <span className="text-slate-500">/</span>
-                  <span className="text-blue-400">{reefCapacity}</span>
-                  <span className="text-slate-500 ml-1">(-{selectedFishForRelease.length})</span>
-                </>
-              ) : (
-                <>
-                  <span className={fishCount >= reefCapacity ? "text-amber-400" : "text-blue-400"}>{fishCount}</span>
-                  <span className="text-slate-500">/</span>
-                  <span className={fishCount >= reefCapacity ? "text-amber-400" : "text-blue-400"}>{reefCapacity}</span>
-                </>
+            <div className="flex items-center gap-2">
+              {/* Expand Button - moved to top right */}
+              {!isReleaseMode && expansionCost !== null && expansionCost !== Number.MAX_SAFE_INTEGER && (
+                <button
+                  onClick={() => expandReef()}
+                  disabled={isWriting || pearlShards < expansionCost}
+                  className="flex items-center justify-center gap-1.5 rounded-lg bg-emerald-500/40 hover:bg-emerald-500/60 px-2 py-1 text-xs font-medium text-white transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-slate-600"
+                  title={`Expand reef capacity (cost: ${expansionCost} Pearl Shards)`}
+                >
+                  <span>Expand</span>
+                  <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full">
+                    {expansionCost} 💎
+                  </span>
+                </button>
               )}
-            </span>
+              <span className="text-xs sm:text-sm font-bold text-white">
+                {isReleaseMode && selectedFishForRelease.length > 0 ? (
+                  <>
+                    <span className="text-blue-400">{fishCount - selectedFishForRelease.length}</span>
+                    <span className="text-slate-500">/</span>
+                    <span className="text-blue-400">{reefCapacity}</span>
+                    <span className="text-slate-500 ml-1">(-{selectedFishForRelease.length})</span>
+                  </>
+                ) : (
+                  <>
+                    <span className={fishCount >= reefCapacity ? "text-amber-400" : "text-blue-400"}>{fishCount}</span>
+                    <span className="text-slate-500">/</span>
+                    <span className={fishCount >= reefCapacity ? "text-amber-400" : "text-blue-400"}>{reefCapacity}</span>
+                  </>
+                )}
+              </span>
+            </div>
           </div>
 
           {/* Progress Bar */}
@@ -407,32 +440,6 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
               </>
             )}
           </div>
-
-          {/* Expand Button */}
-          {!isReleaseMode && (
-            <>
-              {expansionCost !== null && expansionCost !== Number.MAX_SAFE_INTEGER && (
-                <button
-                  onClick={() => expandReef()}
-                  disabled={isWriting || pearlShards < expansionCost}
-                  className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500/80 to-emerald-600/80 hover:from-emerald-500 hover:to-emerald-600 px-4 py-2 text-xs sm:text-sm font-medium text-white transition-all shadow-lg hover:shadow-emerald-500/30 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-slate-600"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  <span>Expand Reef</span>
-                  <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">
-                    {expansionCost} 💎
-                  </span>
-                </button>
-              )}
-              {expansionCost === Number.MAX_SAFE_INTEGER && (
-                <div className="w-full flex items-center justify-center gap-2 rounded-lg bg-slate-600/50 px-4 py-2 text-xs sm:text-sm font-medium text-slate-400">
-                  <span>Maximum capacity reached</span>
-                </div>
-              )}
-            </>
-          )}
         </div>
 
         {/* Fish Grid */}
@@ -460,7 +467,6 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
                 className="object-contain opacity-50"
               />
             </div>
-            <h3 className="mb-1 sm:mb-2 text-base sm:text-lg font-medium text-white">No Fish Yet</h3>
             <p className="text-sm text-slate-400">
               Hatch eggs in the Nest to get your first fish!
             </p>
@@ -470,8 +476,6 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {[...fish]
                 .sort((a, b) => {
-                  // Sort by rarity (higher rarity first: Mythic -> Legendary -> Epic -> Rare -> Common)
-                  // rarity is a number: 0=Common, 1=Rare, 2=Epic, 3=Legendary, 4=Mythic
                   return b.info.rarity - a.info.rarity;
                 })
                 .map((f) => {

@@ -2,31 +2,40 @@ const hre = require("hardhat");
 
 /**
  * Script to mint fish with specified rarity for testing (admin only)
- * 
+ *
  * Usage:
  *   npx hardhat run scripts/mintFish.js --network baseSepolia
- * 
+ *
  * Or with parameters:
  *   npx hardhat run scripts/mintFish.js --network baseSepolia -- --to 0x... --rarity 0 --amount 1
+ *
+ * To use a specific contract address (if different from deployments):
+ *   FISH_NFT_ADDRESS=0x... MINT_TO=0x... MINT_RARITY=0 npx hardhat run scripts/mintFish.js --network baseSepolia
  */
 
 async function main() {
   // Get arguments from environment variables first
   let toAddress = process.env.MINT_TO || null;
-  let rarity = process.env.MINT_RARITY ? parseInt(process.env.MINT_RARITY) : null;
+  let rarity = process.env.MINT_RARITY
+    ? parseInt(process.env.MINT_RARITY)
+    : null;
   let amount = process.env.MINT_AMOUNT ? parseInt(process.env.MINT_AMOUNT) : 1;
-  
+
   console.log("Environment variables:");
   console.log("  MINT_TO:", toAddress || "not set");
   console.log("  MINT_RARITY:", rarity !== null ? rarity : "not set");
   console.log("  MINT_AMOUNT:", amount);
-  
+
   // If env vars not set, show usage
   if (!toAddress || rarity === null) {
     console.log("\n📖 Usage with environment variables (PowerShell):");
-    console.log('  $env:MINT_TO="0x..."; $env:MINT_RARITY="0"; $env:MINT_AMOUNT="1"; npx hardhat run scripts/mintFish.js --network baseSepolia');
+    console.log(
+      '  $env:MINT_TO="0x..."; $env:MINT_RARITY="0"; $env:MINT_AMOUNT="1"; npx hardhat run scripts/mintFish.js --network baseSepolia',
+    );
     console.log("\n📖 Usage with environment variables (Bash):");
-    console.log('  MINT_TO=0x... MINT_RARITY=0 MINT_AMOUNT=1 npx hardhat run scripts/mintFish.js --network baseSepolia');
+    console.log(
+      "  MINT_TO=0x... MINT_RARITY=0 MINT_AMOUNT=1 npx hardhat run scripts/mintFish.js --network baseSepolia",
+    );
     console.log("\nRarity values:");
     console.log("  0 = Common");
     console.log("  1 = Rare");
@@ -35,38 +44,98 @@ async function main() {
     console.log("  4 = Mythic");
     console.log("\nExamples:");
     console.log("  # Mint 1 Common fish");
-    console.log('  $env:MINT_TO="0x1234..."; $env:MINT_RARITY="0"; npx hardhat run scripts/mintFish.js --network baseSepolia');
+    console.log(
+      '  $env:MINT_TO="0x1234..."; $env:MINT_RARITY="0"; npx hardhat run scripts/mintFish.js --network baseSepolia',
+    );
     console.log("\n  # Mint 5 Rare fish");
-    console.log('  $env:MINT_TO="0x1234..."; $env:MINT_RARITY="1"; $env:MINT_AMOUNT="5"; npx hardhat run scripts/mintFish.js --network baseSepolia');
+    console.log(
+      '  $env:MINT_TO="0x1234..."; $env:MINT_RARITY="1"; $env:MINT_AMOUNT="5"; npx hardhat run scripts/mintFish.js --network baseSepolia',
+    );
     process.exit(0);
   }
 
   // Get deployer account
   const [deployer] = await hre.ethers.getSigners();
   console.log("Deploying with account:", deployer.address);
-  console.log("Account balance:", (await hre.ethers.provider.getBalance(deployer.address)).toString());
+  console.log(
+    "Account balance:",
+    (await hre.ethers.provider.getBalance(deployer.address)).toString(),
+  );
 
-  // Get contract address from deployments
-  const FishNFT = await hre.deployments.get("FishNFT");
-  const fishNFT = await hre.ethers.getContractAt("FishNFT", FishNFT.address);
+  // Get contract address - prefer environment variable, fallback to deployments
+  let fishNFTAddress;
+  if (process.env.FISH_NFT_ADDRESS) {
+    fishNFTAddress = process.env.FISH_NFT_ADDRESS;
+    console.log(
+      "\nUsing FishNFT address from FISH_NFT_ADDRESS env var:",
+      fishNFTAddress,
+    );
+  } else {
+    const FishNFT = await hre.deployments.get("FishNFT");
+    fishNFTAddress = FishNFT.address;
+    console.log("\nUsing FishNFT address from deployments:", fishNFTAddress);
+  }
 
-  console.log("\nFishNFT address:", FishNFT.address);
+  // Verify contract exists at this address
+  const code = await hre.ethers.provider.getCode(fishNFTAddress);
+  if (code === "0x") {
+    console.error("❌ Error: No contract found at address:", fishNFTAddress);
+    console.error("   This address might be from an old deployment.");
+    console.error("\n💡 Solutions:");
+    console.error(
+      "   1. If you redeployed, update deployments/baseSepolia/FishNFT.json",
+    );
+    console.error(
+      "   2. Or use FISH_NFT_ADDRESS env var with the new address:",
+    );
+    console.error(
+      "      FISH_NFT_ADDRESS=0xNewAddress ... npx hardhat run scripts/mintFish.js --network baseSepolia",
+    );
+    process.exit(1);
+  }
+
+  const fishNFT = await hre.ethers.getContractAt("FishNFT", fishNFTAddress);
+  console.log("FishNFT address:", fishNFTAddress);
+
+  // Verify contract is the right type
+  try {
+    const name = await fishNFT.name();
+    const symbol = await fishNFT.symbol();
+    console.log("Contract verified - Name:", name, "Symbol:", symbol);
+  } catch (error) {
+    console.error(
+      "❌ Error: Contract at address doesn't match FishNFT interface",
+    );
+    console.error("   Address:", fishNFTAddress);
+    console.error("   Error:", error.message);
+    console.error("\n💡 This might be an old contract version. Try:");
+    console.error("   1. Recompile: npx hardhat compile");
+    console.error("   2. Use correct address via FISH_NFT_ADDRESS env var");
+    process.exit(1);
+  }
 
   // Check if deployer is owner
   const owner = await fishNFT.owner();
   console.log("Contract owner:", owner);
-  
+
   if (owner.toLowerCase() !== deployer.address.toLowerCase()) {
     console.error("❌ Error: Deployer is not the contract owner!");
     console.error("   Deployer:", deployer.address);
     console.error("   Owner:", owner);
+    console.error("\n💡 Tip: If you redeployed, make sure to:");
+    console.error(
+      "   1. Update deployments/baseSepolia/FishNFT.json with new address",
+    );
+    console.error("   2. Or use FISH_NFT_ADDRESS env var with new address");
     process.exit(1);
   }
 
   // If no arguments provided, show usage
   if (!toAddress || rarity === null) {
     console.log("\n📖 Usage:");
-    console.log("  npx hardhat run scripts/mintFish.js --network baseSepolia -- --to <address> --rarity <0-4> [--amount <number>]");
+    console.log(
+      "  npx hardhat run scripts/mintFish.js --network baseSepolia -- --to <address> --rarity <0-4> [--amount <number>]",
+    );
     console.log("\nRarity values:");
     console.log("  0 = Common");
     console.log("  1 = Rare");
@@ -75,9 +144,13 @@ async function main() {
     console.log("  4 = Mythic");
     console.log("\nExamples:");
     console.log("  # Mint 1 Common fish to address");
-    console.log("  npx hardhat run scripts/mintFish.js --network baseSepolia -- --to 0x1234... --rarity 0");
+    console.log(
+      "  npx hardhat run scripts/mintFish.js --network baseSepolia -- --to 0x1234... --rarity 0",
+    );
     console.log("\n  # Mint 5 Rare fish to address");
-    console.log("  npx hardhat run scripts/mintFish.js --network baseSepolia -- --to 0x1234... --rarity 1 --amount 5");
+    console.log(
+      "  npx hardhat run scripts/mintFish.js --network baseSepolia -- --to 0x1234... --rarity 1 --amount 5",
+    );
     process.exit(0);
   }
 
@@ -107,9 +180,9 @@ async function main() {
       console.log("  Transaction hash:", tx.hash);
       const receipt = await tx.wait();
       console.log("  ✅ Transaction confirmed in block:", receipt.blockNumber);
-      
+
       // Get the token ID from events
-      const event = receipt.logs.find(log => {
+      const event = receipt.logs.find((log) => {
         try {
           const parsed = fishNFT.interface.parseLog(log);
           return parsed && parsed.name === "FishMinted";
@@ -117,10 +190,13 @@ async function main() {
           return false;
         }
       });
-      
+
       if (event) {
         const parsed = fishNFT.interface.parseLog(event);
-        console.log("  🐟 Fish minted! Token ID:", parsed.args.tokenId.toString());
+        console.log(
+          "  🐟 Fish minted! Token ID:",
+          parsed.args.tokenId.toString(),
+        );
       }
     } else {
       // Batch mint
@@ -129,9 +205,9 @@ async function main() {
       console.log("  Transaction hash:", tx.hash);
       const receipt = await tx.wait();
       console.log("  ✅ Transaction confirmed in block:", receipt.blockNumber);
-      
+
       // Get token IDs from events
-      const events = receipt.logs.filter(log => {
+      const events = receipt.logs.filter((log) => {
         try {
           const parsed = fishNFT.interface.parseLog(log);
           return parsed && parsed.name === "FishMinted";
@@ -139,16 +215,18 @@ async function main() {
           return false;
         }
       });
-      
+
       if (events.length > 0) {
         console.log("  🐟 Fish minted! Token IDs:");
         events.forEach((event, index) => {
           const parsed = fishNFT.interface.parseLog(event);
-          console.log(`    ${index + 1}. Token ID: ${parsed.args.tokenId.toString()}`);
+          console.log(
+            `    ${index + 1}. Token ID: ${parsed.args.tokenId.toString()}`,
+          );
         });
       }
     }
-    
+
     console.log("\n✅ Success! Fish minted successfully.");
   } catch (error) {
     console.error("\n❌ Error minting fish:", error.message);
@@ -165,4 +243,3 @@ main()
     console.error(error);
     process.exit(1);
   });
-

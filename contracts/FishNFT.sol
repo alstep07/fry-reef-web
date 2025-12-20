@@ -103,7 +103,8 @@ contract FishNFT is ERC721, ERC721Enumerable, Ownable {
             fish[tokenId] = FishInfo({
                 rarity: _rarity,
                 mintedAt: block.timestamp,
-                lastDustCollectedAt: block.timestamp
+                lastDustCollectedAt: block.timestamp,
+                lastEggLaidAt: 0
             });
 
             emit FishMinted(_to, tokenId, _rarity);
@@ -156,7 +157,8 @@ contract FishNFT is ERC721, ERC721Enumerable, Ownable {
         fish[tokenId] = FishInfo({
             rarity: rarity,
             mintedAt: block.timestamp,
-            lastDustCollectedAt: block.timestamp
+            lastDustCollectedAt: block.timestamp,
+            lastEggLaidAt: 0
         });
 
         emit FishMinted(_to, tokenId, rarity);
