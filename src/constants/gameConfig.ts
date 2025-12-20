@@ -60,7 +60,7 @@ export const RARITY_CONFIG = {
  */
 export const FISH_IMAGES = {
   [Rarity.Common]: "/images/fish/common.webp",
-  [Rarity.Rare]: "/images/fish/rare.webp",
+  [Rarity.Rare]: "/images/fish/rare.png",
   [Rarity.Epic]: "/images/fish/epic.webp",
   [Rarity.Legendary]: "/images/fish/legendary.webp",
   [Rarity.Mythic]: "/images/fish/mythic.webp",
@@ -84,7 +84,7 @@ export function getFishImage(rarity: Rarity): string {
 export const STARTER_PACK = {
   eggs: 1,
   pearlShards: 2,
-  spawnDust: 50,
+  spawnDust: 100,
 } as const;
 
 /**
@@ -137,6 +137,27 @@ export const MERGE = {
     pearlShardsReward: 3,
     eggsReward: 2,
     nextRarity: Rarity.Mythic,
+  },
+} as const;
+
+/**
+ * Burn rewards (Fish → Spawn Dust)
+ */
+export const BURN = {
+  [Rarity.Common]: {
+    spawnDustReward: 50,
+  },
+  [Rarity.Rare]: {
+    spawnDustReward: 100,
+  },
+  [Rarity.Epic]: {
+    spawnDustReward: 250,
+  },
+  [Rarity.Legendary]: {
+    spawnDustReward: 500,
+  },
+  [Rarity.Mythic]: {
+    spawnDustReward: 1000,
   },
 } as const;
 

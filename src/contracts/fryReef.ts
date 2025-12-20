@@ -75,6 +75,7 @@ export const fryReefAbi = [
           { name: "totalCheckIns", type: "uint256" },
           { name: "pearlShards", type: "uint256" },
           { name: "spawnDust", type: "uint256" },
+          { name: "reefCapacity", type: "uint256" },
           { name: "starterPackClaimed", type: "bool" },
         ],
       },
@@ -150,6 +151,41 @@ export const fryReefAbi = [
   },
   {
     type: "function",
+    name: "getTimeUntilNextEgg",
+    inputs: [{ name: "_fishId", type: "uint256" }],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "canLayEgg",
+    inputs: [{ name: "_fishId", type: "uint256" }],
+    outputs: [{ type: "bool" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getReefCapacity",
+    inputs: [{ name: "_user", type: "address" }],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getExpansionCost",
+    inputs: [{ name: "_user", type: "address" }],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "expandReef",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
     name: "collectSpawnDust",
     inputs: [],
     outputs: [],
@@ -162,6 +198,13 @@ export const fryReefAbi = [
       { name: "_fishId1", type: "uint256" },
       { name: "_fishId2", type: "uint256" },
     ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "burnFish",
+    inputs: [{ name: "_fishIds", type: "uint256[]" }],
     outputs: [],
     stateMutability: "nonpayable",
   },
@@ -202,6 +245,7 @@ export interface UserInfo {
   totalCheckIns: bigint;
   pearlShards: bigint;
   spawnDust: bigint;
+  reefCapacity: bigint;
   starterPackClaimed: boolean;
 }
 

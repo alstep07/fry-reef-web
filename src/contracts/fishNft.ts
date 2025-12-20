@@ -42,6 +42,7 @@ export const fishNftAbi = [
           { name: "rarity", type: "uint8" },
           { name: "mintedAt", type: "uint256" },
           { name: "lastDustCollectedAt", type: "uint256" },
+          { name: "lastEggLaidAt", type: "uint256" },
         ],
       },
     ],
@@ -100,6 +101,7 @@ export interface FishInfo {
   rarity: number;
   mintedAt: bigint;
   lastDustCollectedAt: bigint;
+  lastEggLaidAt: bigint;
 }
 
 // Rarity enum matching contract

@@ -43,6 +43,7 @@ export function useFryReef() {
     chainId: DEFAULT_CHAIN_ID,
     query: {
       enabled: !!address && !!contractAddress && isOnCorrectNetwork,
+      refetchInterval: 10000, // Refetch every 10 seconds to keep data fresh
     },
   }) as { data: UserInfo | undefined; isLoading: boolean; refetch: () => void };
 
@@ -71,6 +72,32 @@ export function useFryReef() {
         enabled: !!address && !!contractAddress && isOnCorrectNetwork,
       },
     }) as { data: boolean | undefined; refetch: () => void };
+
+  // Read reef capacity
+  const { data: reefCapacityData, refetch: refetchReefCapacity } =
+    useReadContract({
+      address: contractAddress,
+      abi: fryReefAbi,
+      functionName: "getReefCapacity",
+      args: address ? [address] : undefined,
+      chainId: DEFAULT_CHAIN_ID,
+      query: {
+        enabled: !!address && !!contractAddress && isOnCorrectNetwork,
+      },
+    }) as { data: bigint | undefined; refetch: () => void };
+
+  // Read expansion cost
+  const { data: expansionCostData, refetch: refetchExpansionCost } =
+    useReadContract({
+      address: contractAddress,
+      abi: fryReefAbi,
+      functionName: "getExpansionCost",
+      args: address ? [address] : undefined,
+      chainId: DEFAULT_CHAIN_ID,
+      query: {
+        enabled: !!address && !!contractAddress && isOnCorrectNetwork,
+      },
+    }) as { data: bigint | undefined; refetch: () => void };
 
   // Use data directly instead of syncing with state
   const checkedInToday = checkedInTodayData ?? false;
@@ -275,6 +302,66 @@ export function useFryReef() {
     }
   };
 
+  // Expand reef
+  const expandReef = async () => {
+    if (!contractAddress || !address) return;
+
+    if (!isOnCorrectNetwork) {
+      try {
+        await switchChain({ chainId: baseSepolia.id });
+        return;
+      } catch (error) {
+        console.error("Failed to switch network:", error);
+        return;
+      }
+    }
+
+    try {
+      writeContract({
+        address: contractAddress,
+        abi: fryReefAbi,
+        functionName: "expandReef",
+        args: [],
+        chainId: DEFAULT_CHAIN_ID,
+      });
+    } catch (error) {
+      console.error("Expand reef error:", error);
+    }
+  };
+
+  // Burn fish
+  const burnFish = async (fishIds: number[]) => {
+    if (!contractAddress || !address || fishIds.length === 0) return;
+
+    if (!isOnCorrectNetwork) {
+      try {
+        await switchChain({ chainId: baseSepolia.id });
+        return;
+      } catch (error) {
+        console.error("Failed to switch network:", error);
+        return;
+      }
+    }
+
+    try {
+      const fishIdsBigInt = fishIds.map((id) => BigInt(id));
+      console.log("Calling burnFish with:", {
+        fishIds,
+        fishIdsBigInt,
+        contractAddress,
+      });
+      writeContract({
+        address: contractAddress,
+        abi: fryReefAbi,
+        functionName: "burnFish",
+        args: [fishIdsBigInt],
+        chainId: DEFAULT_CHAIN_ID,
+      });
+    } catch (error) {
+      console.error("Burn fish error:", error);
+    }
+  };
+
   // Switch network helper
   const switchToBaseSepolia = async () => {
     try {
@@ -287,14 +374,45 @@ export function useFryReef() {
   // Refetch after successful transaction
   useEffect(() => {
     if (isSuccess && hash) {
-      const timer = setTimeout(() => {
+      // Immediate refetch
+      refetchUserInfo();
+      refetchCheckedInToday();
+      refetchStarterPack();
+      refetchReefCapacity();
+      refetchExpansionCost();
+
+      // Additional refetch after delay to ensure data is updated
+      const timer1 = setTimeout(() => {
         refetchUserInfo();
         refetchCheckedInToday();
         refetchStarterPack();
+        refetchReefCapacity();
+        refetchExpansionCost();
       }, 2000);
-      return () => clearTimeout(timer);
+
+      // Final refetch after longer delay
+      const timer2 = setTimeout(() => {
+        refetchUserInfo();
+        refetchCheckedInToday();
+        refetchStarterPack();
+        refetchReefCapacity();
+        refetchExpansionCost();
+      }, 5000);
+
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+      };
     }
-  }, [isSuccess, hash, refetchUserInfo, refetchCheckedInToday, refetchStarterPack]);
+  }, [
+    isSuccess,
+    hash,
+    refetchUserInfo,
+    refetchCheckedInToday,
+    refetchStarterPack,
+    refetchReefCapacity,
+    refetchExpansionCost,
+  ]);
 
   // Filter out user rejection errors
   const getFilteredError = () => {
@@ -317,6 +435,16 @@ export function useFryReef() {
     return writeError as Error;
   };
 
+  // Debug: log userInfo to check data
+  if (userInfo) {
+    console.log("UserInfo from contract:", {
+      pearlShards: userInfo.pearlShards?.toString(),
+      spawnDust: userInfo.spawnDust?.toString(),
+      reefCapacity: userInfo.reefCapacity?.toString(),
+      starterPackClaimed: userInfo.starterPackClaimed,
+    });
+  }
+
   return {
     // User info
     userInfo,
@@ -324,38 +452,44 @@ export function useFryReef() {
     spawnDust: userInfo?.spawnDust ? Number(userInfo.spawnDust) : 0,
     currentStreak: userInfo?.currentStreak ? Number(userInfo.currentStreak) : 0,
     totalCheckIns: userInfo?.totalCheckIns ? Number(userInfo.totalCheckIns) : 0,
-    
+
     // Starter pack - keep undefined until data loads
     starterPackClaimed: starterPackClaimedData,
     claimStarterPack,
-    
+
     // Check-in
     checkedInToday,
     checkIn,
-    
+
     // Spawn dust
     collectSpawnDust,
-    
+
     // Incubation
     startIncubation,
     hatchEgg,
     layEgg,
     mergeFish,
-    
+    burnFish,
+
+    // Reef expansion
+    reefCapacity: reefCapacityData ? Number(reefCapacityData) : 3, // Default to 3
+    expansionCost: expansionCostData ? Number(expansionCostData) : null,
+    expandReef,
+    refetchReefCapacity,
+
     // Refetch
     refetchUserInfo,
-    
+
     // Status
     isLoading: isLoadingUserInfo || isConfirming,
     isWriting,
     isSuccess,
     error: getFilteredError(),
     resetWrite,
-    
+
     // Network
     isOnCorrectNetwork,
     switchToBaseSepolia,
     isConfigured,
   };
 }
-

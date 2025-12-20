@@ -314,9 +314,6 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
                 className="object-contain opacity-50"
               />
             </div>
-            <h3 className="mb-2 text-base font-medium text-white">
-              No Mergeable Fish
-            </h3>
             <p className="text-sm text-slate-400">
               You need at least 2 fish of the same rarity (except Mythic) to
               merge

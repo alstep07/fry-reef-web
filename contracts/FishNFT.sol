@@ -37,6 +37,7 @@ contract FishNFT is ERC721, ERC721Enumerable, Ownable {
         Rarity rarity;
         uint256 mintedAt;
         uint256 lastDustCollectedAt;
+        uint256 lastEggLaidAt;
     }
 
     mapping(uint256 => FishInfo) public fish;
@@ -77,7 +78,8 @@ contract FishNFT is ERC721, ERC721Enumerable, Ownable {
         fish[tokenId] = FishInfo({
             rarity: _rarity,
             mintedAt: block.timestamp,
-            lastDustCollectedAt: block.timestamp
+            lastDustCollectedAt: block.timestamp,
+            lastEggLaidAt: 0
         });
 
         emit FishMinted(_to, tokenId, _rarity);
@@ -101,7 +103,8 @@ contract FishNFT is ERC721, ERC721Enumerable, Ownable {
             fish[tokenId] = FishInfo({
                 rarity: _rarity,
                 mintedAt: block.timestamp,
-                lastDustCollectedAt: block.timestamp
+                lastDustCollectedAt: block.timestamp,
+                lastEggLaidAt: 0
             });
 
             emit FishMinted(_to, tokenId, _rarity);
@@ -154,7 +157,8 @@ contract FishNFT is ERC721, ERC721Enumerable, Ownable {
         fish[tokenId] = FishInfo({
             rarity: rarity,
             mintedAt: block.timestamp,
-            lastDustCollectedAt: block.timestamp
+            lastDustCollectedAt: block.timestamp,
+            lastEggLaidAt: 0
         });
 
         emit FishMinted(_to, tokenId, rarity);
@@ -175,7 +179,8 @@ contract FishNFT is ERC721, ERC721Enumerable, Ownable {
         fish[tokenId] = FishInfo({
             rarity: _rarity,
             mintedAt: block.timestamp,
-            lastDustCollectedAt: block.timestamp
+            lastDustCollectedAt: block.timestamp,
+            lastEggLaidAt: 0
         });
 
         emit FishMinted(_to, tokenId, _rarity);
@@ -258,6 +263,44 @@ contract FishNFT is ERC721, ERC721Enumerable, Ownable {
         }
         
         return totalDust;
+    }
+
+    // ============ Egg Laying ============
+
+    /**
+     * @notice Update last egg laid timestamp for a fish
+     * @param _tokenId The fish token ID
+     */
+    function updateLastEggLaidAt(uint256 _tokenId) external onlyGameContract {
+        require(_exists(_tokenId), "Fish does not exist");
+        fish[_tokenId].lastEggLaidAt = block.timestamp;
+    }
+
+    /**
+     * @notice Check if fish can lay an egg (24 hours passed since last egg)
+     * @param _tokenId The fish token ID
+     * @return canLay True if fish can lay an egg
+     */
+    function canLayEgg(uint256 _tokenId) external view returns (bool) {
+        if (!_exists(_tokenId)) return false;
+        FishInfo memory fishInfo = fish[_tokenId];
+        if (fishInfo.lastEggLaidAt == 0) return true; // Never laid an egg
+        return block.timestamp >= fishInfo.lastEggLaidAt + 1 days;
+    }
+
+    /**
+     * @notice Get time remaining until fish can lay next egg (in seconds)
+     * @param _tokenId The fish token ID
+     * @return timeRemaining Time in seconds until next egg can be laid (0 if ready)
+     */
+    function getTimeUntilNextEgg(uint256 _tokenId) external view returns (uint256) {
+        if (!_exists(_tokenId)) return type(uint256).max;
+        FishInfo memory fishInfo = fish[_tokenId];
+        if (fishInfo.lastEggLaidAt == 0) return 0; // Never laid an egg, can lay now
+        
+        uint256 nextEggTime = fishInfo.lastEggLaidAt + 1 days;
+        if (block.timestamp >= nextEggTime) return 0;
+        return nextEggTime - block.timestamp;
     }
 
     // ============ View Functions ============
