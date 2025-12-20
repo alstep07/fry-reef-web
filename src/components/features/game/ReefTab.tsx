@@ -206,6 +206,7 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
   const [isReleaseMode, setIsReleaseMode] = useState(false);
   const [selectedFishForRelease, setSelectedFishForRelease] = useState<number[]>([]);
   const [showReleaseConfirmModal, setShowReleaseConfirmModal] = useState(false);
+  const [releasingFishIds, setReleasingFishIds] = useState<Set<number>>(new Set());
 
   // Show modal when egg is successfully laid
   useEffect(() => {
@@ -219,12 +220,15 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
     setPrevIsWriting(isWriting);
   }, [isWriting, prevIsWriting, pendingLayEgg, isSuccess]);
 
+
   // Refetch after successful transaction
   useEffect(() => {
     if (isSuccess) {
       const timer = setTimeout(() => {
         refetch();
         refetchUserInfo();
+        // Clear releasing fish IDs after refetch
+        setReleasingFishIds(new Set());
       }, 2000);
       return () => clearTimeout(timer);
     }
@@ -255,7 +259,13 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
   const confirmRelease = () => {
     if (selectedFishForRelease.length === 0) return;
     setShowReleaseConfirmModal(false);
-    burnFish(selectedFishForRelease);
+    const fishToRelease = [...selectedFishForRelease];
+    // Mark fish as releasing to show skeleton
+    setReleasingFishIds(new Set(fishToRelease));
+    // Clear release mode immediately after starting the transaction
+    setIsReleaseMode(false);
+    setSelectedFishForRelease([]);
+    burnFish(fishToRelease);
   };
 
   const cancelReleaseMode = () => {
@@ -479,6 +489,31 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
                   return b.info.rarity - a.info.rarity;
                 })
                 .map((f) => {
+                  // Show skeleton for releasing fish
+                  if (releasingFishIds.has(f.tokenId)) {
+                    return (
+                      <div
+                        key={f.tokenId}
+                        className="group relative rounded-xl sm:rounded-2xl border-2 border-white/10 bg-white/5 p-3 sm:p-4 backdrop-blur-sm animate-pulse"
+                      >
+                        {/* Token ID skeleton */}
+                        <div className="absolute top-3 left-3 h-4 w-8 rounded-full bg-white/10" />
+
+                        {/* Fish Image skeleton */}
+                        <div className="mx-auto mb-2 sm:mb-3 h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-white/10" />
+
+                        {/* Fish Info skeleton */}
+                        <div className="relative text-center">
+                          {/* Rarity badge skeleton */}
+                          <div className="mb-1 h-5 w-16 mx-auto rounded-full bg-white/5" />
+
+                          {/* Dust stats skeleton */}
+                          <div className="mt-1 sm:mt-2 h-3 w-12 mx-auto rounded bg-white/5" />
+                        </div>
+                      </div>
+                    );
+                  }
+
                   const rarity = rarityMap[f.info.rarity] || Rarity.Common;
 
                   return (
@@ -497,6 +532,31 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
                     />
                   );
                 })}
+
+              {/* Skeleton cards for releasing fish that are no longer in the list */}
+              {Array.from(releasingFishIds)
+                .filter(id => !fish.some(f => f.tokenId === id))
+                .map((id) => (
+                  <div
+                    key={id}
+                    className="group relative rounded-xl sm:rounded-2xl border-2 border-white/10 bg-white/5 p-3 sm:p-4 backdrop-blur-sm animate-pulse"
+                  >
+                    {/* Token ID skeleton */}
+                    <div className="absolute top-3 left-3 h-4 w-8 rounded-full bg-white/10" />
+
+                    {/* Fish Image skeleton */}
+                    <div className="mx-auto mb-2 sm:mb-3 h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-white/10" />
+
+                    {/* Fish Info skeleton */}
+                    <div className="relative text-center">
+                      {/* Rarity badge skeleton */}
+                      <div className="mb-1 h-5 w-16 mx-auto rounded-full bg-white/5" />
+
+                      {/* Dust stats skeleton */}
+                      <div className="mt-1 sm:mt-2 h-3 w-12 mx-auto rounded bg-white/5" />
+                    </div>
+                  </div>
+                ))}
             </div>
 
             {/* Release Button */}
