@@ -202,6 +202,7 @@ export interface UserInfo {
   totalCheckIns: bigint;
   pearlShards: bigint;
   spawnDust: bigint;
+  reefCapacity: bigint;
   starterPackClaimed: boolean;
 }
 

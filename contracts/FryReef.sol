@@ -30,6 +30,21 @@ contract FryReef {
     uint256 public constant MERGE_EPIC_COST = 200;
     uint256 public constant MERGE_LEGENDARY_COST = 400;
 
+    // Reef expansion costs (Pearl Shards)
+    uint256 public constant INITIAL_REEF_CAPACITY = 3;
+    uint256 public constant EXPANSION_COST_1 = 1;
+    uint256 public constant EXPANSION_COST_2 = 2;
+    uint256 public constant EXPANSION_COST_3 = 4;
+    uint256 public constant EXPANSION_COST_4 = 8;
+    uint256 public constant EXPANSION_COST_5 = 16;
+
+    // Burn rewards (Spawn Dust)
+    uint256 public constant BURN_COMMON_REWARD = 50;
+    uint256 public constant BURN_RARE_REWARD = 100;
+    uint256 public constant BURN_EPIC_REWARD = 250;
+    uint256 public constant BURN_LEGENDARY_REWARD = 500;
+    uint256 public constant BURN_MYTHIC_REWARD = 1000;
+
     // ============ State ============
     struct UserInfo {
         uint256 lastCheckIn;
@@ -37,6 +52,7 @@ contract FryReef {
         uint256 totalCheckIns;
         uint256 pearlShards;
         uint256 spawnDust;
+        uint256 reefCapacity;
         bool starterPackClaimed;
     }
 
@@ -48,6 +64,8 @@ contract FryReef {
     event StarterPackClaimed(address indexed user, uint256 eggId, uint256 pearlShards, uint256 spawnDust);
     event ResourcesUpdated(address indexed user, uint256 pearlShards, uint256 spawnDust);
     event FishMerged(address indexed user, uint256 fishId1, uint256 fishId2, uint256 newFishId, FishNFT.Rarity newRarity, uint256 pearlShardsReward, uint256 eggsReward);
+    event ReefExpanded(address indexed user, uint256 newCapacity, uint256 cost);
+    event FishBurned(address indexed user, uint256 fishId, FishNFT.Rarity rarity, uint256 spawnDustReward);
 
     // ============ Constructor ============
     constructor(address _eggNFT, address _fishNFT) {
@@ -68,6 +86,7 @@ contract FryReef {
         user.starterPackClaimed = true;
         user.pearlShards += STARTER_PACK_PEARL_SHARDS;
         user.spawnDust += STARTER_PACK_SPAWN_DUST;
+        user.reefCapacity = INITIAL_REEF_CAPACITY;
 
         // Mint first egg
         uint256 eggId = eggNFT.mint(msg.sender);
@@ -279,6 +298,117 @@ contract FryReef {
         emit ResourcesUpdated(msg.sender, user.pearlShards, user.spawnDust);
     }
 
+    // ============ Burn Fish ============
+
+    /**
+     * @notice Burn multiple fish to receive Spawn Dust
+     * @param _fishIds Array of fish token IDs to burn
+     */
+    function burnFish(uint256[] calldata _fishIds) external {
+        UserInfo storage user = users[msg.sender];
+        require(_fishIds.length > 0, "No fish to burn");
+        
+        uint256 totalReward = 0;
+        
+        for (uint256 i = 0; i < _fishIds.length; i++) {
+            uint256 fishId = _fishIds[i];
+            
+            // Check ownership
+            require(fishNFT.ownerOf(fishId) == msg.sender, "Not fish owner");
+            
+            // Get fish info
+            FishNFT.FishInfo memory fish = fishNFT.getFishInfo(fishId);
+            FishNFT.Rarity rarity = fish.rarity;
+            
+            // Determine burn reward based on rarity
+            uint256 spawnDustReward;
+            
+            if (rarity == FishNFT.Rarity.Common) {
+                spawnDustReward = BURN_COMMON_REWARD;
+            } else if (rarity == FishNFT.Rarity.Rare) {
+                spawnDustReward = BURN_RARE_REWARD;
+            } else if (rarity == FishNFT.Rarity.Epic) {
+                spawnDustReward = BURN_EPIC_REWARD;
+            } else if (rarity == FishNFT.Rarity.Legendary) {
+                spawnDustReward = BURN_LEGENDARY_REWARD;
+            } else if (rarity == FishNFT.Rarity.Mythic) {
+                spawnDustReward = BURN_MYTHIC_REWARD;
+            } else {
+                revert("Invalid rarity");
+            }
+            
+            // Burn the fish
+            fishNFT.burn(fishId);
+            
+            totalReward += spawnDustReward;
+            
+            emit FishBurned(msg.sender, fishId, rarity, spawnDustReward);
+        }
+        
+        // Add total Spawn Dust reward
+        user.spawnDust += totalReward;
+        
+        emit ResourcesUpdated(msg.sender, user.pearlShards, user.spawnDust);
+    }
+
+    // ============ Reef Expansion ============
+
+    /**
+     * @notice Expand reef capacity
+     * @dev Costs increase exponentially: 1, 2, 4, 8, 16 Pearl Shards
+     */
+    function expandReef() external {
+        UserInfo storage user = users[msg.sender];
+        
+        // Initialize capacity if not set (for users who didn't claim starter pack)
+        if (user.reefCapacity == 0) {
+            user.reefCapacity = INITIAL_REEF_CAPACITY;
+        }
+
+        uint256 currentCapacity = user.reefCapacity;
+        uint256 expansionLevel = currentCapacity - INITIAL_REEF_CAPACITY;
+        uint256 cost;
+
+        // Determine cost based on expansion level
+        if (expansionLevel == 0) {
+            cost = EXPANSION_COST_1;
+        } else if (expansionLevel == 1) {
+            cost = EXPANSION_COST_2;
+        } else if (expansionLevel == 2) {
+            cost = EXPANSION_COST_3;
+        } else if (expansionLevel == 3) {
+            cost = EXPANSION_COST_4;
+        } else if (expansionLevel == 4) {
+            cost = EXPANSION_COST_5;
+        } else {
+            revert("Maximum expansion reached");
+        }
+
+        require(user.pearlShards >= cost, "Not enough Pearl Shards");
+
+        user.pearlShards -= cost;
+        user.reefCapacity += 1;
+
+        emit ReefExpanded(msg.sender, user.reefCapacity, cost);
+        emit ResourcesUpdated(msg.sender, user.pearlShards, user.spawnDust);
+    }
+
+    /**
+     * @notice Get expansion cost for next level
+     */
+    function getExpansionCost(address _user) external view returns (uint256) {
+        UserInfo storage user = users[_user];
+        uint256 currentCapacity = user.reefCapacity == 0 ? INITIAL_REEF_CAPACITY : user.reefCapacity;
+        uint256 expansionLevel = currentCapacity - INITIAL_REEF_CAPACITY;
+
+        if (expansionLevel == 0) return EXPANSION_COST_1;
+        if (expansionLevel == 1) return EXPANSION_COST_2;
+        if (expansionLevel == 2) return EXPANSION_COST_3;
+        if (expansionLevel == 3) return EXPANSION_COST_4;
+        if (expansionLevel == 4) return EXPANSION_COST_5;
+        return type(uint256).max; // Max expansion reached
+    }
+
     // ============ View Functions ============
 
     /**
@@ -294,6 +424,14 @@ contract FryReef {
     function getResources(address _user) external view returns (uint256 pearlShards, uint256 spawnDust) {
         UserInfo storage user = users[_user];
         return (user.pearlShards, user.spawnDust);
+    }
+
+    /**
+     * @notice Get user reef capacity
+     */
+    function getReefCapacity(address _user) external view returns (uint256) {
+        UserInfo storage user = users[_user];
+        return user.reefCapacity == 0 ? INITIAL_REEF_CAPACITY : user.reefCapacity;
     }
 
     // ============ Internal ============

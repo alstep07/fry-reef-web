@@ -72,6 +72,31 @@ export function useFryReef() {
       },
     }) as { data: boolean | undefined; refetch: () => void };
 
+  // Read reef capacity
+  const { data: reefCapacityData, refetch: refetchReefCapacity } =
+    useReadContract({
+      address: contractAddress,
+      abi: fryReefAbi,
+      functionName: "getReefCapacity",
+      args: address ? [address] : undefined,
+      chainId: DEFAULT_CHAIN_ID,
+      query: {
+        enabled: !!address && !!contractAddress && isOnCorrectNetwork,
+      },
+    }) as { data: bigint | undefined; refetch: () => void };
+
+  // Read expansion cost
+  const { data: expansionCostData } = useReadContract({
+    address: contractAddress,
+    abi: fryReefAbi,
+    functionName: "getExpansionCost",
+    args: address ? [address] : undefined,
+    chainId: DEFAULT_CHAIN_ID,
+    query: {
+      enabled: !!address && !!contractAddress && isOnCorrectNetwork,
+    },
+  }) as { data: bigint | undefined };
+
   // Use data directly instead of syncing with state
   const checkedInToday = checkedInTodayData ?? false;
 
@@ -275,6 +300,60 @@ export function useFryReef() {
     }
   };
 
+  // Expand reef
+  const expandReef = async () => {
+    if (!contractAddress || !address) return;
+
+    if (!isOnCorrectNetwork) {
+      try {
+        await switchChain({ chainId: baseSepolia.id });
+        return;
+      } catch (error) {
+        console.error("Failed to switch network:", error);
+        return;
+      }
+    }
+
+    try {
+      writeContract({
+        address: contractAddress,
+        abi: fryReefAbi,
+        functionName: "expandReef",
+        args: [],
+        chainId: DEFAULT_CHAIN_ID,
+      });
+    } catch (error) {
+      console.error("Expand reef error:", error);
+    }
+  };
+
+  // Burn fish
+  const burnFish = async (fishIds: number[]) => {
+    if (!contractAddress || !address || fishIds.length === 0) return;
+
+    if (!isOnCorrectNetwork) {
+      try {
+        await switchChain({ chainId: baseSepolia.id });
+        return;
+      } catch (error) {
+        console.error("Failed to switch network:", error);
+        return;
+      }
+    }
+
+    try {
+      writeContract({
+        address: contractAddress,
+        abi: fryReefAbi,
+        functionName: "burnFish",
+        args: [fishIds.map(id => BigInt(id))],
+        chainId: DEFAULT_CHAIN_ID,
+      });
+    } catch (error) {
+      console.error("Burn fish error:", error);
+    }
+  };
+
   // Switch network helper
   const switchToBaseSepolia = async () => {
     try {
@@ -291,10 +370,11 @@ export function useFryReef() {
         refetchUserInfo();
         refetchCheckedInToday();
         refetchStarterPack();
+        refetchReefCapacity();
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [isSuccess, hash, refetchUserInfo, refetchCheckedInToday, refetchStarterPack]);
+  }, [isSuccess, hash, refetchUserInfo, refetchCheckedInToday, refetchStarterPack, refetchReefCapacity]);
 
   // Filter out user rejection errors
   const getFilteredError = () => {
@@ -341,6 +421,13 @@ export function useFryReef() {
     hatchEgg,
     layEgg,
     mergeFish,
+    burnFish,
+    
+    // Reef expansion
+    reefCapacity: reefCapacityData ? Number(reefCapacityData) : 3, // Default to 3
+    expansionCost: expansionCostData ? Number(expansionCostData) : null,
+    expandReef,
+    refetchReefCapacity,
     
     // Refetch
     refetchUserInfo,

@@ -141,6 +141,27 @@ export const MERGE = {
 } as const;
 
 /**
+ * Burn rewards (Fish → Spawn Dust)
+ */
+export const BURN = {
+  [Rarity.Common]: {
+    spawnDustReward: 50,
+  },
+  [Rarity.Rare]: {
+    spawnDustReward: 100,
+  },
+  [Rarity.Epic]: {
+    spawnDustReward: 250,
+  },
+  [Rarity.Legendary]: {
+    spawnDustReward: 500,
+  },
+  [Rarity.Mythic]: {
+    spawnDustReward: 1000,
+  },
+} as const;
+
+/**
  * Resource types
  */
 export enum Resource {
