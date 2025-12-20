@@ -16,9 +16,10 @@ interface EggCardProps {
   onHatch: (tokenId: number) => void;
   isLoading: boolean;
   pearlShards: number;
+  hasSpace: boolean;
 }
 
-function EggCard({ egg, onIncubate, onHatch, isLoading, pearlShards }: EggCardProps) {
+function EggCard({ egg, onIncubate, onHatch, isLoading, pearlShards, hasSpace }: EggCardProps) {
   const { tokenId, info } = egg;
 
   // Initialize with safe values to avoid hydration mismatch
@@ -173,12 +174,13 @@ function EggCard({ egg, onIncubate, onHatch, isLoading, pearlShards }: EggCardPr
             )}
             <button
               onClick={() => onHatch(tokenId)}
-              disabled={isLoading || timeLeft > 0}
+              disabled={isLoading || timeLeft > 0 || !hasSpace}
               className={`mt-2 w-full cursor-pointer rounded-lg px-3 py-2 text-xs font-medium text-white transition disabled:cursor-not-allowed disabled:bg-slate-600 ${
-                timeLeft <= 0 ? "bg-green-500 hover:bg-green-400" : "bg-slate-600"
+                timeLeft <= 0 && hasSpace ? "bg-green-500 hover:bg-green-400" : "bg-slate-600"
               }`}
+              title={!hasSpace ? "Reef capacity full" : undefined}
             >
-              {isLoading ? "..." : "Hatch"}
+              {isLoading ? "..." : !hasSpace ? "No space" : "Hatch"}
             </button>
           </>
         )}
@@ -203,7 +205,7 @@ interface NestTabProps {
 export function NestTab({ onGoToReef }: NestTabProps) {
   const { address } = useAccount();
   const { eggs, eggCount, refetch, isLoading: isEggsLoading } = useEggs();
-  const { pearlShards, isWriting, isSuccess, startIncubation, hatchEgg } = useFryReef();
+  const { pearlShards, isWriting, isSuccess, startIncubation, hatchEgg, reefCapacity } = useFryReef();
 
   // Modal state
   const [showHatchModal, setShowHatchModal] = useState(false);
@@ -222,6 +224,10 @@ export function NestTab({ onGoToReef }: NestTabProps) {
       enabled: !!address && !!FISH_NFT_ADDRESS,
     },
   });
+
+  // Calculate fish count
+  const fishCount = fishIds ? (fishIds as bigint[]).length : 0;
+  const hasSpace = fishCount < reefCapacity;
 
   // Track fish count before hatch
   const [fishCountBefore, setFishCountBefore] = useState<number | null>(null);
@@ -354,6 +360,7 @@ export function NestTab({ onGoToReef }: NestTabProps) {
                 onHatch={handleHatch}
                 isLoading={isWriting}
                 pearlShards={pearlShards}
+                hasSpace={hasSpace}
               />
             ))}
           </div>

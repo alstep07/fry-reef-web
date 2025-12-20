@@ -173,6 +173,11 @@ contract FryReef {
         require(eggNFT.ownerOf(_eggId) == msg.sender, "Not egg owner");
         require(eggNFT.canHatch(_eggId), "Cannot hatch yet");
 
+        UserInfo storage user = users[msg.sender];
+        uint256 currentCapacity = user.reefCapacity == 0 ? INITIAL_REEF_CAPACITY : user.reefCapacity;
+        uint256 currentFishCount = fishNFT.balanceOf(msg.sender);
+        require(currentFishCount < currentCapacity, "Reef capacity full");
+
         // Burn egg
         eggNFT.burn(_eggId);
 
