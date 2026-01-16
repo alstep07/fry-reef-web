@@ -108,13 +108,15 @@ export function useFryReef() {
   // ISOLATED TRANSACTIONS - Each has its own state
   // ============================================================
 
-  // Refetch all data helper
+  // Refetch all data helper with delay for RPC sync
   const refetchAllData = useCallback(() => {
-    refetchUserInfo();
-    refetchCheckedInToday();
-    refetchStarterPack();
-    refetchReefCapacity();
-    refetchExpansionCost();
+    setTimeout(() => {
+      refetchUserInfo();
+      refetchCheckedInToday();
+      refetchStarterPack();
+      refetchReefCapacity();
+      refetchExpansionCost();
+    }, 2000);
   }, [refetchUserInfo, refetchCheckedInToday, refetchStarterPack, refetchReefCapacity, refetchExpansionCost]);
 
   // Starter pack transaction
