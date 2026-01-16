@@ -1,7 +1,7 @@
 "use client";
 
 import { useAccount, useReadContract, useReadContracts } from "wagmi";
-import { baseSepolia } from "wagmi/chains";
+import { base } from "wagmi/chains";
 import { fishNftAbi, FISH_NFT_ADDRESS, type FishInfo } from "@/contracts/fishNft";
 import { fryReefAbi, FRYREEF_ADDRESS } from "@/contracts/fryReef";
 
@@ -33,7 +33,7 @@ export function useFish() {
     abi: fishNftAbi,
     functionName: "getFishByOwner",
     args: address ? [address] : undefined,
-    chainId: baseSepolia.id,
+    chainId: base.id,
     query: {
       enabled: !!address && !!contractAddress,
     },
@@ -49,7 +49,7 @@ export function useFish() {
     abi: fryReefAbi,
     functionName: "getPendingSpawnDust",
     args: address ? [address] : undefined,
-    chainId: baseSepolia.id,
+    chainId: base.id,
     query: {
       enabled: !!address && !!fryReefAddress,
       refetchInterval: 60000,
@@ -64,7 +64,7 @@ export function useFish() {
     abi: fishNftAbi,
     functionName: "getFishInfo" as const,
     args: [id] as const,
-    chainId: baseSepolia.id,
+    chainId: base.id,
   }));
 
   const pendingDustContracts = fishIdsArray.map((id) => ({
@@ -72,7 +72,7 @@ export function useFish() {
     abi: fishNftAbi,
     functionName: "getPendingDustForFish" as const,
     args: [id] as const,
-    chainId: baseSepolia.id,
+    chainId: base.id,
   }));
 
   const timeUntilNextEggContracts = fishIdsArray.map((id) => ({
@@ -80,7 +80,7 @@ export function useFish() {
     abi: fryReefAbi,
     functionName: "getTimeUntilNextEgg" as const,
     args: [id] as const,
-    chainId: baseSepolia.id,
+    chainId: base.id,
   }));
 
   const {

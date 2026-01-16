@@ -22,7 +22,7 @@ export const SUPPORTED_NETWORKS = {
 /**
  * Default network for contracts
  */
-export const DEFAULT_NETWORK = SUPPORTED_NETWORKS.baseSepolia;
+export const DEFAULT_NETWORK = SUPPORTED_NETWORKS.base;
 
 /**
  * Environment variable keys

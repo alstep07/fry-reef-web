@@ -7,7 +7,7 @@ import {
   useChainId,
   useSwitchChain,
 } from "wagmi";
-import { baseSepolia } from "wagmi/chains";
+import { base } from "wagmi/chains";
 import {
   fryReefAbi,
   FRYREEF_ADDRESS,
@@ -16,14 +16,14 @@ import {
 } from "@/contracts/fryReef";
 import { useTransaction } from "./useTransaction";
 
-const DEFAULT_CHAIN_ID = baseSepolia.id;
+const DEFAULT_CHAIN_ID = base.id;
 
 export function useFryReef() {
   const { address, chainId: currentChainId } = useAccount();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
 
-  const isOnCorrectNetwork = (currentChainId || chainId) === baseSepolia.id;
+  const isOnCorrectNetwork = (currentChainId || chainId) === base.id;
   const isConfigured = isFryReefConfigured();
   const contractAddress = isConfigured
     ? (FRYREEF_ADDRESS as `0x${string}`)
@@ -254,9 +254,9 @@ export function useFryReef() {
   }, [contractAddress, burnTx]);
 
   // Switch network helper
-  const switchToBaseSepolia = useCallback(async () => {
+  const switchToBase = useCallback(async () => {
     try {
-      await switchChain({ chainId: baseSepolia.id });
+      await switchChain({ chainId: base.id });
     } catch (error) {
       console.error("Failed to switch network:", error);
     }
@@ -326,7 +326,7 @@ export function useFryReef() {
 
     // Network
     isOnCorrectNetwork,
-    switchToBaseSepolia,
+    switchToBase,
     isConfigured,
   };
 }

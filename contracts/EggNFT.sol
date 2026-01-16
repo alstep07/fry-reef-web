@@ -43,9 +43,11 @@ contract EggNFT is ERC721, ERC721Enumerable, Ownable {
     // ============ Admin ============
 
     /**
-     * @notice Set the game contract address
+     * @notice Set the game contract address (can only be set once)
      */
     function setGameContract(address _gameContract) external onlyOwner {
+        require(gameContract == address(0), "Game contract already set");
+        require(_gameContract != address(0), "Invalid address");
         gameContract = _gameContract;
     }
 

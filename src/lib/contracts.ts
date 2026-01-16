@@ -3,19 +3,19 @@
  * @fileoverview Shared utilities for working with smart contracts
  */
 
-import { baseSepolia } from "wagmi/chains";
+import { base } from "wagmi/chains";
 
 /**
  * Supported chains for contracts
  */
 export const CONTRACT_CHAINS = {
-  baseSepolia,
+  base,
 } as const;
 
 /**
  * Default chain ID for contracts
  */
-export const DEFAULT_CHAIN_ID = baseSepolia.id;
+export const DEFAULT_CHAIN_ID = base.id;
 
 /**
  * Get contract address for a given contract name
@@ -34,4 +34,3 @@ export function getContractAddress(
 
   return address;
 }
-

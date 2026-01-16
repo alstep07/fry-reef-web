@@ -58,87 +58,12 @@ contract FishNFT is ERC721, ERC721Enumerable, Ownable {
     // ============ Admin ============
 
     /**
-     * @notice Set the game contract address
+     * @notice Set the game contract address (can only be set once)
      */
     function setGameContract(address _gameContract) external onlyOwner {
+        require(gameContract == address(0), "Game contract already set");
+        require(_gameContract != address(0), "Invalid address");
         gameContract = _gameContract;
-    }
-
-    /**
-     * @notice Admin mint fish with specified rarity (for testing)
-     * @param _to Address to mint to
-     * @param _rarity The rarity of the fish to mint
-     * @return tokenId The minted token ID
-     */
-    function adminMint(address _to, Rarity _rarity) external onlyOwner returns (uint256) {
-        uint256 tokenId = _nextTokenId++;
-        
-        _safeMint(_to, tokenId);
-
-        fish[tokenId] = FishInfo({
-            rarity: _rarity,
-            mintedAt: block.timestamp,
-            lastDustCollectedAt: block.timestamp,
-            lastEggLaidAt: 0
-        });
-
-        emit FishMinted(_to, tokenId, _rarity);
-        return tokenId;
-    }
-
-    /**
-     * @notice Admin mint multiple fish with specified rarity (for testing)
-     * @param _to Address to mint to
-     * @param _rarity The rarity of the fish to mint
-     * @param _amount Number of fish to mint
-     * @return tokenIds Array of minted token IDs
-     */
-    function adminMintBatch(address _to, Rarity _rarity, uint256 _amount) external onlyOwner returns (uint256[] memory) {
-        uint256[] memory tokenIds = new uint256[](_amount);
-        
-        for (uint256 i = 0; i < _amount; i++) {
-            uint256 tokenId = _nextTokenId++;
-            _safeMint(_to, tokenId);
-
-            fish[tokenId] = FishInfo({
-                rarity: _rarity,
-                mintedAt: block.timestamp,
-                lastDustCollectedAt: block.timestamp,
-                lastEggLaidAt: 0
-            });
-
-            emit FishMinted(_to, tokenId, _rarity);
-            tokenIds[i] = tokenId;
-        }
-        
-        return tokenIds;
-    }
-
-    /**
-     * @notice Admin transfer fish to another address (for testing)
-     * @param _from Current owner address
-     * @param _to Recipient address
-     * @param _tokenId The fish token ID to transfer
-     */
-    function adminTransfer(address _from, address _to, uint256 _tokenId) external onlyOwner {
-        require(_exists(_tokenId), "Fish does not exist");
-        require(ownerOf(_tokenId) == _from, "Fish not owned by from address");
-        _transfer(_from, _to, _tokenId);
-    }
-
-    /**
-     * @notice Admin transfer multiple fish to another address (for testing)
-     * @param _from Current owner address
-     * @param _to Recipient address
-     * @param _tokenIds Array of fish token IDs to transfer
-     */
-    function adminTransferBatch(address _from, address _to, uint256[] calldata _tokenIds) external onlyOwner {
-        for (uint256 i = 0; i < _tokenIds.length; i++) {
-            uint256 tokenId = _tokenIds[i];
-            require(_exists(tokenId), "Fish does not exist");
-            require(ownerOf(tokenId) == _from, "Fish not owned by from address");
-            _transfer(_from, _to, tokenId);
-        }
     }
 
     // ============ Minting ============

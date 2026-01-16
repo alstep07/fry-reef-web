@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\Users\\Oleksandr\\Desktop\\projects\\personal\\based-repo\\contracts\\EggNFT.sol": {
-      "lastModificationDate": 1764754476132,
-      "contentHash": "78779a95670a9727ba80a47944c0699a",
+      "lastModificationDate": 1768561516442,
+      "contentHash": "587d879c7dc7f3e57ca6bc200cb9dd49",
       "sourceName": "contracts/EggNFT.sol",
       "solcConfig": {
         "version": "0.8.24",
@@ -816,7 +816,7 @@
       ]
     },
     "C:\\Users\\Oleksandr\\Desktop\\projects\\personal\\based-repo\\contracts\\FryReef.sol": {
-      "lastModificationDate": 1766242215274,
+      "lastModificationDate": 1768556953543,
       "contentHash": "2bb118d715e38a2e16c1519c27a88700",
       "sourceName": "contracts/FryReef.sol",
       "solcConfig": {
@@ -862,8 +862,8 @@
       ]
     },
     "C:\\Users\\Oleksandr\\Desktop\\projects\\personal\\based-repo\\contracts\\FishNFT.sol": {
-      "lastModificationDate": 1766242390124,
-      "contentHash": "d925d353f4a1068ee4ff9ebf73f733b9",
+      "lastModificationDate": 1768561466785,
+      "contentHash": "c51c2995f3aa4c46b20be7636acceb03",
       "sourceName": "contracts/FishNFT.sol",
       "solcConfig": {
         "version": "0.8.24",
