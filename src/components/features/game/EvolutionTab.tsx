@@ -1,22 +1,20 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useAccount, useReadContract } from "wagmi";
 import Image from "next/image";
 import { useFish } from "@/hooks/useFish";
 import { useFryReef } from "@/hooks/useFryReef";
-import { Rarity, RARITY_CONFIG, getFishImage, MERGE } from "@/constants/gameConfig";
-import { FishRarity, fishNftAbi, FISH_NFT_ADDRESS } from "@/contracts/fishNft";
+import {
+  Rarity,
+  RARITY_CONFIG,
+  getFishImage,
+  MERGE,
+  CONTRACT_RARITY_MAP,
+} from "@/constants/gameConfig";
+import { fishNftAbi, FISH_NFT_ADDRESS } from "@/contracts/fishNft";
 import { baseSepolia } from "wagmi/chains";
 import { MergeSuccessModal } from "./MergeSuccessModal";
-
-const rarityMap: Record<number, Rarity> = {
-  [FishRarity.Common]: Rarity.Common,
-  [FishRarity.Rare]: Rarity.Rare,
-  [FishRarity.Epic]: Rarity.Epic,
-  [FishRarity.Legendary]: Rarity.Legendary,
-  [FishRarity.Mythic]: Rarity.Mythic,
-};
 
 interface SelectedFish {
   tokenId: number;
@@ -29,16 +27,8 @@ interface EvolutionTabProps {
 
 export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
   const { address } = useAccount();
-  const { fish, totalPendingDust, isLoading: isFishLoading, refetch } = useFish();
-  const {
-    spawnDust,
-    mergeFish,
-    isWriting,
-    isSuccess,
-    error,
-    refetchUserInfo,
-    resetWrite,
-  } = useFryReef();
+  const { fish, isLoading: isFishLoading, refetch } = useFish();
+  const { spawnDust, mergeFish, mergeTx, refetchUserInfo } = useFryReef();
 
   const [selectedFish, setSelectedFish] = useState<SelectedFish[]>([]);
 
@@ -46,11 +36,13 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
   const [showMergeSuccessModal, setShowMergeSuccessModal] = useState(false);
   const [mergedFishId, setMergedFishId] = useState<number | null>(null);
   const [mergedRarity, setMergedRarity] = useState<Rarity | null>(null);
-  const [mergeRewards, setMergeRewards] = useState<{ pearlShards: number; eggs: number } | null>(null);
+  const [mergeRewards, setMergeRewards] = useState<{
+    pearlShards: number;
+    eggs: number;
+  } | null>(null);
 
-  // merge lifecycle flags
-  const [pendingMerge, setPendingMerge] = useState(false);
-  const [fishIdsBefore, setFishIdsBefore] = useState<number[] | null>(null);
+  // Track fish IDs before merge to detect new fish
+  const fishIdsBeforeRef = useRef<number[] | null>(null);
 
   // Read user's fish to detect new fish after merge
   const { data: fishIds, refetch: refetchFish } = useReadContract({
@@ -62,31 +54,7 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
     query: { enabled: !!address && !!FISH_NFT_ADDRESS },
   });
 
-  useEffect(() => {
-    if (!isSuccess || !pendingMerge) return;
-
-    refetchFish();
-    refetch();
-    refetchUserInfo();
-  }, [isSuccess, pendingMerge, refetchFish, refetch, refetchUserInfo]);
-
-  useEffect(() => {
-    if (!pendingMerge || !fishIdsBefore || !fishIds) return;
-
-    const current = (fishIds as bigint[]).map(Number);
-    const previous = new Set(fishIdsBefore);
-
-    const newId = current.find(id => !previous.has(id));
-
-    if (newId) {
-      setMergedFishId(newId);
-      setPendingMerge(false);
-      setFishIdsBefore(null);
-      setSelectedFish([]);
-      resetWrite?.();
-    }
-  }, [fishIds, fishIdsBefore, pendingMerge, resetWrite]);
-
+  // Get fish info for merged fish
   const { data: fishInfo } = useReadContract({
     address: FISH_NFT_ADDRESS ? (FISH_NFT_ADDRESS as `0x${string}`) : undefined,
     abi: fishNftAbi,
@@ -96,19 +64,22 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
     query: { enabled: mergedFishId !== null && !!FISH_NFT_ADDRESS },
   });
 
+  // Show modal when we have fish info for merged fish
   useEffect(() => {
     if (!fishInfo || mergedFishId === null) return;
 
     const info = fishInfo as { rarity: number };
-    const newRarity = rarityMap[info.rarity] || Rarity.Common;
+    const newRarity = CONTRACT_RARITY_MAP[info.rarity] || Rarity.Common;
 
     setMergedRarity(newRarity);
 
-    // Rewards based on previous rarity
+    // Calculate rewards based on previous rarity
     let rewards = { pearlShardsReward: 0, eggsReward: 0 };
     if (newRarity !== Rarity.Common) {
       const keys = Object.keys(MERGE) as Rarity[];
-      const prev = keys.find(r => MERGE[r as keyof typeof MERGE]?.nextRarity === newRarity);
+      const prev = keys.find(
+        (r) => MERGE[r as keyof typeof MERGE]?.nextRarity === newRarity
+      );
       if (prev && prev in MERGE) {
         rewards = MERGE[prev as keyof typeof MERGE];
       }
@@ -116,48 +87,49 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
 
     setMergeRewards({
       pearlShards: rewards.pearlShardsReward,
-      eggs: rewards.eggsReward
+      eggs: rewards.eggsReward,
     });
 
     setShowMergeSuccessModal(true);
   }, [fishInfo, mergedFishId]);
 
+  // Memoized fish data
   const fishWithRarity = useMemo(() => {
     return fish
-      .filter(f => {
+      .filter((f) => {
         // Check if fish has valid data (not burned)
-        // Invalid fish have both mintedAt and lastDustCollectedAt equal to 0
-        const hasValidData = f.info.mintedAt > 0 || f.info.lastDustCollectedAt > 0;
+        const hasValidData =
+          f.info.mintedAt > 0 || f.info.lastDustCollectedAt > 0;
         return hasValidData;
       })
-      .map(f => ({
+      .map((f) => ({
         tokenId: f.tokenId,
-        rarity: rarityMap[f.info.rarity] || Rarity.Common,
+        rarity: CONTRACT_RARITY_MAP[f.info.rarity] || Rarity.Common,
         info: f.info,
         pendingDust: f.pendingDust,
       }));
   }, [fish]);
 
-  // Fish that are invalid (burned - both mintedAt and lastDustCollectedAt are 0)
+  // Invalid fish (burned but still in old data)
   const invalidFish = useMemo(() => {
-    return fish.filter(f => {
-      // Invalid fish have both fields equal to 0
-      const mintedAtZero = f.info.mintedAt === BigInt(0) || Number(f.info.mintedAt) === 0;
-      const lastDustZero = f.info.lastDustCollectedAt === BigInt(0) || Number(f.info.lastDustCollectedAt) === 0;
+    return fish.filter((f) => {
+      const mintedAtZero =
+        f.info.mintedAt === BigInt(0) || Number(f.info.mintedAt) === 0;
+      const lastDustZero =
+        f.info.lastDustCollectedAt === BigInt(0) ||
+        Number(f.info.lastDustCollectedAt) === 0;
       return mintedAtZero && lastDustZero;
     });
   }, [fish]);
 
+  // Mergeable fish (not Mythic, sorted by rarity)
   const mergeableFish = useMemo(() => {
     return fishWithRarity
-      .filter(f => f.rarity !== Rarity.Mythic)
-      .sort((a, b) => {
-        // Sort by rarity (higher rarity first: Legendary -> Epic -> Rare -> Common)
-        // Use the numeric rarity from info for sorting
-        return b.info.rarity - a.info.rarity;
-      });
+      .filter((f) => f.rarity !== Rarity.Mythic)
+      .sort((a, b) => b.info.rarity - a.info.rarity);
   }, [fishWithRarity]);
 
+  // Merge validation
   const mergeValidation = useMemo(() => {
     if (selectedFish.length !== 2) {
       return { isValid: false, reason: "Select 2 fish to merge" };
@@ -169,7 +141,8 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
       return { isValid: false, reason: "Fish must be same rarity" };
     }
 
-    const mergeConfig = f1.rarity in MERGE ? MERGE[f1.rarity as keyof typeof MERGE] : undefined;
+    const mergeConfig =
+      f1.rarity in MERGE ? MERGE[f1.rarity as keyof typeof MERGE] : undefined;
     if (!mergeConfig) return { isValid: false, reason: "Cannot merge this rarity" };
 
     if (spawnDust < mergeConfig.spawnDustCost) {
@@ -186,26 +159,74 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
     };
   }, [selectedFish, spawnDust]);
 
-  const toggleFish = (tokenId: number, rarity: Rarity) => {
-    setSelectedFish(prev => {
-      const isSelected = prev.some(f => f.tokenId === tokenId);
-      if (isSelected) return prev.filter(f => f.tokenId !== tokenId);
+  // Selected fish pending dust warning
+  const selectedPendingDust = useMemo(() => {
+    if (selectedFish.length !== 2) return 0;
+    return selectedFish.reduce((sum, fish) => {
+      const fishData = fishWithRarity.find((f) => f.tokenId === fish.tokenId);
+      return sum + (fishData?.pendingDust || 0);
+    }, 0);
+  }, [selectedFish, fishWithRarity]);
+
+  // Handlers
+  const toggleFish = useCallback((tokenId: number, rarity: Rarity) => {
+    setSelectedFish((prev) => {
+      const isSelected = prev.some((f) => f.tokenId === tokenId);
+      if (isSelected) return prev.filter((f) => f.tokenId !== tokenId);
       if (prev.length >= 2) return prev;
       return [...prev, { tokenId, rarity }];
     });
-  };
+  }, []);
 
-  const handleMerge = () => {
-    if (!mergeValidation.isValid || selectedFish.length !== 2 || isWriting || pendingMerge) return;
+  const handleMerge = useCallback(async () => {
+    if (
+      !mergeValidation.isValid ||
+      selectedFish.length !== 2 ||
+      mergeTx.isLoading
+    )
+      return;
 
-    const idsNow = fishIds ? (fishIds as bigint[]).map(Number) : [];
-    setFishIdsBefore(idsNow);
-    setPendingMerge(true);
+    // Store current fish IDs before merge
+    fishIdsBeforeRef.current = fishIds
+      ? (fishIds as bigint[]).map(Number)
+      : [];
 
-    mergeFish(selectedFish[0].tokenId, selectedFish[1].tokenId);
-  };
+    const success = await mergeFish(
+      selectedFish[0].tokenId,
+      selectedFish[1].tokenId
+    );
 
-  const handleCloseModal = () => {
+    if (success) {
+      // Refetch fish to get new merged fish - use result directly since state won't update immediately
+      const result = await refetchFish();
+      const updatedFishIds = result.data as bigint[] | undefined;
+
+      // Detect new fish
+      const currentIds = updatedFishIds ? updatedFishIds.map(Number) : [];
+      const previousIds = new Set(fishIdsBeforeRef.current);
+      const newId = currentIds.find((id) => !previousIds.has(id));
+
+      if (newId) {
+        setMergedFishId(newId);
+      }
+
+      setSelectedFish([]);
+      refetch();
+      refetchUserInfo();
+      fishIdsBeforeRef.current = null;
+    }
+  }, [
+    mergeValidation.isValid,
+    selectedFish,
+    mergeTx.isLoading,
+    mergeFish,
+    fishIds,
+    refetchFish,
+    refetch,
+    refetchUserInfo,
+  ]);
+
+  const handleCloseModal = useCallback(() => {
     setShowMergeSuccessModal(false);
     setMergedFishId(null);
     setMergedRarity(null);
@@ -214,12 +235,14 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
     refetchFish();
     refetch();
     refetchUserInfo();
-  };
+  }, [refetchFish, refetch, refetchUserInfo]);
 
-  const handleGoToReef = () => {
+  const handleGoToReef = useCallback(() => {
     handleCloseModal();
     onGoToReef?.();
-  };
+  }, [handleCloseModal, onGoToReef]);
+
+  const isMerging = mergeTx.isLoading;
 
   return (
     <>
@@ -249,44 +272,54 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
             <p className="mb-2 text-xs sm:text-sm text-slate-400">
               Selected: {selectedFish.length}/2
             </p>
-            {selectedFish.length === 2 && mergeValidation.isValid && mergeValidation.mergeConfig && (
-              <div className="mt-2 space-y-2">
-                <div className="flex items-center justify-between text-xs sm:text-sm">
-                  <span className="text-slate-400">Cost:</span>
-                  <span className="text-white">
-                    ✨ {mergeValidation.mergeConfig.spawnDustCost}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-xs sm:text-sm">
-                  <span className="text-slate-400">Rewards:</span>
-                  <div className="flex items-center gap-2">
-                    {mergeValidation.mergeConfig.pearlShardsReward > 0 && (
-                      <span className="text-white">
-                        💎 +{mergeValidation.mergeConfig.pearlShardsReward}
-                      </span>
-                    )}
-                    {mergeValidation.mergeConfig.eggsReward > 0 && (
-                      <span className="text-white">
-                        🟠 +{mergeValidation.mergeConfig.eggsReward}
-                      </span>
-                    )}
+            {selectedFish.length === 2 &&
+              mergeValidation.isValid &&
+              mergeValidation.mergeConfig && (
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center justify-between text-xs sm:text-sm">
+                    <span className="text-slate-400">Cost:</span>
+                    <span className="text-white">
+                      ✨ {mergeValidation.mergeConfig.spawnDustCost}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs sm:text-sm">
+                    <span className="text-slate-400">Rewards:</span>
+                    <div className="flex items-center gap-2">
+                      {mergeValidation.mergeConfig.pearlShardsReward > 0 && (
+                        <span className="text-white">
+                          💎 +{mergeValidation.mergeConfig.pearlShardsReward}
+                        </span>
+                      )}
+                      {mergeValidation.mergeConfig.eggsReward > 0 && (
+                        <span className="text-white">
+                          🟠 +{mergeValidation.mergeConfig.eggsReward}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-xs sm:text-sm">
+                    <span className="text-slate-400">Result:</span>
+                    {mergeValidation.nextRarity &&
+                      mergeValidation.nextRarity in RARITY_CONFIG && (
+                        <span
+                          className="font-semibold"
+                          style={{
+                            color:
+                              RARITY_CONFIG[
+                                mergeValidation.nextRarity as keyof typeof RARITY_CONFIG
+                              ].color,
+                          }}
+                        >
+                          {
+                            RARITY_CONFIG[
+                              mergeValidation.nextRarity as keyof typeof RARITY_CONFIG
+                            ].name
+                          }
+                        </span>
+                      )}
                   </div>
                 </div>
-                <div className="flex items-center justify-between text-xs sm:text-sm">
-                  <span className="text-slate-400">Result:</span>
-                  {mergeValidation.nextRarity && mergeValidation.nextRarity in RARITY_CONFIG && (
-                    <span
-                      className="font-semibold"
-                      style={{
-                        color: RARITY_CONFIG[mergeValidation.nextRarity as keyof typeof RARITY_CONFIG].color,
-                      }}
-                    >
-                      {RARITY_CONFIG[mergeValidation.nextRarity as keyof typeof RARITY_CONFIG].name}
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
+              )}
           </div>
         )}
 
@@ -332,10 +365,11 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
                 return (
                   <label
                     key={f.tokenId}
-                    className={`group relative cursor-pointer rounded-xl border-2 transition ${isSelected
-                      ? "border-blue-500 bg-blue-500/10"
-                      : "border-white/10 bg-white/5 hover:border-white/20"
-                      }`}
+                    className={`group relative cursor-pointer rounded-xl border-2 transition ${
+                      isSelected
+                        ? "border-blue-500 bg-blue-500/10"
+                        : "border-white/10 bg-white/5 hover:border-white/20"
+                    }`}
                   >
                     <input
                       type="checkbox"
@@ -349,7 +383,6 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
                       className="sr-only"
                     />
                     <div className="p-2 sm:p-3">
-                      {/* Fish Image */}
                       <div className="relative mx-auto mb-1.5 sm:mb-2 h-12 w-12 sm:h-16 sm:w-16">
                         <Image
                           src={fishImage}
@@ -359,14 +392,12 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
                         />
                       </div>
 
-                      {/* Token ID */}
                       <div className="text-center">
                         <span className="text-[10px] text-slate-400">
                           #{f.tokenId}
                         </span>
                       </div>
 
-                      {/* Rarity Badge */}
                       <div
                         className="mt-1 rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase text-center"
                         style={{
@@ -377,7 +408,6 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
                         {config.name}
                       </div>
 
-                      {/* Pending Dust */}
                       {f.pendingDust > 0 && (
                         <div className="mt-1 text-center">
                           <span className="text-[9px] text-amber-400">
@@ -386,7 +416,6 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
                         </div>
                       )}
 
-                      {/* Checkbox Indicator */}
                       {isSelected && (
                         <div className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500">
                           <svg
@@ -409,7 +438,7 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
                 );
               })}
 
-              {/* Skeleton cards for invalid fish (burned but still in old data) */}
+              {/* Skeleton cards for invalid fish */}
               {invalidFish.map((f) => (
                 <div
                   key={f.tokenId}
@@ -431,50 +460,42 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
                 disabled={
                   !mergeValidation.isValid ||
                   selectedFish.length !== 2 ||
-                  isWriting ||
-                  pendingMerge
+                  isMerging
                 }
-                className={`w-full cursor-pointer rounded-xl px-4 py-3 text-sm font-medium text-white shadow-lg transition ${mergeValidation.isValid && selectedFish.length === 2
-                  ? "bg-baseBlue hover:bg-baseBlue/80"
-                  : "cursor-not-allowed bg-slate-600"
-                  } disabled:cursor-not-allowed`}
+                className={`w-full cursor-pointer rounded-xl px-4 py-3 text-sm font-medium text-white shadow-lg transition ${
+                  mergeValidation.isValid && selectedFish.length === 2
+                    ? "bg-baseBlue hover:bg-baseBlue/80"
+                    : "cursor-not-allowed bg-slate-600"
+                } disabled:cursor-not-allowed`}
               >
-                {isWriting ? (
+                {isMerging ? (
                   "Merging..."
                 ) : selectedFish.length < 2 ? (
                   "Select 2 fish"
                 ) : !mergeValidation.isValid ? (
                   mergeValidation.reason
                 ) : (
-                  <>
-                    Merge for ✨ {mergeValidation.mergeConfig?.spawnDustCost}
-                  </>
+                  <>Merge for ✨ {mergeValidation.mergeConfig?.spawnDustCost}</>
                 )}
               </button>
             </div>
 
-            {/* Warning about unclaimed dust from selected fish */}
-            {selectedFish.length === 2 && (() => {
-              const selectedPendingDust = selectedFish.reduce((sum, fish) => {
-                const fishData = fishWithRarity.find(f => f.tokenId === fish.tokenId);
-                return sum + (fishData?.pendingDust || 0);
-              }, 0);
-
-              return selectedPendingDust > 0 ? (
-                <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
-                  <p className="text-xs text-amber-400">
-                    ⚠️ Warning: Selected fish have {selectedPendingDust} unclaimed Spawn Dust.
-                    Claim it before merging, or it will be lost when the fish are merged.
-                  </p>
-                </div>
-              ) : null;
-            })()}
+            {/* Warning about unclaimed dust */}
+            {selectedPendingDust > 0 && (
+              <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
+                <p className="text-xs text-amber-400">
+                  ⚠️ Warning: Selected fish have {selectedPendingDust} unclaimed
+                  Spawn Dust. Claim it before merging, or it will be lost when
+                  the fish are merged.
+                </p>
+              </div>
+            )}
 
             {/* Error Message */}
-            {error && (
+            {mergeTx.error && (
               <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3">
                 <p className="text-xs text-red-400">
-                  {error.message || "Transaction failed. Please try again."}
+                  {mergeTx.error.message || "Transaction failed. Please try again."}
                 </p>
               </div>
             )}

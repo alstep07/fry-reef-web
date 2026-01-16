@@ -1,43 +1,55 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useAccount, useReadContract } from "wagmi";
 import Image from "next/image";
 import { useEggs, type EggWithInfo } from "@/hooks/useEggs";
 import { useFryReef } from "@/hooks/useFryReef";
-import { INCUBATION, Rarity, EGG_IMAGE } from "@/constants/gameConfig";
+import {
+  INCUBATION,
+  Rarity,
+  EGG_IMAGE,
+  CONTRACT_RARITY_MAP,
+} from "@/constants/gameConfig";
 import { HatchModal } from "./HatchModal";
-import { fishNftAbi, FISH_NFT_ADDRESS, FishRarity } from "@/contracts/fishNft";
+import { fishNftAbi, FISH_NFT_ADDRESS } from "@/contracts/fishNft";
 import { baseSepolia } from "wagmi/chains";
 
 interface EggCardProps {
   egg: EggWithInfo;
   onIncubate: (tokenId: number) => void;
   onHatch: (tokenId: number) => void;
-  isLoading: boolean;
+  isIncubating: boolean;
+  isHatching: boolean;
   pearlShards: number;
   hasSpace: boolean;
 }
 
-function EggCard({ egg, onIncubate, onHatch, isLoading, pearlShards, hasSpace }: EggCardProps) {
+function EggCard({
+  egg,
+  onIncubate,
+  onHatch,
+  isIncubating,
+  isHatching,
+  pearlShards,
+  hasSpace,
+}: EggCardProps) {
   const { tokenId, info } = egg;
+  const isLoading = isIncubating || isHatching;
 
   // Initialize with safe values to avoid hydration mismatch
   const [{ timeLeft, progress }, setTimeData] = useState(() => {
-    // On server or initial render, use safe default
     if (!info.isIncubating) return { timeLeft: 0, progress: 0 };
-    // For incubating eggs, start with full time (will be calculated in useEffect)
     return { timeLeft: INCUBATION.durationSeconds, progress: 0 };
   });
 
-  // Update every second when incubating (only runs on client)
+  // Update every second when incubating
   useEffect(() => {
     if (!info.isIncubating) {
       setTimeData({ timeLeft: 0, progress: 0 });
       return;
     }
 
-    // Calculate time remaining and progress
     const calculateTimeAndProgress = () => {
       const startedAt = Number(info.incubationStartedAt);
       if (startedAt === 0) {
@@ -50,7 +62,6 @@ function EggCard({ egg, onIncubate, onHatch, isLoading, pearlShards, hasSpace }:
       return { timeLeft, progress };
     };
 
-    // Initial calculation
     setTimeData(calculateTimeAndProgress());
 
     const interval = setInterval(() => {
@@ -58,7 +69,6 @@ function EggCard({ egg, onIncubate, onHatch, isLoading, pearlShards, hasSpace }:
     }, 1000);
 
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [info.isIncubating, info.incubationStartedAt]);
 
   const formatTime = (seconds: number) => {
@@ -66,14 +76,11 @@ function EggCard({ egg, onIncubate, onHatch, isLoading, pearlShards, hasSpace }:
     const hours = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
-
     return `${String(hours).padStart(2, "0")}h ${String(mins).padStart(2, "0")}m ${String(secs).padStart(2, "0")}s`;
   };
 
-  // Check if ready to hatch (use local timeLeft for real-time updates)
   const isReadyToHatch = info.isIncubating && timeLeft <= 0;
 
-  // Status styling
   const getStatusStyle = () => {
     if (isReadyToHatch) return "border-green-500/30 bg-green-500/5";
     if (info.isIncubating) return "border-baseBlue/30 bg-baseBlue/5";
@@ -81,11 +88,13 @@ function EggCard({ egg, onIncubate, onHatch, isLoading, pearlShards, hasSpace }:
   };
 
   return (
-    <div className={`group relative rounded-xl sm:rounded-2xl border p-3 sm:p-4 backdrop-blur-sm ${getStatusStyle()}`}>
-      {/* Token ID - top left */}
-      <span className="absolute top-3 left-3 rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] text-slate-400">#{tokenId}</span>
+    <div
+      className={`group relative flex flex-col rounded-xl sm:rounded-2xl border p-3 sm:p-4 backdrop-blur-sm ${getStatusStyle()}`}
+    >
+      <span className="absolute top-3 left-3 rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] text-slate-400">
+        #{tokenId}
+      </span>
 
-      {/* Status badge */}
       {isReadyToHatch && (
         <div className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-green-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-lg">
           READY
@@ -97,9 +106,7 @@ function EggCard({ egg, onIncubate, onHatch, isLoading, pearlShards, hasSpace }:
         </div>
       )}
 
-      {/* Egg Visual */}
       <div className="relative mx-auto mb-2 sm:mb-3 h-16 w-16 sm:h-20 sm:w-20">
-        {/* Glow effect */}
         {isReadyToHatch && (
           <div className="absolute inset-0 animate-pulse rounded-full bg-green-500/20 blur-xl" />
         )}
@@ -107,8 +114,9 @@ function EggCard({ egg, onIncubate, onHatch, isLoading, pearlShards, hasSpace }:
           <div className="absolute inset-0 rounded-full bg-baseBlue/10 blur-lg" />
         )}
 
-        {/* Egg image */}
-        <div className={`relative flex h-full w-full items-center justify-center ${!info.isIncubating ? "animate-float" : ""}`}>
+        <div
+          className={`relative flex h-full w-full items-center justify-center ${!info.isIncubating ? "animate-float" : ""}`}
+        >
           <Image
             src={EGG_IMAGE}
             alt="Egg"
@@ -118,7 +126,6 @@ function EggCard({ egg, onIncubate, onHatch, isLoading, pearlShards, hasSpace }:
           />
         </div>
 
-        {/* Progress ring for incubating eggs */}
         {info.isIncubating && !isReadyToHatch && (
           <div className="absolute inset-0 flex items-center justify-center">
             <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
@@ -145,58 +152,56 @@ function EggCard({ egg, onIncubate, onHatch, isLoading, pearlShards, hasSpace }:
         )}
       </div>
 
-      {/* Egg Info */}
-      <div className="text-center">
+      <div className="flex-grow flex flex-col text-center">
         {!info.isIncubating ? (
           <button
             onClick={() => onIncubate(tokenId)}
             disabled={isLoading || pearlShards < INCUBATION.pearlShardCost}
-            className="mt-2 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-baseBlue/80 px-3 py-2 text-xs font-medium text-white transition hover:bg-baseBlue disabled:cursor-not-allowed disabled:bg-slate-600"
+            className="mt-auto flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-baseBlue/80 px-3 py-2 text-xs font-medium text-white transition hover:bg-baseBlue disabled:cursor-not-allowed disabled:bg-slate-600"
           >
             {pearlShards < INCUBATION.pearlShardCost ? (
               <>
                 <span>Need</span>
-                <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]">{INCUBATION.pearlShardCost} 💎</span>
+                <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]">
+                  {INCUBATION.pearlShardCost} 💎
+                </span>
               </>
-            ) : isLoading ? (
+            ) : isIncubating ? (
               "..."
             ) : (
               <>
                 <span>Incubate</span>
-                <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]">{INCUBATION.pearlShardCost} 💎</span>
+                <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]">
+                  {INCUBATION.pearlShardCost} 💎
+                </span>
               </>
             )}
           </button>
         ) : (
-          <>
+          <div className="mt-auto">
             {timeLeft > 0 && (
-              <p className="mt-1 text-[10px] tabular-nums text-slate-400">{formatTime(timeLeft)}</p>
+              <p className="mb-1 text-[10px] tabular-nums text-slate-400">
+                {formatTime(timeLeft)}
+              </p>
             )}
             <button
               onClick={() => onHatch(tokenId)}
               disabled={isLoading || timeLeft > 0 || !hasSpace}
-              className={`mt-2 w-full cursor-pointer rounded-lg px-3 py-2 text-xs font-medium text-white transition disabled:cursor-not-allowed disabled:bg-slate-600 ${
-                timeLeft <= 0 && hasSpace ? "bg-green-500 hover:bg-green-400" : "bg-slate-600"
+              className={`w-full cursor-pointer rounded-lg px-3 py-2 text-xs font-medium text-white transition disabled:cursor-not-allowed disabled:bg-slate-600 ${
+                timeLeft <= 0 && hasSpace
+                  ? "bg-green-500 hover:bg-green-400"
+                  : "bg-slate-600"
               }`}
               title={!hasSpace ? "Reef capacity full" : undefined}
             >
-              {isLoading ? "..." : !hasSpace ? "No space" : "Hatch"}
+              {isHatching ? "..." : !hasSpace ? "No space" : "Hatch"}
             </button>
-          </>
+          </div>
         )}
       </div>
     </div>
   );
 }
-
-// Map contract rarity (number) to our Rarity enum (string)
-const rarityMap: Record<number, Rarity> = {
-  [FishRarity.Common]: Rarity.Common,
-  [FishRarity.Rare]: Rarity.Rare,
-  [FishRarity.Epic]: Rarity.Epic,
-  [FishRarity.Legendary]: Rarity.Legendary,
-  [FishRarity.Mythic]: Rarity.Mythic,
-};
 
 interface NestTabProps {
   onGoToReef?: () => void;
@@ -205,13 +210,23 @@ interface NestTabProps {
 export function NestTab({ onGoToReef }: NestTabProps) {
   const { address } = useAccount();
   const { eggs, eggCount, refetch, isLoading: isEggsLoading } = useEggs();
-  const { pearlShards, isWriting, isSuccess, startIncubation, hatchEgg, reefCapacity } = useFryReef();
+  const {
+    pearlShards,
+    startIncubation,
+    hatchEgg,
+    reefCapacity,
+    incubationTx,
+    hatchTx,
+    refetchUserInfo,
+  } = useFryReef();
 
   // Modal state
   const [showHatchModal, setShowHatchModal] = useState(false);
   const [hatchedFishId, setHatchedFishId] = useState<number | null>(null);
   const [hatchedRarity, setHatchedRarity] = useState<Rarity | null>(null);
-  const [pendingHatch, setPendingHatch] = useState(false);
+
+  // Track fish count before hatch to detect new fish
+  const fishCountBeforeRef = useRef<number | null>(null);
 
   // Get user's fish to detect new ones
   const { data: fishIds, refetch: refetchFish } = useReadContract({
@@ -225,41 +240,8 @@ export function NestTab({ onGoToReef }: NestTabProps) {
     },
   });
 
-  // Calculate fish count
   const fishCount = fishIds ? (fishIds as bigint[]).length : 0;
   const hasSpace = fishCount < reefCapacity;
-
-  // Track fish count before hatch
-  const [fishCountBefore, setFishCountBefore] = useState<number | null>(null);
-
-  // After successful transaction, refetch all data
-  useEffect(() => {
-    if (!isSuccess) return;
-
-    const timer = setTimeout(() => {
-      // Always refetch both - safe to call even if not needed
-      refetchFish();
-      refetch();
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [isSuccess, refetch, refetchFish]);
-
-  // Detect new fish after hatch
-  useEffect(() => {
-    if (pendingHatch && fishIds && fishCountBefore !== null) {
-      const currentCount = (fishIds as bigint[]).length;
-      if (currentCount > fishCountBefore) {
-        // New fish hatched!
-        const newFishId = Number((fishIds as bigint[])[currentCount - 1]);
-        setHatchedFishId(newFishId);
-        setPendingHatch(false);
-        setFishCountBefore(null);
-        // Refetch immediately when fish detected
-        refetch();
-      }
-    }
-  }, [fishIds, pendingHatch, fishCountBefore, refetch]);
 
   // Get fish info when we have a new fish ID
   const { data: fishInfo } = useReadContract({
@@ -277,33 +259,61 @@ export function NestTab({ onGoToReef }: NestTabProps) {
   useEffect(() => {
     if (fishInfo && hatchedFishId !== null) {
       const info = fishInfo as { rarity: number };
-      setHatchedRarity(rarityMap[info.rarity] || Rarity.Common);
+      setHatchedRarity(CONTRACT_RARITY_MAP[info.rarity] || Rarity.Common);
       setShowHatchModal(true);
     }
   }, [fishInfo, hatchedFishId]);
 
-  const handleIncubate = async (tokenId: number) => {
-    await startIncubation(tokenId);
-  };
+  const handleIncubate = useCallback(
+    async (tokenId: number) => {
+      const success = await startIncubation(tokenId);
+      if (success) {
+        refetch();
+        refetchUserInfo();
+      }
+    },
+    [startIncubation, refetch, refetchUserInfo]
+  );
 
-  const handleHatch = async (tokenId: number) => {
-    // Store current fish count before hatch
-    const currentCount = fishIds ? (fishIds as bigint[]).length : 0;
-    setFishCountBefore(currentCount);
-    setPendingHatch(true);
-    await hatchEgg(tokenId);
-  };
+  const handleHatch = useCallback(
+    async (tokenId: number) => {
+      // Store current fish count before hatch
+      fishCountBeforeRef.current = fishCount;
 
-  const handleCloseModal = () => {
+      const success = await hatchEgg(tokenId);
+      if (success) {
+        // Refetch to get new fish - use result directly since state won't update immediately
+        const result = await refetchFish();
+        const updatedFishIds = result.data as bigint[] | undefined;
+
+        // Detect new fish
+        if (
+          updatedFishIds &&
+          fishCountBeforeRef.current !== null &&
+          updatedFishIds.length > fishCountBeforeRef.current
+        ) {
+          const newFishId = Number(updatedFishIds[updatedFishIds.length - 1]);
+          setHatchedFishId(newFishId);
+        }
+
+        refetch();
+        refetchUserInfo();
+        fishCountBeforeRef.current = null;
+      }
+    },
+    [hatchEgg, fishCount, refetchFish, refetch, refetchUserInfo]
+  );
+
+  const handleCloseModal = useCallback(() => {
     setShowHatchModal(false);
     setHatchedFishId(null);
     setHatchedRarity(null);
-  };
+  }, []);
 
-  const handleGoToReef = () => {
+  const handleGoToReef = useCallback(() => {
     handleCloseModal();
     onGoToReef?.();
-  };
+  }, [handleCloseModal, onGoToReef]);
 
   return (
     <>
@@ -327,7 +337,10 @@ export function NestTab({ onGoToReef }: NestTabProps) {
         {isEggsLoading ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 animate-pulse">
             {[1, 2].map((i) => (
-              <div key={i} className="rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
+              <div
+                key={i}
+                className="rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4"
+              >
                 <div className="mx-auto mb-2 sm:mb-3 h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-white/10" />
                 <div className="flex flex-col items-center gap-2">
                   <div className="h-8 w-full rounded-lg bg-white/10" />
@@ -358,7 +371,8 @@ export function NestTab({ onGoToReef }: NestTabProps) {
                 egg={egg}
                 onIncubate={handleIncubate}
                 onHatch={handleHatch}
-                isLoading={isWriting}
+                isIncubating={incubationTx.isLoading}
+                isHatching={hatchTx.isLoading}
                 pearlShards={pearlShards}
                 hasSpace={hasSpace}
               />
@@ -369,4 +383,3 @@ export function NestTab({ onGoToReef }: NestTabProps) {
     </>
   );
 }
-

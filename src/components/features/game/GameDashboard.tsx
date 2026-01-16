@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, useState, useEffect, useRef } from "react";
+import { useTransition, useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import { useFryReef } from "@/hooks/useFryReef";
@@ -65,20 +65,24 @@ export function GameDashboard() {
   const [isPending, startTransition] = useTransition();
 
   const tabFromUrl = searchParams.get("tab") as Tab | null;
-  const activeTab: Tab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "checkin";
+  const activeTab: Tab =
+    tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "checkin";
 
-  const setActiveTab = (tab: Tab) => {
-    startTransition(() => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (tab === "checkin") {
-        params.delete("tab");
-      } else {
-        params.set("tab", tab);
-      }
-      const query = params.toString();
-      router.replace(query ? `/?${query}` : "/", { scroll: false });
-    });
-  };
+  const setActiveTab = useCallback(
+    (tab: Tab) => {
+      startTransition(() => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (tab === "checkin") {
+          params.delete("tab");
+        } else {
+          params.set("tab", tab);
+        }
+        const query = params.toString();
+        router.replace(query ? `/?${query}` : "/", { scroll: false });
+      });
+    },
+    [router, searchParams]
+  );
 
   const {
     currentStreak,
@@ -88,9 +92,8 @@ export function GameDashboard() {
     checkedInToday,
     checkIn,
     isLoading,
-    isWriting,
-    isSuccess,
-    error,
+    starterPackTx,
+    checkInTx,
     isOnCorrectNetwork,
     switchToBaseSepolia,
   } = useFryReef();
@@ -101,42 +104,37 @@ export function GameDashboard() {
   const pendingCheckInRef = useRef<boolean>(false);
 
   // Save streak before check-in
-  const handleCheckIn = () => {
+  const handleCheckIn = useCallback(async () => {
     previousStreakRef.current = currentStreak;
     pendingCheckInRef.current = true;
-    checkIn();
-  };
 
-  // Track when check-in completes and check if reward was earned
-  useEffect(() => {
-    // When check-in succeeds and we're waiting for it
-    if (isSuccess && pendingCheckInRef.current && !isWriting && !isLoading) {
+    const success = await checkIn();
+
+    if (success) {
       // Wait a bit for data to refetch from blockchain
-      const timer = setTimeout(() => {
-        const previousStreak = previousStreakRef.current;
+      setTimeout(() => {
         const newStreak = currentStreak;
-
         // Check if new streak is a multiple of 7 and previous wasn't
         if (
           newStreak > 0 &&
           newStreak % DAILY_CHECKIN.streakForReward === 0 &&
-          previousStreak % DAILY_CHECKIN.streakForReward !== 0
+          previousStreakRef.current % DAILY_CHECKIN.streakForReward !== 0
         ) {
           setShowStreakReward(true);
         }
-
-        previousStreakRef.current = newStreak;
         pendingCheckInRef.current = false;
-      }, 2000); // Wait for data to refetch
-
-      return () => clearTimeout(timer);
-    }
-
-    // Reset pending flag if transaction failed
-    if (!isSuccess && !isWriting) {
+      }, 2000);
+    } else {
       pendingCheckInRef.current = false;
     }
-  }, [isSuccess, isWriting, isLoading, currentStreak]);
+  }, [checkIn, currentStreak]);
+
+  // Update previous streak ref when streak changes
+  useEffect(() => {
+    if (!pendingCheckInRef.current) {
+      previousStreakRef.current = currentStreak;
+    }
+  }, [currentStreak]);
 
   // Not connected - render nothing (page.tsx handles this)
   if (!isConnected || !address) {
@@ -144,7 +142,6 @@ export function GameDashboard() {
   }
 
   // Data not loaded yet - show skeleton
-  // starterPackClaimed is undefined until data loads
   if (starterPackClaimed === undefined) {
     return <DashboardSkeleton />;
   }
@@ -154,9 +151,9 @@ export function GameDashboard() {
     return (
       <StarterPackCard
         onClaim={claimStarterPack}
-        isLoading={isWriting}
-        isSuccess={isSuccess}
-        error={error}
+        isLoading={starterPackTx.isLoading}
+        isSuccess={starterPackTx.isSuccess}
+        error={starterPackTx.error}
       />
     );
   }
@@ -167,6 +164,8 @@ export function GameDashboard() {
     { id: "reef" as Tab, label: "Reef", icon: "🐟" },
     { id: "evolution" as Tab, label: "Evolution", icon: "🧬" },
   ];
+
+  const isCheckingIn = checkInTx.isLoading;
 
   return (
     <div className="w-full max-w-2xl space-y-4 sm:space-y-6">
@@ -195,10 +194,11 @@ export function GameDashboard() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 sm:flex-initial cursor-pointer rounded-full px-3 sm:px-5 py-2.5 sm:py-2 text-sm font-medium transition ${activeTab === tab.id
-                ? "bg-baseBlue text-white shadow-lg"
-                : "text-slate-400 hover:text-white"
-                }`}
+              className={`flex-1 sm:flex-initial cursor-pointer rounded-full px-3 sm:px-5 py-2.5 sm:py-2 text-sm font-medium transition ${
+                activeTab === tab.id
+                  ? "bg-baseBlue text-white shadow-lg"
+                  : "text-slate-400 hover:text-white"
+              }`}
               title={tab.label}
             >
               <span className="sm:mr-1.5">{tab.icon}</span>
@@ -212,7 +212,9 @@ export function GameDashboard() {
       <div className={activeTab === "checkin" ? "" : "hidden"}>
         {activeTab === "checkin" && (
           <div className="rounded-2xl border border-white/5 bg-white/5 p-4 sm:p-6 backdrop-blur-sm">
-            <h2 className="mb-3 sm:mb-4 text-lg sm:text-xl font-semibold text-white">Daily Check-in</h2>
+            <h2 className="mb-3 sm:mb-4 text-lg sm:text-xl font-semibold text-white">
+              Daily Check-in
+            </h2>
 
             <div className="mb-3 sm:mb-4 space-y-2 text-sm">
               <div className="flex items-center justify-between">
@@ -222,7 +224,10 @@ export function GameDashboard() {
                     <>
                       {currentStreak} day{currentStreak !== 1 ? "s" : ""}
                       <span className="ml-1.5 text-xs font-normal text-slate-400">
-                        ({currentStreak % DAILY_CHECKIN.streakForReward || DAILY_CHECKIN.streakForReward}/{DAILY_CHECKIN.streakForReward})
+                        (
+                        {currentStreak % DAILY_CHECKIN.streakForReward ||
+                          DAILY_CHECKIN.streakForReward}
+                        /{DAILY_CHECKIN.streakForReward})
                       </span>
                     </>
                   ) : (
@@ -240,15 +245,23 @@ export function GameDashboard() {
                     <div
                       className="h-full transition-all"
                       style={{
-                        width: `${((currentStreak % DAILY_CHECKIN.streakForReward) / DAILY_CHECKIN.streakForReward) * 100}%`,
-                        background: "linear-gradient(90deg, #E8D5E2 0%, #F5E6EA 30%, #FFFFFF 50%, #E0F4F8 70%, #D4E5ED 100%)",
+                        width: `${
+                          ((currentStreak % DAILY_CHECKIN.streakForReward) /
+                            DAILY_CHECKIN.streakForReward) *
+                          100
+                        }%`,
+                        background:
+                          "linear-gradient(90deg, #E8D5E2 0%, #F5E6EA 30%, #FFFFFF 50%, #E0F4F8 70%, #D4E5ED 100%)",
                       }}
                     />
                   </div>
                   <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-slate-400">
                     {currentStreak % DAILY_CHECKIN.streakForReward === 0
                       ? "🎉 Claim your Pearl Shard!"
-                      : `${DAILY_CHECKIN.streakForReward - (currentStreak % DAILY_CHECKIN.streakForReward)} days until next Pearl Shard`}
+                      : `${
+                          DAILY_CHECKIN.streakForReward -
+                          (currentStreak % DAILY_CHECKIN.streakForReward)
+                        } days until next Pearl Shard`}
                   </p>
                 </div>
               )}
@@ -257,18 +270,23 @@ export function GameDashboard() {
             <div className="flex justify-center">
               <button
                 onClick={handleCheckIn}
-                disabled={checkedInToday || isWriting || isLoading || !isOnCorrectNetwork}
+                disabled={
+                  checkedInToday ||
+                  isCheckingIn ||
+                  isLoading ||
+                  !isOnCorrectNetwork
+                }
                 className="cursor-pointer rounded-full bg-baseBlue px-5 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base font-medium text-white shadow-lg transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:bg-slate-600 disabled:shadow-none"
               >
                 {checkedInToday
                   ? "✓ Checked in today"
-                  : isWriting || isLoading
-                    ? "Checking in..."
-                    : "Check-in"}
+                  : isCheckingIn || isLoading
+                  ? "Checking in..."
+                  : "Check-in"}
               </button>
             </div>
 
-            {error && (
+            {checkInTx.error && (
               <p className="mt-2 sm:mt-3 text-center text-[10px] sm:text-xs text-red-400">
                 Transaction failed. Please try again.
               </p>
@@ -299,4 +317,3 @@ export function GameDashboard() {
     </div>
   );
 }
-
