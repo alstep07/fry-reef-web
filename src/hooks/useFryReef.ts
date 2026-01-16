@@ -7,6 +7,7 @@ import {
   useChainId,
   useSwitchChain,
 } from "wagmi";
+import { useQueryClient } from "@tanstack/react-query";
 import { base } from "wagmi/chains";
 import {
   fryReefAbi,
@@ -22,6 +23,7 @@ export function useFryReef() {
   const { address, chainId: currentChainId } = useAccount();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
+  const queryClient = useQueryClient();
 
   const isOnCorrectNetwork = (currentChainId || chainId) === base.id;
   const isConfigured = isFryReefConfigured();
@@ -108,14 +110,20 @@ export function useFryReef() {
   // ISOLATED TRANSACTIONS - Each has its own state
   // ============================================================
 
-  // Refetch all data helper
+  // Refetch all data helper with cache invalidation for Smart Wallets
   const refetchAllData = useCallback(() => {
-    refetchUserInfo();
-    refetchCheckedInToday();
-    refetchStarterPack();
-    refetchReefCapacity();
-    refetchExpansionCost();
-  }, [refetchUserInfo, refetchCheckedInToday, refetchStarterPack, refetchReefCapacity, refetchExpansionCost]);
+    // First invalidate all wagmi queries to clear cache
+    queryClient.invalidateQueries();
+    
+    // Then refetch after delay for RPC sync
+    setTimeout(() => {
+      refetchUserInfo();
+      refetchCheckedInToday();
+      refetchStarterPack();
+      refetchReefCapacity();
+      refetchExpansionCost();
+    }, 3000);
+  }, [queryClient, refetchUserInfo, refetchCheckedInToday, refetchStarterPack, refetchReefCapacity, refetchExpansionCost]);
 
   // Starter pack transaction
   const starterPackTx = useTransaction({

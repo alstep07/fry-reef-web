@@ -1,4 +1,4 @@
-const URL = process.env.NEXT_PUBLIC_URL || "https://fryreef.vercel.app";
+const APP_URL = "https://fry-reef.vercel.app";
 
 const manifest = {
   accountAssociation: {
@@ -9,19 +9,19 @@ const manifest = {
   miniapp: {
     version: "1",
     name: "FryReef",
-    homeUrl: URL,
-    iconUrl: `${URL}/images/common/logo.png`,
-    splashImageUrl: `${URL}/images/common/logo.png`,
+    homeUrl: APP_URL,
+    iconUrl: `${APP_URL}/images/common/logo.png`,
+    splashImageUrl: `${APP_URL}/images/common/logo.png`,
     splashBackgroundColor: "#0a1628",
-    subtitle: "Breed, merge, evolve on Base",
-    description: "Collect fish NFTs, breed eggs, merge for rare species. Free-to-play game on Base.",
+    subtitle: "Free-to-play NFT game on Base",
+    description: "Collect, breed & merge fish NFTs. Hatch eggs, evolve rare species, earn daily rewards. No crypto needed to start!",
     primaryCategory: "games",
-    tags: ["nft", "game", "base", "fish", "breeding"],
-    heroImageUrl: `${URL}/images/common/logo.png`,
+    tags: ["nft", "game", "base", "fish", "breeding", "free-to-play", "idle", "collectible"],
+    heroImageUrl: `${APP_URL}/images/common/logo.png`,
     tagline: "Collect & evolve fish NFTs",
     ogTitle: "FryReef - Fish NFT Game",
-    ogDescription: "Breed, merge, evolve fish NFTs on Base",
-    ogImageUrl: `${URL}/images/common/logo.png`,
+    ogDescription: "Free-to-play fish breeding game on Base",
+    ogImageUrl: `${APP_URL}/images/common/logo.png`,
   },
 };
 
