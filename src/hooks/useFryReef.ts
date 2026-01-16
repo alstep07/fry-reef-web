@@ -108,7 +108,7 @@ export function useFryReef() {
   // ISOLATED TRANSACTIONS - Each has its own state
   // ============================================================
 
-  // Refetch all data helper with delay for RPC sync
+  // Refetch all data helper with delay for RPC sync (longer for Smart Wallets)
   const refetchAllData = useCallback(() => {
     setTimeout(() => {
       refetchUserInfo();
@@ -116,7 +116,7 @@ export function useFryReef() {
       refetchStarterPack();
       refetchReefCapacity();
       refetchExpansionCost();
-    }, 2000);
+    }, 4000);
   }, [refetchUserInfo, refetchCheckedInToday, refetchStarterPack, refetchReefCapacity, refetchExpansionCost]);
 
   // Starter pack transaction

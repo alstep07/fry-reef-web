@@ -30,6 +30,9 @@ export const metadata: Metadata = {
       },
     ],
   },
+  other: {
+    "base:app_id": "696a34857383fd216ccd736b",
+  },
 };
 
 export const viewport: Viewport = {

@@ -69,7 +69,7 @@ export function Web3Providers({ children }: Props) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000,
+            staleTime: 30 * 1000,
             refetchOnWindowFocus: false,
           },
         },
