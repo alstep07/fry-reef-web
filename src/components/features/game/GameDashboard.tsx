@@ -95,7 +95,7 @@ export function GameDashboard() {
     starterPackTx,
     checkInTx,
     isOnCorrectNetwork,
-    switchToBaseSepolia,
+    switchToBase,
   } = useFryReef();
 
   // Track streak reward modal
@@ -176,13 +176,13 @@ export function GameDashboard() {
             ⚠️ Wrong Network
           </p>
           <p className="mb-2 sm:mb-3 text-[10px] sm:text-xs text-yellow-300/80">
-            Please switch to Base Sepolia to play.
+            Please switch to Base to play.
           </p>
           <button
-            onClick={switchToBaseSepolia}
+            onClick={switchToBase}
             className="cursor-pointer rounded-full bg-yellow-500/20 px-3 sm:px-4 py-1.5 sm:py-2 text-[10px] sm:text-xs font-medium text-yellow-300 transition hover:bg-yellow-500/30"
           >
-            Switch to Base Sepolia
+            Switch to Base
           </button>
         </div>
       )}

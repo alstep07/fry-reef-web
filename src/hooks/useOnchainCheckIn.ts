@@ -9,7 +9,7 @@ import {
   useChainId,
   useSwitchChain,
 } from "wagmi";
-import { baseSepolia } from "wagmi/chains";
+import { base } from "wagmi/chains";
 import {
   dailyCheckInAbi,
   DAILY_CHECK_IN_ADDRESS,
@@ -26,7 +26,7 @@ export function useOnchainCheckIn(address?: string) {
     | `0x${string}`
     | undefined;
 
-  const isOnCorrectNetwork = (currentChainId || chainId) === baseSepolia.id;
+  const isOnCorrectNetwork = (currentChainId || chainId) === base.id;
 
   const isConfigured = isContractConfigured();
   const contractAddress = isConfigured
@@ -78,10 +78,10 @@ export function useOnchainCheckIn(address?: string) {
   const checkIn = async () => {
     if (!contractAddress || !userAddress) return;
 
-    // Switch to Base Sepolia if on wrong network
+    // Switch to Base if on wrong network
     if (!isOnCorrectNetwork) {
       try {
-        await switchChain({ chainId: baseSepolia.id });
+        await switchChain({ chainId: base.id });
         return;
       } catch (error) {
         console.error("Failed to switch network:", error);
@@ -101,9 +101,9 @@ export function useOnchainCheckIn(address?: string) {
     }
   };
 
-  const switchToBaseSepolia = async () => {
+  const switchToBase = async () => {
     try {
-      await switchChain({ chainId: baseSepolia.id });
+      await switchChain({ chainId: base.id });
     } catch (error) {
       console.error("Failed to switch network:", error);
     }
@@ -164,6 +164,6 @@ export function useOnchainCheckIn(address?: string) {
     isSuccess,
     error: getFilteredError(),
     isOnCorrectNetwork,
-    switchToBaseSepolia,
+    switchToBase,
   };
 }

@@ -8,10 +8,10 @@ import {
   usePublicClient,
   useWalletClient,
 } from "wagmi";
-import { baseSepolia } from "wagmi/chains";
+import { base } from "wagmi/chains";
 import type { Abi } from "viem";
 
-const TARGET_CHAIN_ID = baseSepolia.id;
+const TARGET_CHAIN_ID = base.id;
 
 export type TransactionStatus = "idle" | "pending" | "confirming" | "success" | "error";
 
@@ -88,7 +88,7 @@ export function useTransaction(options?: UseTransactionOptions) {
       if (!isOnCorrectNetwork) {
         const switched = await switchToTargetNetwork();
         if (!switched) {
-          const error = new Error("Please switch to Base Sepolia network");
+          const error = new Error("Please switch to Base network");
           setState({ status: "error", hash: null, error });
           onErrorRef.current?.(error);
           return false;
@@ -102,7 +102,7 @@ export function useTransaction(options?: UseTransactionOptions) {
         // Send transaction
         const hash = await walletClient.writeContract({
           ...params,
-          chain: baseSepolia,
+          chain: base,
           account: address,
         } as Parameters<typeof walletClient.writeContract>[0]);
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useAccount, useBalance } from "wagmi";
-import { baseSepolia } from "wagmi/chains";
+import { base } from "wagmi/chains";
 import { useFryReef } from "@/hooks/useFryReef";
 import { RESOURCE_CONFIG, Resource } from "@/constants/gameConfig";
 
@@ -11,7 +11,7 @@ export function MobileResourceBar() {
 
   const { data: balanceData, isLoading: isBalanceLoading } = useBalance({
     address,
-    chainId: baseSepolia.id,
+    chainId: base.id,
     query: {
       enabled: !!address && isConnected,
     },

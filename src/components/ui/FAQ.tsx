@@ -11,32 +11,32 @@ const faqData: FAQItem[] = [
   {
     question: "How do I start playing?",
     answer:
-      "Connect your wallet and claim your Starter Pack! You'll receive 1 Egg, 2 Pearl Shards, and 50 Spawn Dust to begin your underwater adventure.",
+      "Connect your wallet and claim your Starter Pack! You'll receive 1 Egg, 2 Pearl Shards, and 100 Spawn Dust to begin your underwater adventure. Your reef starts with capacity for 3 fish.",
   },
   {
     question: "What are Pearl Shards?",
     answer:
-      "Pearl Shards 💎 are used to incubate eggs. You need 1 Pearl Shard to start incubation. Earn them by completing a 7-day check-in streak or from the Starter Pack.",
+      "Pearl Shards 💎 are used to incubate eggs and expand your reef capacity. You need 1 Pearl Shard to start incubation. Earn them by completing a 7-day check-in streak, merging fish, or from the Starter Pack.",
   },
   {
     question: "What is Spawn Dust?",
     answer:
-      "Spawn Dust ✨ is produced by your fish daily. Different rarity fish produce different amounts: Common (6/day), Rare (12/day), Epic (18/day), Legendary (32/day), Mythic (48/day). Use 100 Spawn Dust to lay a new egg.",
+      "Spawn Dust ✨ is produced by your fish daily. Different rarity fish produce different amounts: Common (6/day), Rare (12/day), Epic (18/day), Legendary (32/day), Mythic (48/day). Use 100 Spawn Dust to lay a new egg from any fish.",
   },
   {
     question: "How does egg incubation work?",
     answer:
-      "Go to the Nest tab, select an egg, and click 'Incubate' (costs 1 Pearl Shard). After 24 hours, your egg will be ready to hatch into a fish with a random rarity!",
+      "Go to the Nest tab, select an egg, and click 'Incubate' (costs 1 Pearl Shard). After 24 hours, your egg will be ready to hatch into a fish with a random rarity! Make sure you have space in your reef before hatching.",
   },
   {
     question: "What are the fish rarities?",
     answer:
-      "There are 5 rarities: Common (50% chance), Rare (28%), Epic (14%), Legendary (6%), and Mythic (2%). Rarer fish produce more Spawn Dust per day.",
+      "There are 5 rarities: Common (50% chance), Rare (28%), Epic (14%), Legendary (6%), and Mythic (2%). Rarer fish produce more Spawn Dust per day and give better rewards when merged or released.",
   },
   {
     question: "How do I get more eggs?",
     answer:
-      "Collect 100 Spawn Dust from your fish and use 'Lay Egg' feature in the Reef tab. The more fish you have, the faster you accumulate Spawn Dust!",
+      "There are two ways: 1) Lay eggs - collect 100 Spawn Dust from your fish and use 'Lay Egg' in the Reef tab (24h cooldown per fish). 2) Merge fish - merging higher rarity fish rewards bonus eggs.",
   },
   {
     question: "What is the daily check-in?",
@@ -44,24 +44,29 @@ const faqData: FAQItem[] = [
       "Visit the Tasks tab daily and click 'Check-in' to build your streak. Complete a 7-day streak to earn 1 Pearl Shard. The streak resets if you miss a day!",
   },
   {
+    question: "What is Reef Capacity?",
+    answer:
+      "Reef Capacity limits how many fish you can have. You start with 3 slots. Expand your reef using Pearl Shards - costs increase with each expansion (1, 2, 4, 8, 16 Pearl Shards). You can also release fish to free up space.",
+  },
+  {
+    question: "How does fish merging work?",
+    answer:
+      "In the Evolution tab, select 2 fish of the same rarity to merge them into one higher-rarity fish. Costs: Common→Rare (50 dust), Rare→Epic (100 dust), Epic→Legendary (200 dust), Legendary→Mythic (400 dust). You also receive Pearl Shards and bonus eggs as rewards!",
+  },
+  {
+    question: "How do I release fish?",
+    answer:
+      "Click the Release button in the Reef tab to enter release mode. Select fish you want to release and confirm. Released fish are permanently burned, but you receive Spawn Dust: Common (50), Rare (100), Epic (250), Legendary (500), Mythic (1000).",
+  },
+  {
     question: "Which network does FryReef use?",
     answer:
-      "FryReef runs on Base Sepolia testnet. Make sure your wallet is connected to this network. The app will prompt you to switch if needed.",
+      "FryReef runs on Base Mainnet. Make sure your wallet is connected to Base network. The app will prompt you to switch if needed.",
   },
   {
     question: "Will there be a token?",
     answer:
-      "Yes! The $FR token is planned for future release on Base Mainnet. It will be the core currency of the FryReef ecosystem.",
-  },
-  {
-    question: "What will be the $FR token utility?",
-    answer:
-      "The $FR token will be used for premium fish breeding, marketplace transactions, staking rewards, governance voting, and exclusive in-game features.",
-  },
-  {
-    question: "Will there be an airdrop?",
-    answer:
-      "Yes! Early players and active testnet participants will receive $FR token allocation based on their activity, fish collection, and engagement. Play now to qualify!",
+      "Yes! The $FR token is planned for future release. It will be the core currency of the FryReef ecosystem, used for premium fish breeding, marketplace transactions, staking rewards, governance voting, and exclusive in-game features. Early players and active participants may receive $FR token allocation based on their activity, fish collection, and engagement.",
   },
 ];
 
@@ -119,4 +124,3 @@ export function FAQ() {
     </div>
   );
 }
-

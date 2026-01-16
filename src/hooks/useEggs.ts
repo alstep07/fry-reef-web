@@ -1,10 +1,10 @@
 "use client";
 
 import { useAccount, useReadContract, useReadContracts } from "wagmi";
-import { baseSepolia } from "wagmi/chains";
+import { base } from "wagmi/chains";
 import { eggNftAbi, EGG_NFT_ADDRESS, type EggInfo } from "@/contracts/eggNft";
 
-const DEFAULT_CHAIN_ID = baseSepolia.id;
+const DEFAULT_CHAIN_ID = base.id;
 
 export interface EggWithInfo {
   tokenId: number;

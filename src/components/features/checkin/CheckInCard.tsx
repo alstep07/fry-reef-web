@@ -20,7 +20,7 @@ export function CheckInCard() {
     error,
     isSuccess,
     isOnCorrectNetwork,
-    switchToBaseSepolia,
+    switchToBase,
   } = useOnchainCheckIn(address);
 
   const lastCheckIn = lastCheckInTimestamp
@@ -65,14 +65,13 @@ export function CheckInCard() {
                     ⚠️ Wrong Network
                   </p>
                   <p className="mb-3 text-xs text-yellow-300/80">
-                    Please switch to Base Sepolia to use check-in feature. Your
-                    data is stored on Base Sepolia testnet.
+                    Please switch to Base to use check-in feature.
                   </p>
                   <button
-                    onClick={switchToBaseSepolia}
+                    onClick={switchToBase}
                     className="rounded-full bg-yellow-500/20 px-4 py-2 text-xs font-medium text-yellow-300 transition hover:bg-yellow-500/30"
                   >
-                    Switch to Base Sepolia
+                    Switch to Base
                   </button>
                 </div>
               )}
@@ -95,7 +94,7 @@ export function CheckInCard() {
             )}
             {isSuccess && (
               <p className="mt-2 text-center text-xs text-green-400">
-                ✓ Check-in successful! Transaction confirmed on Base Sepolia.
+                ✓ Check-in successful! Transaction confirmed on Base.
               </p>
             )}
           </div>
@@ -104,4 +103,3 @@ export function CheckInCard() {
     </CardShell>
   );
 }
-

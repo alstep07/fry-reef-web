@@ -13,7 +13,7 @@ import {
 } from "@/constants/gameConfig";
 import { HatchModal } from "./HatchModal";
 import { fishNftAbi, FISH_NFT_ADDRESS } from "@/contracts/fishNft";
-import { baseSepolia } from "wagmi/chains";
+import { base } from "wagmi/chains";
 
 interface EggCardProps {
   egg: EggWithInfo;
@@ -234,7 +234,7 @@ export function NestTab({ onGoToReef }: NestTabProps) {
     abi: fishNftAbi,
     functionName: "getFishByOwner",
     args: address ? [address] : undefined,
-    chainId: baseSepolia.id,
+    chainId: base.id,
     query: {
       enabled: !!address && !!FISH_NFT_ADDRESS,
     },
@@ -249,7 +249,7 @@ export function NestTab({ onGoToReef }: NestTabProps) {
     abi: fishNftAbi,
     functionName: "getFishInfo",
     args: hatchedFishId !== null ? [BigInt(hatchedFishId)] : undefined,
-    chainId: baseSepolia.id,
+    chainId: base.id,
     query: {
       enabled: hatchedFishId !== null,
     },

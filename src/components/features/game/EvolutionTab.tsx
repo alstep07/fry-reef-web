@@ -13,7 +13,7 @@ import {
   CONTRACT_RARITY_MAP,
 } from "@/constants/gameConfig";
 import { fishNftAbi, FISH_NFT_ADDRESS } from "@/contracts/fishNft";
-import { baseSepolia } from "wagmi/chains";
+import { base } from "wagmi/chains";
 import { MergeSuccessModal } from "./MergeSuccessModal";
 
 interface SelectedFish {
@@ -50,7 +50,7 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
     abi: fishNftAbi,
     functionName: "getFishByOwner",
     args: address ? [address] : undefined,
-    chainId: baseSepolia.id,
+    chainId: base.id,
     query: { enabled: !!address && !!FISH_NFT_ADDRESS },
   });
 
@@ -60,7 +60,7 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
     abi: fishNftAbi,
     functionName: "getFishInfo",
     args: mergedFishId !== null ? [BigInt(mergedFishId)] : undefined,
-    chainId: baseSepolia.id,
+    chainId: base.id,
     query: { enabled: mergedFishId !== null && !!FISH_NFT_ADDRESS },
   });
 
