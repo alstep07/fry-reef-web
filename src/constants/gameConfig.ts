@@ -184,3 +184,15 @@ export const RESOURCE_CONFIG = {
     icon: "✨",
   },
 } as const;
+
+/**
+ * Contract rarity (number) to Rarity enum mapping
+ * Used to convert contract's uint8 rarity to our string enum
+ */
+export const CONTRACT_RARITY_MAP: Record<number, Rarity> = {
+  0: Rarity.Common,
+  1: Rarity.Rare,
+  2: Rarity.Epic,
+  3: Rarity.Legendary,
+  4: Rarity.Mythic,
+} as const;

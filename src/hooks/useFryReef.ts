@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback } from "react";
 import {
   useAccount,
   useReadContract,
-  useWriteContract,
-  useWaitForTransactionReceipt,
   useChainId,
   useSwitchChain,
 } from "wagmi";
@@ -16,6 +14,7 @@ import {
   isFryReefConfigured,
   type UserInfo,
 } from "@/contracts/fryReef";
+import { useTransaction } from "./useTransaction";
 
 const DEFAULT_CHAIN_ID = baseSepolia.id;
 
@@ -30,6 +29,10 @@ export function useFryReef() {
     ? (FRYREEF_ADDRESS as `0x${string}`)
     : undefined;
 
+  // ============================================================
+  // READ CONTRACTS
+  // ============================================================
+
   // Read user info
   const {
     data: userInfo,
@@ -43,7 +46,7 @@ export function useFryReef() {
     chainId: DEFAULT_CHAIN_ID,
     query: {
       enabled: !!address && !!contractAddress && isOnCorrectNetwork,
-      refetchInterval: 10000, // Refetch every 10 seconds to keep data fresh
+      refetchInterval: 10000,
     },
   }) as { data: UserInfo | undefined; isLoading: boolean; refetch: () => void };
 
@@ -99,351 +102,169 @@ export function useFryReef() {
       },
     }) as { data: bigint | undefined; refetch: () => void };
 
-  // Use data directly instead of syncing with state
   const checkedInToday = checkedInTodayData ?? false;
 
-  // Write contracts
-  const {
-    writeContract,
-    data: hash,
-    isPending: isWriting,
-    error: writeError,
-    reset: resetWrite,
-  } = useWriteContract();
+  // ============================================================
+  // ISOLATED TRANSACTIONS - Each has its own state
+  // ============================================================
 
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash,
-    chainId: DEFAULT_CHAIN_ID,
+  // Refetch all data helper
+  const refetchAllData = useCallback(() => {
+    refetchUserInfo();
+    refetchCheckedInToday();
+    refetchStarterPack();
+    refetchReefCapacity();
+    refetchExpansionCost();
+  }, [refetchUserInfo, refetchCheckedInToday, refetchStarterPack, refetchReefCapacity, refetchExpansionCost]);
+
+  // Starter pack transaction
+  const starterPackTx = useTransaction({
+    onSuccess: refetchAllData,
   });
 
-  // Claim starter pack
-  const claimStarterPack = async () => {
-    if (!contractAddress || !address) return;
+  // Check-in transaction
+  const checkInTx = useTransaction({
+    onSuccess: refetchAllData,
+  });
 
-    if (!isOnCorrectNetwork) {
-      try {
-        await switchChain({ chainId: baseSepolia.id });
-        return;
-      } catch (error) {
-        console.error("Failed to switch network:", error);
-        return;
-      }
-    }
+  // Collect spawn dust transaction
+  const collectDustTx = useTransaction({
+    onSuccess: refetchAllData,
+  });
 
-    try {
-      writeContract({
-        address: contractAddress,
-        abi: fryReefAbi,
-        functionName: "claimStarterPack",
-        chainId: DEFAULT_CHAIN_ID,
-      });
-    } catch (error) {
-      console.error("Claim starter pack error:", error);
-    }
-  };
+  // Start incubation transaction
+  const incubationTx = useTransaction({
+    onSuccess: refetchAllData,
+  });
 
-  // Check in
-  const checkIn = async () => {
-    if (!contractAddress || !address) return;
+  // Hatch egg transaction
+  const hatchTx = useTransaction({
+    onSuccess: refetchAllData,
+  });
 
-    if (!isOnCorrectNetwork) {
-      try {
-        await switchChain({ chainId: baseSepolia.id });
-        return;
-      } catch (error) {
-        console.error("Failed to switch network:", error);
-        return;
-      }
-    }
+  // Lay egg transaction
+  const layEggTx = useTransaction({
+    onSuccess: refetchAllData,
+  });
 
-    try {
-      writeContract({
-        address: contractAddress,
-        abi: fryReefAbi,
-        functionName: "checkIn",
-        chainId: DEFAULT_CHAIN_ID,
-      });
-    } catch (error) {
-      console.error("Check-in error:", error);
-    }
-  };
+  // Merge fish transaction
+  const mergeTx = useTransaction({
+    onSuccess: refetchAllData,
+  });
 
-  // Collect spawn dust
-  const collectSpawnDust = async () => {
-    if (!contractAddress || !address) return;
+  // Expand reef transaction
+  const expandTx = useTransaction({
+    onSuccess: refetchAllData,
+  });
 
-    if (!isOnCorrectNetwork) {
-      try {
-        await switchChain({ chainId: baseSepolia.id });
-        return;
-      } catch (error) {
-        console.error("Failed to switch network:", error);
-        return;
-      }
-    }
+  // Burn fish transaction
+  const burnTx = useTransaction({
+    onSuccess: refetchAllData,
+  });
 
-    try {
-      writeContract({
-        address: contractAddress,
-        abi: fryReefAbi,
-        functionName: "collectSpawnDust",
-        chainId: DEFAULT_CHAIN_ID,
-      });
-    } catch (error) {
-      console.error("Collect spawn dust error:", error);
-    }
-  };
+  // ============================================================
+  // TRANSACTION METHODS
+  // ============================================================
 
-  // Start incubation
-  const startIncubation = async (eggId: number) => {
-    if (!contractAddress || !address) return;
+  const claimStarterPack = useCallback(async (): Promise<boolean> => {
+    if (!contractAddress) return false;
+    return starterPackTx.execute({
+      address: contractAddress,
+      abi: fryReefAbi,
+      functionName: "claimStarterPack",
+    });
+  }, [contractAddress, starterPackTx]);
 
-    if (!isOnCorrectNetwork) {
-      try {
-        await switchChain({ chainId: baseSepolia.id });
-        return;
-      } catch (error) {
-        console.error("Failed to switch network:", error);
-        return;
-      }
-    }
+  const checkIn = useCallback(async (): Promise<boolean> => {
+    if (!contractAddress) return false;
+    return checkInTx.execute({
+      address: contractAddress,
+      abi: fryReefAbi,
+      functionName: "checkIn",
+    });
+  }, [contractAddress, checkInTx]);
 
-    try {
-      writeContract({
-        address: contractAddress,
-        abi: fryReefAbi,
-        functionName: "startIncubation",
-        args: [BigInt(eggId)],
-        chainId: DEFAULT_CHAIN_ID,
-      });
-    } catch (error) {
-      console.error("Start incubation error:", error);
-    }
-  };
+  const collectSpawnDust = useCallback(async (): Promise<boolean> => {
+    if (!contractAddress) return false;
+    return collectDustTx.execute({
+      address: contractAddress,
+      abi: fryReefAbi,
+      functionName: "collectSpawnDust",
+    });
+  }, [contractAddress, collectDustTx]);
 
-  // Hatch egg
-  const hatchEgg = async (eggId: number) => {
-    if (!contractAddress || !address) return;
+  const startIncubation = useCallback(async (eggId: number): Promise<boolean> => {
+    if (!contractAddress) return false;
+    return incubationTx.execute({
+      address: contractAddress,
+      abi: fryReefAbi,
+      functionName: "startIncubation",
+      args: [BigInt(eggId)],
+    });
+  }, [contractAddress, incubationTx]);
 
-    if (!isOnCorrectNetwork) {
-      try {
-        await switchChain({ chainId: baseSepolia.id });
-        return;
-      } catch (error) {
-        console.error("Failed to switch network:", error);
-        return;
-      }
-    }
+  const hatchEgg = useCallback(async (eggId: number): Promise<boolean> => {
+    if (!contractAddress) return false;
+    return hatchTx.execute({
+      address: contractAddress,
+      abi: fryReefAbi,
+      functionName: "hatchEgg",
+      args: [BigInt(eggId)],
+    });
+  }, [contractAddress, hatchTx]);
 
-    try {
-      writeContract({
-        address: contractAddress,
-        abi: fryReefAbi,
-        functionName: "hatchEgg",
-        args: [BigInt(eggId)],
-        chainId: DEFAULT_CHAIN_ID,
-      });
-    } catch (error) {
-      console.error("Hatch egg error:", error);
-    }
-  };
+  const layEgg = useCallback(async (fishId: number): Promise<boolean> => {
+    if (!contractAddress) return false;
+    return layEggTx.execute({
+      address: contractAddress,
+      abi: fryReefAbi,
+      functionName: "layEgg",
+      args: [BigInt(fishId)],
+    });
+  }, [contractAddress, layEggTx]);
 
-  // Lay egg (from fish)
-  const layEgg = async (fishId: number) => {
-    if (!contractAddress || !address) return;
+  const mergeFish = useCallback(async (fishId1: number, fishId2: number): Promise<boolean> => {
+    if (!contractAddress) return false;
+    return mergeTx.execute({
+      address: contractAddress,
+      abi: fryReefAbi,
+      functionName: "mergeFish",
+      args: [BigInt(fishId1), BigInt(fishId2)],
+    });
+  }, [contractAddress, mergeTx]);
 
-    if (!isOnCorrectNetwork) {
-      try {
-        await switchChain({ chainId: baseSepolia.id });
-        return;
-      } catch (error) {
-        console.error("Failed to switch network:", error);
-        return;
-      }
-    }
+  const expandReef = useCallback(async (): Promise<boolean> => {
+    if (!contractAddress) return false;
+    return expandTx.execute({
+      address: contractAddress,
+      abi: fryReefAbi,
+      functionName: "expandReef",
+      args: [],
+    });
+  }, [contractAddress, expandTx]);
 
-    try {
-      writeContract({
-        address: contractAddress,
-        abi: fryReefAbi,
-        functionName: "layEgg",
-        args: [BigInt(fishId)],
-        chainId: DEFAULT_CHAIN_ID,
-      });
-    } catch (error) {
-      console.error("Lay egg error:", error);
-    }
-  };
-
-  // Merge fish
-  const mergeFish = async (fishId1: number, fishId2: number) => {
-    if (!contractAddress || !address) return;
-
-    if (!isOnCorrectNetwork) {
-      try {
-        await switchChain({ chainId: baseSepolia.id });
-        return;
-      } catch (error) {
-        console.error("Failed to switch network:", error);
-        return;
-      }
-    }
-
-    try {
-      writeContract({
-        address: contractAddress,
-        abi: fryReefAbi,
-        functionName: "mergeFish",
-        args: [BigInt(fishId1), BigInt(fishId2)],
-        chainId: DEFAULT_CHAIN_ID,
-      });
-    } catch (error) {
-      console.error("Merge fish error:", error);
-    }
-  };
-
-  // Expand reef
-  const expandReef = async () => {
-    if (!contractAddress || !address) return;
-
-    if (!isOnCorrectNetwork) {
-      try {
-        await switchChain({ chainId: baseSepolia.id });
-        return;
-      } catch (error) {
-        console.error("Failed to switch network:", error);
-        return;
-      }
-    }
-
-    try {
-      writeContract({
-        address: contractAddress,
-        abi: fryReefAbi,
-        functionName: "expandReef",
-        args: [],
-        chainId: DEFAULT_CHAIN_ID,
-      });
-    } catch (error) {
-      console.error("Expand reef error:", error);
-    }
-  };
-
-  // Burn fish
-  const burnFish = async (fishIds: number[]) => {
-    if (!contractAddress || !address || fishIds.length === 0) return;
-
-    if (!isOnCorrectNetwork) {
-      try {
-        await switchChain({ chainId: baseSepolia.id });
-        return;
-      } catch (error) {
-        console.error("Failed to switch network:", error);
-        return;
-      }
-    }
-
-    try {
-      const fishIdsBigInt = fishIds.map((id) => BigInt(id));
-      console.log("Calling burnFish with:", {
-        fishIds,
-        fishIdsBigInt,
-        contractAddress,
-      });
-      writeContract({
-        address: contractAddress,
-        abi: fryReefAbi,
-        functionName: "burnFish",
-        args: [fishIdsBigInt],
-        chainId: DEFAULT_CHAIN_ID,
-      });
-    } catch (error) {
-      console.error("Burn fish error:", error);
-    }
-  };
+  const burnFish = useCallback(async (fishIds: number[]): Promise<boolean> => {
+    if (!contractAddress || fishIds.length === 0) return false;
+    return burnTx.execute({
+      address: contractAddress,
+      abi: fryReefAbi,
+      functionName: "burnFish",
+      args: [fishIds.map((id) => BigInt(id))],
+    });
+  }, [contractAddress, burnTx]);
 
   // Switch network helper
-  const switchToBaseSepolia = async () => {
+  const switchToBaseSepolia = useCallback(async () => {
     try {
       await switchChain({ chainId: baseSepolia.id });
     } catch (error) {
       console.error("Failed to switch network:", error);
     }
-  };
+  }, [switchChain]);
 
-  // Refetch after successful transaction
-  useEffect(() => {
-    if (isSuccess && hash) {
-      // Immediate refetch
-      refetchUserInfo();
-      refetchCheckedInToday();
-      refetchStarterPack();
-      refetchReefCapacity();
-      refetchExpansionCost();
-
-      // Additional refetch after delay to ensure data is updated
-      const timer1 = setTimeout(() => {
-        refetchUserInfo();
-        refetchCheckedInToday();
-        refetchStarterPack();
-        refetchReefCapacity();
-        refetchExpansionCost();
-      }, 2000);
-
-      // Final refetch after longer delay
-      const timer2 = setTimeout(() => {
-        refetchUserInfo();
-        refetchCheckedInToday();
-        refetchStarterPack();
-        refetchReefCapacity();
-        refetchExpansionCost();
-      }, 5000);
-
-      return () => {
-        clearTimeout(timer1);
-        clearTimeout(timer2);
-      };
-    }
-  }, [
-    isSuccess,
-    hash,
-    refetchUserInfo,
-    refetchCheckedInToday,
-    refetchStarterPack,
-    refetchReefCapacity,
-    refetchExpansionCost,
-  ]);
-
-  // Filter out user rejection errors
-  const getFilteredError = () => {
-    if (!writeError) return null;
-
-    const errorMessage =
-      writeError instanceof Error
-        ? writeError.message.toLowerCase()
-        : String(writeError).toLowerCase();
-
-    const isUserRejection =
-      errorMessage.includes("user rejected") ||
-      errorMessage.includes("user denied") ||
-      errorMessage.includes("rejected") ||
-      errorMessage.includes("denied") ||
-      errorMessage.includes("cancelled");
-
-    if (isUserRejection) return null;
-
-    return writeError as Error;
-  };
-
-  // Debug: log userInfo to check data
-  if (userInfo) {
-    console.log("UserInfo from contract:", {
-      pearlShards: userInfo.pearlShards?.toString(),
-      spawnDust: userInfo.spawnDust?.toString(),
-      reefCapacity: userInfo.reefCapacity?.toString(),
-      starterPackClaimed: userInfo.starterPackClaimed,
-    });
-  }
+  // ============================================================
+  // RETURN
+  // ============================================================
 
   return {
     // User info
@@ -453,39 +274,55 @@ export function useFryReef() {
     currentStreak: userInfo?.currentStreak ? Number(userInfo.currentStreak) : 0,
     totalCheckIns: userInfo?.totalCheckIns ? Number(userInfo.totalCheckIns) : 0,
 
-    // Starter pack - keep undefined until data loads
+    // Starter pack
     starterPackClaimed: starterPackClaimedData,
     claimStarterPack,
+    starterPackTx,
 
     // Check-in
     checkedInToday,
     checkIn,
+    checkInTx,
 
     // Spawn dust
     collectSpawnDust,
+    collectDustTx,
 
     // Incubation
     startIncubation,
+    incubationTx,
     hatchEgg,
+    hatchTx,
     layEgg,
+    layEggTx,
     mergeFish,
+    mergeTx,
     burnFish,
+    burnTx,
 
     // Reef expansion
-    reefCapacity: reefCapacityData ? Number(reefCapacityData) : 3, // Default to 3
+    reefCapacity: reefCapacityData ? Number(reefCapacityData) : 3,
     expansionCost: expansionCostData ? Number(expansionCostData) : null,
     expandReef,
+    expandTx,
     refetchReefCapacity,
 
     // Refetch
     refetchUserInfo,
+    refetchAllData,
 
-    // Status
-    isLoading: isLoadingUserInfo || isConfirming,
-    isWriting,
-    isSuccess,
-    error: getFilteredError(),
-    resetWrite,
+    // Status (aggregated - any transaction loading)
+    isLoading: isLoadingUserInfo,
+    isAnyTxLoading:
+      starterPackTx.isLoading ||
+      checkInTx.isLoading ||
+      collectDustTx.isLoading ||
+      incubationTx.isLoading ||
+      hatchTx.isLoading ||
+      layEggTx.isLoading ||
+      mergeTx.isLoading ||
+      expandTx.isLoading ||
+      burnTx.isLoading,
 
     // Network
     isOnCorrectNetwork,

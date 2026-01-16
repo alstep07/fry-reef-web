@@ -9,7 +9,7 @@ export interface FishWithInfo {
   tokenId: number;
   info: FishInfo;
   pendingDust: number;
-  timeUntilNextEgg: number; // Time in seconds until next egg can be laid
+  timeUntilNextEgg: number;
 }
 
 export function useFish() {
@@ -52,13 +52,13 @@ export function useFish() {
     chainId: baseSepolia.id,
     query: {
       enabled: !!address && !!fryReefAddress,
-      refetchInterval: 60000, // Refetch every 60 seconds
+      refetchInterval: 60000,
     },
   });
 
   // Get info for each fish
   const fishIdsArray = (fishIds as bigint[]) || [];
-  
+
   const fishInfoContracts = fishIdsArray.map((id) => ({
     address: contractAddress!,
     abi: fishNftAbi,
@@ -103,7 +103,7 @@ export function useFish() {
     contracts: pendingDustContracts,
     query: {
       enabled: fishIdsArray.length > 0 && !!contractAddress,
-      refetchInterval: 60000, // Refetch every 60 seconds
+      refetchInterval: 60000,
     },
   });
 
@@ -116,7 +116,7 @@ export function useFish() {
     contracts: timeUntilNextEggContracts,
     query: {
       enabled: fishIdsArray.length > 0 && !!fryReefAddress,
-      refetchInterval: 1000, // Refetch every second for live updates
+      refetchInterval: 1000,
     },
   });
 
@@ -127,49 +127,38 @@ export function useFish() {
     const timeResult = timeUntilNextEggResults?.[index];
 
     // Extract FishInfo from result
-    // wagmi returns tuple as an object with named properties matching ABI component names
     let info: FishInfo;
     if (infoResult?.result) {
-      const result = infoResult.result as any;
-      // Handle both object and array formats
-      // TODO: Remove mock data when contract is updated
-      const MOCK_MODE = false; // Set to false when contract is updated
-      
+      const result = infoResult.result as {
+        rarity?: number;
+        mintedAt?: bigint;
+        lastDustCollectedAt?: bigint;
+        lastEggLaidAt?: bigint;
+      } | [number, bigint, bigint, bigint];
+
       if (Array.isArray(result)) {
-        // If it's an array, extract by index (order: rarity, mintedAt, lastDustCollectedAt, lastEggLaidAt)
-        const contractRarity = Number(result[0] ?? 0);
-        // Only use mock if contract rarity is 0 (likely means contract not updated or data missing)
-        const rarity = MOCK_MODE && contractRarity === 0 ? ((Number(id) * 17) % 5) : contractRarity;
-        
+        // Tuple format: [rarity, mintedAt, lastDustCollectedAt, lastEggLaidAt]
         info = {
-          rarity,
+          rarity: Number(result[0] ?? 0),
           mintedAt: BigInt(result[1] ?? 0),
           lastDustCollectedAt: BigInt(result[2] ?? 0),
           lastEggLaidAt: BigInt(result[3] ?? 0),
         };
       } else {
-        // If it's an object, use named properties
-        const contractRarity = Number(result.rarity ?? 0);
-        // Only use mock if contract rarity is 0 (likely means contract not updated or data missing)
-        const rarity = MOCK_MODE && contractRarity === 0 ? ((Number(id) * 17) % 5) : contractRarity;
-        
+        // Object format
         info = {
-          rarity,
+          rarity: Number(result.rarity ?? 0),
           mintedAt: BigInt(result.mintedAt ?? 0),
           lastDustCollectedAt: BigInt(result.lastDustCollectedAt ?? 0),
           lastEggLaidAt: BigInt(result.lastEggLaidAt ?? 0),
         };
       }
     } else {
-      // No result data - use default values
-      const MOCK_MODE = false;
-      const seed = Number(id);
-      const mockRarity = (seed * 17) % 5;
-      info = { 
-        rarity: MOCK_MODE ? mockRarity : 0, 
-        mintedAt: BigInt(0), 
-        lastDustCollectedAt: BigInt(0), 
-        lastEggLaidAt: BigInt(0) 
+      info = {
+        rarity: 0,
+        mintedAt: BigInt(0),
+        lastDustCollectedAt: BigInt(0),
+        lastEggLaidAt: BigInt(0),
       };
     }
 
@@ -177,27 +166,9 @@ export function useFish() {
       ? Number(dustResult.result as bigint)
       : 0;
 
-    // TODO: Remove this mock data when contract is updated
-    // For now, generate random data for UI testing
-    const MOCK_MODE = false; // Set to false when contract is updated
-    
-    let timeUntilNextEgg: number;
-    if (MOCK_MODE) {
-      // First fish (index 0) is ready to lay egg (timeUntilNextEgg = 0)
-      if (index === 0) {
-        timeUntilNextEgg = 0;
-      } else {
-        // Generate random time between 0 and 24 hours (86400 seconds) for other fish
-        // Use tokenId as seed for consistent "random" values per fish
-        const seed = Number(id);
-        const randomValue = (seed * 7919) % 86400; // Use prime number for better distribution
-        timeUntilNextEgg = randomValue;
-      }
-    } else {
-      timeUntilNextEgg = timeResult?.result
-        ? Number(timeResult.result as bigint)
-        : 0;
-    }
+    const timeUntilNextEgg = timeResult?.result
+      ? Number(timeResult.result as bigint)
+      : 0;
 
     return {
       tokenId: Number(id),
@@ -223,4 +194,3 @@ export function useFish() {
     refetch,
   };
 }
-
