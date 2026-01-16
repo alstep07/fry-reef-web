@@ -17,11 +17,17 @@ const manifest = {
     description: "Collect, breed & merge fish NFTs. Hatch eggs, evolve rare species, earn daily rewards. No crypto needed to start!",
     primaryCategory: "games",
     tags: ["nft", "game", "freetoplay", "breeding", "onchain"],
+    screenshotUrls: [
+      `${APP_URL}/images/screenshots/screenshot_1.jpg`,
+      `${APP_URL}/images/screenshots/screenshot_2.jpg`,
+      `${APP_URL}/images/screenshots/screenshot_3.jpg`,
+    ],
     heroImageUrl: `${APP_URL}/images/common/logo.png`,
     tagline: "Collect & evolve fish NFTs",
     ogTitle: "FryReef - Fish NFT Game",
     ogDescription: "Free-to-play fish breeding game on Base",
     ogImageUrl: `${APP_URL}/images/common/logo.png`,
+    noindex: false,
   },
 };
 
