@@ -2,6 +2,7 @@
 
 import { useAccount, useReadContract, useReadContracts } from "wagmi";
 import { base } from "wagmi/chains";
+import { keepPreviousData } from "@tanstack/react-query";
 import { fishNftAbi, FISH_NFT_ADDRESS, type FishInfo } from "@/contracts/fishNft";
 import { fryReefAbi, FRYREEF_ADDRESS } from "@/contracts/fryReef";
 
@@ -36,6 +37,7 @@ export function useFish() {
     chainId: base.id,
     query: {
       enabled: !!address && !!contractAddress,
+      placeholderData: keepPreviousData,
     },
   });
 
@@ -53,6 +55,7 @@ export function useFish() {
     query: {
       enabled: !!address && !!fryReefAddress,
       refetchInterval: 60000,
+      placeholderData: keepPreviousData,
     },
   });
 
@@ -91,6 +94,7 @@ export function useFish() {
     contracts: fishInfoContracts,
     query: {
       enabled: fishIdsArray.length > 0 && !!contractAddress,
+      placeholderData: keepPreviousData,
     },
   });
 
@@ -104,6 +108,7 @@ export function useFish() {
     query: {
       enabled: fishIdsArray.length > 0 && !!contractAddress,
       refetchInterval: 60000,
+      placeholderData: keepPreviousData,
     },
   });
 
@@ -117,6 +122,7 @@ export function useFish() {
     query: {
       enabled: fishIdsArray.length > 0 && !!fryReefAddress,
       refetchInterval: 1000,
+      placeholderData: keepPreviousData,
     },
   });
 

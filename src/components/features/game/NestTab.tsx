@@ -108,10 +108,10 @@ function EggCard({
 
       <div className="relative mx-auto mb-2 sm:mb-3 h-16 w-16 sm:h-20 sm:w-20">
         {isReadyToHatch && (
-          <div className="absolute inset-0 animate-pulse rounded-full bg-green-500/20 blur-xl" />
+          <div className="absolute inset-0 animate-pulse rounded-full bg-green-500/20 blur-md sm:blur-xl" />
         )}
         {info.isIncubating && !isReadyToHatch && (
-          <div className="absolute inset-0 rounded-full bg-baseBlue/10 blur-lg" />
+          <div className="absolute inset-0 rounded-full bg-baseBlue/10 blur-sm sm:blur-lg" />
         )}
 
         <div
@@ -187,11 +187,10 @@ function EggCard({
             <button
               onClick={() => onHatch(tokenId)}
               disabled={isLoading || timeLeft > 0 || !hasSpace}
-              className={`w-full cursor-pointer rounded-lg px-3 py-2 text-xs font-medium text-white transition disabled:cursor-not-allowed disabled:bg-slate-600 ${
-                timeLeft <= 0 && hasSpace
-                  ? "bg-green-500 hover:bg-green-400"
-                  : "bg-slate-600"
-              }`}
+              className={`w-full cursor-pointer rounded-lg px-3 py-2 text-xs font-medium text-white transition disabled:cursor-not-allowed disabled:bg-slate-600 ${timeLeft <= 0 && hasSpace
+                ? "bg-green-500 hover:bg-green-400"
+                : "bg-slate-600"
+                }`}
               title={!hasSpace ? "Reef capacity full" : undefined}
             >
               {isHatching ? "..." : !hasSpace ? "No space" : "Hatch"}
@@ -225,8 +224,8 @@ export function NestTab({ onGoToReef }: NestTabProps) {
   const [hatchedFishId, setHatchedFishId] = useState<number | null>(null);
   const [hatchedRarity, setHatchedRarity] = useState<Rarity | null>(null);
 
-  // Track fish count before hatch to detect new fish
-  const fishCountBeforeRef = useRef<number | null>(null);
+  // Track fish IDs before hatch to detect new fish
+  const fishIdsBeforeRef = useRef<Set<number> | null>(null);
 
   // Get user's fish to detect new ones
   const { data: fishIds, refetch: refetchFish } = useReadContract({
@@ -240,11 +239,12 @@ export function NestTab({ onGoToReef }: NestTabProps) {
     },
   });
 
-  const fishCount = fishIds ? (fishIds as bigint[]).length : 0;
+  const fishIdsArray = fishIds ? (fishIds as bigint[]).map(id => Number(id)) : [];
+  const fishCount = fishIdsArray.length;
   const hasSpace = fishCount < reefCapacity;
 
   // Get fish info when we have a new fish ID
-  const { data: fishInfo } = useReadContract({
+  const { data: fishInfo, refetch: refetchFishInfo } = useReadContract({
     address: FISH_NFT_ADDRESS as `0x${string}`,
     abi: fishNftAbi,
     functionName: "getFishInfo",
@@ -258,8 +258,24 @@ export function NestTab({ onGoToReef }: NestTabProps) {
   // Show modal when we have fish info
   useEffect(() => {
     if (fishInfo && hatchedFishId !== null) {
-      const info = fishInfo as { rarity: number };
-      setHatchedRarity(CONTRACT_RARITY_MAP[info.rarity] || Rarity.Common);
+      // Parse fishInfo - can be tuple [rarity, mintedAt, lastDustCollectedAt, lastEggLaidAt] or object
+      const result = fishInfo as {
+        rarity?: number;
+        mintedAt?: bigint;
+        lastDustCollectedAt?: bigint;
+        lastEggLaidAt?: bigint;
+      } | [number, bigint, bigint, bigint];
+
+      let rarity: number;
+      if (Array.isArray(result)) {
+        // Tuple format: [rarity, mintedAt, lastDustCollectedAt, lastEggLaidAt]
+        rarity = Number(result[0] ?? 0);
+      } else {
+        // Object format
+        rarity = Number(result.rarity ?? 0);
+      }
+
+      setHatchedRarity(CONTRACT_RARITY_MAP[rarity] || Rarity.Common);
       setShowHatchModal(true);
     }
   }, [fishInfo, hatchedFishId]);
@@ -277,31 +293,37 @@ export function NestTab({ onGoToReef }: NestTabProps) {
 
   const handleHatch = useCallback(
     async (tokenId: number) => {
-      // Store current fish count before hatch
-      fishCountBeforeRef.current = fishCount;
+      // Store current fish IDs before hatch
+      fishIdsBeforeRef.current = new Set(fishIdsArray);
 
       const success = await hatchEgg(tokenId);
       if (success) {
+        // Wait a bit for RPC to sync
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
         // Refetch to get new fish - use result directly since state won't update immediately
         const result = await refetchFish();
         const updatedFishIds = result.data as bigint[] | undefined;
+        // Detect new fish by finding the one that wasn't in the old set
+        if (updatedFishIds && fishIdsBeforeRef.current) {
+          const updatedFishIdsArray = updatedFishIds.map(id => Number(id));
+          const newFishId = updatedFishIdsArray.find(id => !fishIdsBeforeRef.current!.has(id));
 
-        // Detect new fish
-        if (
-          updatedFishIds &&
-          fishCountBeforeRef.current !== null &&
-          updatedFishIds.length > fishCountBeforeRef.current
-        ) {
-          const newFishId = Number(updatedFishIds[updatedFishIds.length - 1]);
-          setHatchedFishId(newFishId);
+          if (newFishId !== undefined) {
+            setHatchedFishId(newFishId);
+            // Wait a bit more and refetch fish info to ensure we get the correct rarity
+            setTimeout(() => {
+              refetchFishInfo();
+            }, 1000);
+          }
         }
 
         refetch();
         refetchUserInfo();
-        fishCountBeforeRef.current = null;
+        fishIdsBeforeRef.current = null;
       }
     },
-    [hatchEgg, fishCount, refetchFish, refetch, refetchUserInfo]
+    [hatchEgg, fishIdsArray, refetchFish, refetchFishInfo, refetch, refetchUserInfo]
   );
 
   const handleCloseModal = useCallback(() => {

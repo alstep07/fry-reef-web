@@ -2,6 +2,7 @@
 
 import { useAccount, useReadContract, useReadContracts } from "wagmi";
 import { base } from "wagmi/chains";
+import { keepPreviousData } from "@tanstack/react-query";
 import { eggNftAbi, EGG_NFT_ADDRESS, type EggInfo } from "@/contracts/eggNft";
 
 const DEFAULT_CHAIN_ID = base.id;
@@ -29,6 +30,7 @@ export function useEggs() {
     chainId: DEFAULT_CHAIN_ID,
     query: {
       enabled: !!address && !!contractAddress,
+      placeholderData: keepPreviousData,
     },
   });
 
@@ -47,6 +49,7 @@ export function useEggs() {
     contracts: tokenIdContracts,
     query: {
       enabled: eggCount > 0 && !!address,
+      placeholderData: keepPreviousData,
     },
   });
 
@@ -83,6 +86,7 @@ export function useEggs() {
     contracts: eggInfoContracts,
     query: {
       enabled: tokenIds.length > 0,
+      placeholderData: keepPreviousData,
     },
   });
 

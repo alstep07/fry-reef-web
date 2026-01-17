@@ -46,7 +46,7 @@ export function HatchModal({ isOpen, rarity, fishId, onClose, onGoToReef }: Hatc
         {/* Confetti effect for rare+ */}
         {rarity !== Rarity.Common && (
           <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
-            <div className="absolute -top-4 left-1/2 h-24 w-24 sm:h-32 sm:w-32 -translate-x-1/2 animate-pulse rounded-full blur-3xl"
+            <div className="absolute -top-4 left-1/2 h-24 w-24 sm:h-32 sm:w-32 -translate-x-1/2 animate-pulse rounded-full blur-xl sm:blur-3xl"
               style={{ backgroundColor: `${config.color}40` }}
             />
           </div>
@@ -64,7 +64,7 @@ export function HatchModal({ isOpen, rarity, fishId, onClose, onGoToReef }: Hatc
         <div className="relative mx-auto mb-3 sm:mb-4 h-28 w-28 sm:h-40 sm:w-40">
           {/* Glow */}
           <div
-            className="absolute inset-0 animate-pulse rounded-full blur-2xl"
+            className="absolute inset-0 animate-pulse rounded-full blur-lg sm:blur-2xl"
             style={{ backgroundColor: `${config.color}30` }}
           />
           <Image

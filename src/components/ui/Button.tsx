@@ -34,7 +34,7 @@ export function Button({
       {/* Base brand blue gradient overlay */}
       <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.3),transparent_60%),radial-gradient(circle_at_bottom,rgba(229,233,255,0.2),transparent_60%)] opacity-90 mix-blend-overlay" />
       {/* Base blue glow */}
-      <span className="pointer-events-none absolute inset-0 rounded-full bg-baseBlue/20 blur-xl" />
+      <span className="pointer-events-none absolute inset-0 rounded-full bg-baseBlue/20 blur-md sm:blur-xl" />
       <span className="relative z-10">{children}</span>
     </button>
   );

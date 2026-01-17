@@ -38,7 +38,7 @@ export function LayEggModal({ isOpen, onClose, onGoToNest }: LayEggModalProps) {
       <div className="relative z-10 mx-4 w-full max-w-xs sm:max-w-sm animate-[scaleIn_0.3s_ease-out] rounded-2xl border border-white/10 bg-gradient-to-b from-slate-800/90 to-slate-900/90 p-4 sm:p-6 text-center shadow-2xl backdrop-blur-md">
         {/* Title */}
         <h2 className="mb-1.5 sm:mb-2 text-xl sm:text-2xl font-bold text-white">
-          Икринка успешно отложена
+          Egg Successfully Laid!
         </h2>
 
         {/* Egg Icon */}
@@ -52,13 +52,13 @@ export function LayEggModal({ isOpen, onClose, onGoToNest }: LayEggModalProps) {
             onClick={onClose}
             className="flex-1 cursor-pointer rounded-xl border border-white/10 bg-white/5 px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium text-slate-300 transition hover:bg-white/10"
           >
-            Остаться здесь
+            Stay Here
           </button>
           <button
             onClick={onGoToNest}
             className="flex-1 cursor-pointer rounded-xl bg-baseBlue px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium text-white shadow-lg transition hover:bg-baseBlue/80"
           >
-            Перейти в Nest
+            Go to Nest
           </button>
         </div>
       </div>

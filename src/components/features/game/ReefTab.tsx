@@ -49,13 +49,13 @@ function FishCard({
   const progress = canLayEggByTime
     ? 100
     : Math.max(
-        0,
-        Math.min(
-          100,
-          ((EGG_COOLDOWN_SECONDS - timeUntilNextEgg) / EGG_COOLDOWN_SECONDS) *
-            100
-        )
-      );
+      0,
+      Math.min(
+        100,
+        ((EGG_COOLDOWN_SECONDS - timeUntilNextEgg) / EGG_COOLDOWN_SECONDS) *
+        100
+      )
+    );
 
   const formatTime = (seconds: number) => {
     if (seconds <= 0) return "Ready";
@@ -69,18 +69,17 @@ function FishCard({
 
   return (
     <div
-      className={`group relative flex flex-col rounded-xl sm:rounded-2xl border-2 p-3 sm:p-4 backdrop-blur-sm transition ${
-        isSelected
-          ? "border-red-600/70 bg-red-600/10"
-          : isReleaseMode && onSelect
+      className={`group relative flex flex-col rounded-xl sm:rounded-2xl border-2 p-3 sm:p-4 backdrop-blur-sm transition ${isSelected
+        ? "border-red-600/70 bg-red-600/10"
+        : isReleaseMode && onSelect
           ? "border-white/10 bg-white/5 cursor-pointer hover:border-white/20"
           : "border-white/10 bg-white/5"
-      }`}
+        }`}
       onClick={isReleaseMode && onSelect ? () => onSelect(tokenId) : undefined}
     >
       {/* Rarity glow */}
       <div
-        className="pointer-events-none absolute inset-0 rounded-xl sm:rounded-2xl opacity-20 blur-xl"
+        className="pointer-events-none absolute inset-0 rounded-xl sm:rounded-2xl opacity-10 sm:opacity-20 blur-md sm:blur-xl"
         style={{ backgroundColor: config.color }}
       />
 
@@ -151,17 +150,16 @@ function FishCard({
               <button
                 onClick={() => onLayEgg(tokenId)}
                 disabled={isLoading || !canLayEgg || !canLayEggByTime}
-                className={`relative flex w-full cursor-pointer items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-medium text-white transition overflow-hidden ${
-                  canLayEggByTime && canLayEgg
-                    ? "bg-purple-500/80 hover:bg-purple-500"
-                    : "bg-slate-600/60 hover:bg-slate-600/80"
-                } disabled:cursor-not-allowed`}
+                className={`relative flex w-full cursor-pointer items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-medium text-white transition overflow-hidden ${canLayEggByTime && canLayEgg
+                  ? "bg-purple-500/80 hover:bg-purple-500"
+                  : "bg-slate-600/60 hover:bg-slate-600/80"
+                  } disabled:cursor-not-allowed`}
                 title={
                   !canLayEgg
                     ? `Need ${EGG_LAYING.spawnDustCost} Spawn Dust`
                     : !canLayEggByTime
-                    ? `Cooldown: ${formatTime(timeUntilNextEgg)}`
-                    : "Create a new egg"
+                      ? `Cooldown: ${formatTime(timeUntilNextEgg)}`
+                      : "Create a new egg"
                 }
               >
                 {/* Progress bar background */}
@@ -399,7 +397,7 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                   />
                 </svg>
                 <span className="hidden sm:inline">Release</span>
@@ -537,7 +535,7 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
                         width: `${Math.min(
                           ((fishCount - selectedFishForRelease.length) /
                             reefCapacity) *
-                            100,
+                          100,
                           100
                         )}%`,
                       }}
@@ -545,24 +543,21 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
                     <div
                       className="h-full bg-linear-to-r from-emerald-500/50 to-emerald-400/50 transition-all duration-300 absolute left-0 border-r-2 border-emerald-300/30"
                       style={{
-                        width: `${
-                          (selectedFishForRelease.length / reefCapacity) * 100
-                        }%`,
-                        left: `${
-                          ((fishCount - selectedFishForRelease.length) /
-                            reefCapacity) *
+                        width: `${(selectedFishForRelease.length / reefCapacity) * 100
+                          }%`,
+                        left: `${((fishCount - selectedFishForRelease.length) /
+                          reefCapacity) *
                           100
-                        }%`,
+                          }%`,
                       }}
                     />
                   </>
                 ) : (
                   <div
-                    className={`h-full transition-all duration-300 absolute left-0 ${
-                      fishCount >= reefCapacity
-                        ? "bg-linear-to-r from-amber-500 to-amber-400"
-                        : "bg-linear-to-r from-blue-500 to-blue-400"
-                    }`}
+                    className={`h-full transition-all duration-300 absolute left-0 ${fishCount >= reefCapacity
+                      ? "bg-linear-to-r from-amber-500 to-amber-400"
+                      : "bg-linear-to-r from-blue-500 to-blue-400"
+                      }`}
                     style={{
                       width: `${Math.min(
                         (fishCount / reefCapacity) * 100,

@@ -7,7 +7,7 @@ import {
   useChainId,
   useSwitchChain,
 } from "wagmi";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { base } from "wagmi/chains";
 import {
   fryReefAbi,
@@ -49,6 +49,7 @@ export function useFryReef() {
     query: {
       enabled: !!address && !!contractAddress && isOnCorrectNetwork,
       refetchInterval: 10000,
+      placeholderData: keepPreviousData,
     },
   }) as { data: UserInfo | undefined; isLoading: boolean; refetch: () => void };
 
@@ -62,6 +63,7 @@ export function useFryReef() {
       chainId: DEFAULT_CHAIN_ID,
       query: {
         enabled: !!address && !!contractAddress && isOnCorrectNetwork,
+        placeholderData: keepPreviousData,
       },
     }) as { data: boolean | undefined; refetch: () => void };
 
@@ -75,6 +77,7 @@ export function useFryReef() {
       chainId: DEFAULT_CHAIN_ID,
       query: {
         enabled: !!address && !!contractAddress && isOnCorrectNetwork,
+        placeholderData: keepPreviousData,
       },
     }) as { data: boolean | undefined; refetch: () => void };
 
@@ -88,6 +91,7 @@ export function useFryReef() {
       chainId: DEFAULT_CHAIN_ID,
       query: {
         enabled: !!address && !!contractAddress && isOnCorrectNetwork,
+        placeholderData: keepPreviousData,
       },
     }) as { data: bigint | undefined; refetch: () => void };
 
@@ -101,6 +105,7 @@ export function useFryReef() {
       chainId: DEFAULT_CHAIN_ID,
       query: {
         enabled: !!address && !!contractAddress && isOnCorrectNetwork,
+        placeholderData: keepPreviousData,
       },
     }) as { data: bigint | undefined; refetch: () => void };
 
