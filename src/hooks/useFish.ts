@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useRef } from "react";
 import { useAccount, useReadContract, useReadContracts } from "wagmi";
 import { base } from "wagmi/chains";
 import { keepPreviousData } from "@tanstack/react-query";
@@ -15,6 +16,8 @@ export interface FishWithInfo {
 
 export function useFish() {
   const { address } = useAccount();
+  // Store previous timeUntilNextEgg values to prevent flickering during refetch
+  const previousTimeValuesRef = useRef<Map<number, number>>(new Map());
 
   const contractAddress = FISH_NFT_ADDRESS
     ? (FISH_NFT_ADDRESS as `0x${string}`)
@@ -168,16 +171,30 @@ export function useFish() {
       };
     }
 
-    const pendingDust = dustResult?.result
+    const pendingDust = dustResult?.status === "success" && dustResult.result
       ? Number(dustResult.result as bigint)
       : 0;
 
-    const timeUntilNextEgg = timeResult?.result
-      ? Number(timeResult.result as bigint)
-      : 0;
+    // Get timeUntilNextEgg, using previous value if current data is still loading
+    // This prevents flickering when data is refetching
+    let timeUntilNextEgg: number;
+    const tokenIdNum = Number(id);
+    
+    if (timeResult?.status === "success" && timeResult.result !== undefined) {
+      // Use new value and update cache
+      timeUntilNextEgg = Number(timeResult.result as bigint);
+      previousTimeValuesRef.current.set(tokenIdNum, timeUntilNextEgg);
+    } else if (timeResult?.result !== undefined) {
+      // During refetch, use the result value (keepPreviousData should provide it)
+      timeUntilNextEgg = Number(timeResult.result as bigint);
+      previousTimeValuesRef.current.set(tokenIdNum, timeUntilNextEgg);
+    } else {
+      // No data available, use previous value if exists, otherwise 0
+      timeUntilNextEgg = previousTimeValuesRef.current.get(tokenIdNum) ?? 0;
+    }
 
     return {
-      tokenId: Number(id),
+      tokenId: tokenIdNum,
       info,
       pendingDust,
       timeUntilNextEgg,
