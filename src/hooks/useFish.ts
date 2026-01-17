@@ -177,16 +177,15 @@ export function useFish() {
 
     // Get timeUntilNextEgg, using previous value if current data is still loading
     // This prevents flickering when data is refetching
-    let timeUntilNextEgg: number;
     const tokenIdNum = Number(id);
     
-    if (timeResult?.status === "success" && timeResult.result !== undefined) {
-      // Use new value and update cache
-      timeUntilNextEgg = Number(timeResult.result as bigint);
-      previousTimeValuesRef.current.set(tokenIdNum, timeUntilNextEgg);
-    } else if (timeResult?.result !== undefined) {
-      // During refetch, use the result value (keepPreviousData should provide it)
-      timeUntilNextEgg = Number(timeResult.result as bigint);
+    // Check if we have valid result data
+    const timeResultValue = timeResult?.result;
+    const hasTimeResult = timeResultValue !== undefined && timeResultValue !== null;
+    
+    let timeUntilNextEgg: number;
+    if (hasTimeResult) {
+      timeUntilNextEgg = Number(timeResultValue as bigint);
       previousTimeValuesRef.current.set(tokenIdNum, timeUntilNextEgg);
     } else {
       // No data available, use previous value if exists, otherwise 0

@@ -252,28 +252,32 @@ export function NestTab({ onGoToReef }: NestTabProps) {
     chainId: base.id,
     query: {
       enabled: hatchedFishId !== null,
+      staleTime: 0, // Always fetch fresh data for hatch modal
+      gcTime: 0, // Don't cache this query
     },
   });
 
   // Show modal when we have fish info
   useEffect(() => {
     if (fishInfo && hatchedFishId !== null) {
-      // Parse fishInfo - can be tuple [rarity, mintedAt, lastDustCollectedAt, lastEggLaidAt] or object
+      // Parse fishInfo - wagmi returns object with named properties
+      // rarity is uint8 in contract, may come as number or bigint
       const result = fishInfo as {
-        rarity?: number;
+        rarity?: number | bigint;
         mintedAt?: bigint;
         lastDustCollectedAt?: bigint;
         lastEggLaidAt?: bigint;
-      } | [number, bigint, bigint, bigint];
+      };
 
-      let rarity: number;
-      if (Array.isArray(result)) {
-        // Tuple format: [rarity, mintedAt, lastDustCollectedAt, lastEggLaidAt]
-        rarity = Number(result[0] ?? 0);
-      } else {
-        // Object format
-        rarity = Number(result.rarity ?? 0);
-      }
+      // Convert rarity to number (handles both number and bigint)
+      const rarity = Number(result.rarity ?? 0);
+
+      console.log('[NestTab] Fish info for hatch modal:', {
+        fishId: hatchedFishId,
+        rawRarity: result.rarity,
+        parsedRarity: rarity,
+        mappedRarity: CONTRACT_RARITY_MAP[rarity]
+      });
 
       setHatchedRarity(CONTRACT_RARITY_MAP[rarity] || Rarity.Common);
       setShowHatchModal(true);
