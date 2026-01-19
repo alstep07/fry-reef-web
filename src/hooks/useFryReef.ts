@@ -117,17 +117,24 @@ export function useFryReef() {
 
   // Refetch all data helper with cache invalidation for Smart Wallets
   const refetchAllData = useCallback(() => {
-    // First invalidate all wagmi queries to clear cache
-    queryClient.invalidateQueries();
+    // Invalidate only specific queries, not everything
+    // This prevents cascading invalidations that cause rate limiting
+    queryClient.invalidateQueries({ queryKey: ["readContract", "getUserInfo"] });
+    queryClient.invalidateQueries({ queryKey: ["readContract", "getPendingSpawnDust"] });
+    queryClient.invalidateQueries({ queryKey: ["readContract", "hasCheckedInToday"] });
+    queryClient.invalidateQueries({ queryKey: ["readContract", "hasClaimedStarterPack"] });
+    queryClient.invalidateQueries({ queryKey: ["readContract", "getReefCapacity"] });
+    queryClient.invalidateQueries({ queryKey: ["readContract", "getExpansionCost"] });
     
-    // Then refetch after delay for RPC sync
-    setTimeout(() => {
-      refetchUserInfo();
-      refetchCheckedInToday();
-      refetchStarterPack();
-      refetchReefCapacity();
-      refetchExpansionCost();
-    }, 3000);
+    // Emit custom event for useFish to invalidate its queries
+    window.dispatchEvent(new Event("fish:invalidate"));
+    
+    // Refetch immediately without delay for better UX
+    refetchUserInfo();
+    refetchCheckedInToday();
+    refetchStarterPack();
+    refetchReefCapacity();
+    refetchExpansionCost();
   }, [queryClient, refetchUserInfo, refetchCheckedInToday, refetchStarterPack, refetchReefCapacity, refetchExpansionCost]);
 
   // Starter pack transaction

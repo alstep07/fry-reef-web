@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useEffect } from "react";
 import { useAccount, useReadContract, useReadContracts } from "wagmi";
 import { base } from "wagmi/chains";
-import { keepPreviousData } from "@tanstack/react-query";
+import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
 import { fishNftAbi, FISH_NFT_ADDRESS, type FishInfo } from "@/contracts/fishNft";
 import { fryReefAbi, FRYREEF_ADDRESS } from "@/contracts/fryReef";
 
@@ -17,8 +17,12 @@ export interface FishWithInfo {
 
 export function useFish() {
   const { address } = useAccount();
+  const queryClient = useQueryClient();
   // Store previous timeUntilNextEgg values to prevent flickering during refetch
   const previousTimeValuesRef = useRef<Map<number, number>>(new Map());
+  // Track when each fish started loading - if it takes too long, show it anyway
+  const fishLoadingStartRef = useRef<Map<number, number>>(new Map());
+  const LOADING_TIMEOUT = 8000; // 8 seconds - if fish doesn't load, show it anyway
 
   const contractAddress = FISH_NFT_ADDRESS
     ? (FISH_NFT_ADDRESS as `0x${string}`)
@@ -28,7 +32,7 @@ export function useFish() {
     ? (FRYREEF_ADDRESS as `0x${string}`)
     : undefined;
 
-  // Get fish IDs owned by user
+  // Get fish IDs owned by user (auto-refresh every 15s to catch new/burned fish)
   const {
     data: fishIds,
     isLoading: isLoadingIds,
@@ -41,6 +45,7 @@ export function useFish() {
     chainId: base.id,
     query: {
       enabled: !!address && !!contractAddress,
+      refetchInterval: 15000, // Check for new fish every 15 seconds
       placeholderData: keepPreviousData,
     },
   });
@@ -98,6 +103,7 @@ export function useFish() {
     contracts: fishInfoContracts,
     query: {
       enabled: fishIdsArray.length > 0 && !!contractAddress,
+      refetchInterval: 30000, // Refresh fish info every 30 seconds (rarely changes)
       placeholderData: keepPreviousData,
     },
   });
@@ -116,7 +122,7 @@ export function useFish() {
     },
   });
 
-  // Get time until next egg per fish (auto-refresh every second for live updates)
+  // Get time until next egg per fish (auto-refresh every 10 seconds for efficiency)
   const {
     data: timeUntilNextEggResults,
     isLoading: isLoadingTime,
@@ -125,7 +131,7 @@ export function useFish() {
     contracts: timeUntilNextEggContracts,
     query: {
       enabled: fishIdsArray.length > 0 && !!fryReefAddress,
-      refetchInterval: 1000,
+      refetchInterval: 10000, // Changed from 1000ms to 10000ms to reduce rate limiting
       placeholderData: keepPreviousData,
     },
   });
@@ -136,8 +142,18 @@ export function useFish() {
     const dustResult = pendingDustResults?.[index];
     const timeResult = timeUntilNextEggResults?.[index];
 
-    // Check if info was successfully loaded
-    const isInfoLoaded = infoResult?.status === "success" && infoResult?.result !== undefined;
+    const tokenIdNum = Number(id);
+    const now = Date.now();
+    
+    // Track when this fish started loading
+    if (!fishLoadingStartRef.current.has(tokenIdNum)) {
+      fishLoadingStartRef.current.set(tokenIdNum, now);
+    }
+    const loadingStartTime = fishLoadingStartRef.current.get(tokenIdNum) || now;
+    const hasBeenLoadingTooLong = now - loadingStartTime > LOADING_TIMEOUT;
+
+    // Check if info was successfully loaded OR if loading has taken too long (then show anyway)
+    const isInfoLoaded = (infoResult?.status === "success" && infoResult?.result !== undefined) || hasBeenLoadingTooLong;
 
     // Extract FishInfo from result
     let info: FishInfo;
@@ -181,7 +197,6 @@ export function useFish() {
 
     // Get timeUntilNextEgg, using previous value if current data is still loading
     // This prevents flickering when data is refetching
-    const tokenIdNum = Number(id);
     
     // Check if we have valid result data
     const timeResultValue = timeResult?.result;
@@ -212,6 +227,40 @@ export function useFish() {
     refetchDust();
     refetchTime();
   };
+
+  // Listen for invalidation signals from transactions (via localStorage or custom event)
+  useEffect(() => {
+    const handleInvalidation = () => {
+      // Invalidate only fish-related queries, not all queries
+      queryClient.invalidateQueries({
+        queryKey: ["readContract"],
+        exact: false,
+      });
+      // Reset loading timers when data is invalidated
+      fishLoadingStartRef.current.clear();
+    };
+
+    window.addEventListener("fish:invalidate", handleInvalidation);
+    return () => window.removeEventListener("fish:invalidate", handleInvalidation);
+  }, [queryClient]);
+
+  // Clean up old fish loading timers (remove fish that no longer exist)
+  useEffect(() => {
+    const currentFishIds = new Set(fishIdsArray.map(id => Number(id)));
+    const timerKeys = Array.from(fishLoadingStartRef.current.keys());
+    
+    timerKeys.forEach(key => {
+      if (!currentFishIds.has(key)) {
+        fishLoadingStartRef.current.delete(key);
+      }
+    });
+  }, [fishIdsArray]);
+
+  // Reset loading timers and cache when wallet address changes
+  useEffect(() => {
+    fishLoadingStartRef.current.clear();
+    previousTimeValuesRef.current.clear();
+  }, [address]);
 
   return {
     fish,

@@ -288,16 +288,20 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
   const handleCollectAll = useCallback(async () => {
     const success = await collectSpawnDust();
     if (success) {
-      refetch();
+      // Don't refetch here - useFryReef will handle it via refetchAllData
+      refetchUserInfo();
     }
-  }, [collectSpawnDust, refetch]);
+  }, [collectSpawnDust, refetchUserInfo]);
 
   const handleLayEgg = useCallback(async (fishId: number) => {
     const success = await layEgg(fishId);
     if (success) {
       setShowLayEggModal(true);
-      refetch();
-      refetchUserInfo();
+      // Wait a moment for transaction to be confirmed, then refetch fish list
+      setTimeout(() => {
+        refetch();
+        refetchUserInfo();
+      }, 1000);
     }
   }, [layEgg, refetch, refetchUserInfo]);
 
@@ -325,8 +329,11 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
 
     const success = await burnFish(fishToRelease);
     if (success) {
-      refetch();
-      refetchUserInfo();
+      // Wait for transaction confirmation before refetching
+      setTimeout(() => {
+        refetch();
+        refetchUserInfo();
+      }, 1500);
     }
     // Clear skeleton state after transaction completes (success or fail)
     setReleasingFishIds(new Set());
@@ -340,7 +347,10 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
   const handleExpandReef = useCallback(async () => {
     const success = await expandReef();
     if (success) {
-      refetchUserInfo();
+      // Add a small delay to ensure transaction is confirmed
+      setTimeout(() => {
+        refetchUserInfo();
+      }, 1000);
     }
   }, [expandReef, refetchUserInfo]);
 
