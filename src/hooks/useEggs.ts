@@ -91,9 +91,6 @@ export function useEggs() {
     },
   });
 
-  // Debug: log query status
-  console.log('[useEggs] eggInfoStatus:', eggInfoStatus, 'tokenIds:', tokenIds, 'eggInfoData:', eggInfoData);
-
   // Parse egg data
   const eggs: EggWithInfo[] = tokenIds.map((tokenId, index) => {
     const baseIndex = index * 3;

@@ -272,13 +272,6 @@ export function NestTab({ onGoToReef }: NestTabProps) {
       // Convert rarity to number (handles both number and bigint)
       const rarity = Number(result.rarity ?? 0);
 
-      console.log('[NestTab] Fish info for hatch modal:', {
-        fishId: hatchedFishId,
-        rawRarity: result.rarity,
-        parsedRarity: rarity,
-        mappedRarity: CONTRACT_RARITY_MAP[rarity]
-      });
-
       setHatchedRarity(CONTRACT_RARITY_MAP[rarity] || Rarity.Common);
       setShowHatchModal(true);
     }
@@ -342,7 +335,7 @@ export function NestTab({ onGoToReef }: NestTabProps) {
     },
     [hatchEgg, fishIdsArray, refetchFish, refetchFishInfo, refetch, refetchUserInfo]
   );
-  console.log(eggs);
+
   const handleCloseModal = useCallback(() => {
     setShowHatchModal(false);
     setHatchedFishId(null);
