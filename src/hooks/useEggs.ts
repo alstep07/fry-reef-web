@@ -83,13 +83,16 @@ export function useEggs() {
     },
   ]);
 
-  const { data: eggInfoData, refetch: refetchEggInfo, isFetched: isEggInfoFetched } = useReadContracts({
+  const { data: eggInfoData, refetch: refetchEggInfo, isFetched: isEggInfoFetched, status: eggInfoStatus } = useReadContracts({
     contracts: eggInfoContracts,
     query: {
       enabled: tokenIds.length > 0,
       placeholderData: keepPreviousData,
     },
   });
+
+  // Debug: log query status
+  console.log('[useEggs] eggInfoStatus:', eggInfoStatus, 'tokenIds:', tokenIds, 'eggInfoData:', eggInfoData);
 
   // Parse egg data
   const eggs: EggWithInfo[] = tokenIds.map((tokenId, index) => {
@@ -103,23 +106,24 @@ export function useEggs() {
     // Parse EggInfo - wagmi may return as array tuple or object
     let info: EggInfo;
     if (infoResult?.status === "success" && infoResult?.result) {
-      const result = infoResult.result as 
-        | { mintedAt?: bigint; incubationStartedAt?: bigint; isIncubating?: boolean }
-        | [bigint, bigint, boolean];
+      const result = infoResult.result;
       
-      if (Array.isArray(result)) {
-        // Tuple format: [mintedAt, incubationStartedAt, isIncubating]
+      // Check for readonly array (wagmi returns readonly tuples)
+      if (Array.isArray(result) || (typeof result === 'object' && '0' in result)) {
+        // Tuple/array format: [mintedAt, incubationStartedAt, isIncubating]
+        const arr = result as readonly [bigint, bigint, boolean];
         info = {
-          mintedAt: BigInt(result[0] ?? 0),
-          incubationStartedAt: BigInt(result[1] ?? 0),
-          isIncubating: Boolean(result[2]),
+          mintedAt: BigInt(arr[0] ?? 0),
+          incubationStartedAt: BigInt(arr[1] ?? 0),
+          isIncubating: Boolean(arr[2]),
         };
       } else {
         // Object format
+        const obj = result as { mintedAt?: bigint; incubationStartedAt?: bigint; isIncubating?: boolean };
         info = {
-          mintedAt: BigInt(result.mintedAt ?? 0),
-          incubationStartedAt: BigInt(result.incubationStartedAt ?? 0),
-          isIncubating: Boolean(result.isIncubating),
+          mintedAt: BigInt(obj.mintedAt ?? 0),
+          incubationStartedAt: BigInt(obj.incubationStartedAt ?? 0),
+          isIncubating: Boolean(obj.isIncubating),
         };
       }
     } else {

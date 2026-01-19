@@ -288,8 +288,15 @@ export function NestTab({ onGoToReef }: NestTabProps) {
     async (tokenId: number) => {
       const success = await startIncubation(tokenId);
       if (success) {
-        refetch();
-        refetchUserInfo();
+        // Multiple refetch attempts to ensure state updates
+        const doRefetch = () => {
+          refetch();
+          refetchUserInfo();
+        };
+        // First attempt after 2s
+        setTimeout(doRefetch, 2000);
+        // Backup attempt after 5s
+        setTimeout(doRefetch, 5000);
       }
     },
     [startIncubation, refetch, refetchUserInfo]
@@ -325,11 +332,17 @@ export function NestTab({ onGoToReef }: NestTabProps) {
         refetch();
         refetchUserInfo();
         fishIdsBeforeRef.current = null;
+
+        // Backup refetch after 5s in case of rate limiting
+        setTimeout(() => {
+          refetch();
+          refetchUserInfo();
+        }, 5000);
       }
     },
     [hatchEgg, fishIdsArray, refetchFish, refetchFishInfo, refetch, refetchUserInfo]
   );
-
+  console.log(eggs);
   const handleCloseModal = useCallback(() => {
     setShowHatchModal(false);
     setHatchedFishId(null);

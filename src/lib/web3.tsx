@@ -69,8 +69,10 @@ export function Web3Providers({ children }: Props) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 30 * 1000,
+            staleTime: 60 * 1000, // 1 minute cache to avoid RPC rate limits
             refetchOnWindowFocus: false,
+            retry: 3,
+            retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
           },
         },
       })
