@@ -52,19 +52,19 @@ body {
   animation: float 3s ease-in-out infinite;
 }
 
-/* Swimming fish animation - smooth and gentle rotation for swimming effect */
+/* Swimming fish animation - natural wave-like motion */
 @keyframes swim {
   0% {
     transform: rotateZ(-3deg);
   }
   25% {
-    transform: rotateZ(0deg);
+    transform: rotateZ(-1deg);
   }
   50% {
     transform: rotateZ(3deg);
   }
   75% {
-    transform: rotateZ(0deg);
+    transform: rotateZ(1deg);
   }
   100% {
     transform: rotateZ(-3deg);
