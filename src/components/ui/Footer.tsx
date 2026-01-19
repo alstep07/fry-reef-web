@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { APP_VERSION } from "@/constants/appVersion";
 
 export function Footer() {
   return (
     <footer className="relative z-10 border-t border-white/5 bg-black/30 backdrop-blur-sm pb-[env(safe-area-inset-bottom)]">
       <div className="container mx-auto flex items-center justify-between px-4 py-3 sm:py-4 sm:px-6 lg:max-w-5xl">
         <p className="text-xs text-slate-500">
-          © 2025 FryReef
+          © 2025 FryReef <span className="ml-2 text-slate-600 font-mono">v{APP_VERSION}</span>
         </p>
         <div className="flex items-center gap-4">
           <Link

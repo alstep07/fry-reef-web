@@ -297,6 +297,8 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
     const success = await layEgg(fishId);
     if (success) {
       setShowLayEggModal(true);
+      // Emit event to invalidate egg cache - new egg created
+      window.dispatchEvent(new Event("eggs:invalidate"));
       // Wait a moment for transaction to be confirmed, then refetch fish list
       setTimeout(() => {
         refetch();

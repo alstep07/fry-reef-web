@@ -2,7 +2,8 @@
 
 import { useAccount, useReadContract, useReadContracts } from "wagmi";
 import { base } from "wagmi/chains";
-import { keepPreviousData } from "@tanstack/react-query";
+import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
+import { useRef, useEffect } from "react";
 import { eggNftAbi, EGG_NFT_ADDRESS, type EggInfo } from "@/contracts/eggNft";
 
 const DEFAULT_CHAIN_ID = base.id;
@@ -17,12 +18,16 @@ export interface EggWithInfo {
 
 export function useEggs() {
   const { address } = useAccount();
+  const queryClient = useQueryClient();
+  // Track when each egg started loading
+  const eggLoadingStartRef = useRef<Map<number, number>>(new Map());
+  const LOADING_TIMEOUT = 8000; // 8 seconds - if egg doesn't load, show it anyway
 
   const contractAddress = EGG_NFT_ADDRESS
     ? (EGG_NFT_ADDRESS as `0x${string}`)
     : undefined;
 
-  // Get egg balance
+  // Get egg balance (auto-refresh every 15s)
   const { data: balance, refetch: refetchBalance, isFetched: isBalanceFetched } = useReadContract({
     address: contractAddress,
     abi: eggNftAbi,
@@ -31,6 +36,7 @@ export function useEggs() {
     chainId: DEFAULT_CHAIN_ID,
     query: {
       enabled: !!address && !!contractAddress,
+      refetchInterval: 15000, // Check for new/hatched eggs
       placeholderData: keepPreviousData,
     },
   });
@@ -50,6 +56,7 @@ export function useEggs() {
     contracts: tokenIdContracts,
     query: {
       enabled: eggCount > 0 && !!address,
+      refetchInterval: 15000, // Check for token ID changes
       placeholderData: keepPreviousData,
     },
   });
@@ -87,6 +94,7 @@ export function useEggs() {
     contracts: eggInfoContracts,
     query: {
       enabled: tokenIds.length > 0,
+      refetchInterval: 10000, // Auto-refresh egg state every 10 seconds
       placeholderData: keepPreviousData,
     },
   });
@@ -98,7 +106,16 @@ export function useEggs() {
     const canHatchResult = eggInfoData?.[baseIndex + 1];
     const timeResult = eggInfoData?.[baseIndex + 2];
 
-    const isInfoLoaded = infoResult?.status === "success" && infoResult?.result !== undefined;
+    const now = Date.now();
+    
+    // Track when this egg started loading
+    if (!eggLoadingStartRef.current.has(tokenId)) {
+      eggLoadingStartRef.current.set(tokenId, now);
+    }
+    const loadingStartTime = eggLoadingStartRef.current.get(tokenId) || now;
+    const hasBeenLoadingTooLong = now - loadingStartTime > LOADING_TIMEOUT;
+
+    const isInfoLoaded = (infoResult?.status === "success" && infoResult?.result !== undefined) || hasBeenLoadingTooLong;
 
     // Parse EggInfo - wagmi may return as array tuple or object
     let info: EggInfo;
@@ -141,6 +158,38 @@ export function useEggs() {
     refetchTokenIds();
     refetchEggInfo();
   };
+
+  // Listen for invalidation signals from transactions
+  useEffect(() => {
+    const handleInvalidation = () => {
+      queryClient.invalidateQueries({
+        queryKey: ["readContract"],
+        exact: false,
+      });
+      // Reset loading timers
+      eggLoadingStartRef.current.clear();
+    };
+
+    window.addEventListener("eggs:invalidate", handleInvalidation);
+    return () => window.removeEventListener("eggs:invalidate", handleInvalidation);
+  }, [queryClient]);
+
+  // Clean up old egg loading timers
+  useEffect(() => {
+    const currentEggIds = new Set(tokenIds);
+    const timerKeys = Array.from(eggLoadingStartRef.current.keys());
+    
+    timerKeys.forEach(key => {
+      if (!currentEggIds.has(key)) {
+        eggLoadingStartRef.current.delete(key);
+      }
+    });
+  }, [tokenIds]);
+
+  // Reset loading timers when wallet address changes
+  useEffect(() => {
+    eggLoadingStartRef.current.clear();
+  }, [address]);
 
   // Loading only on initial fetch (not during refetch with keepPreviousData)
   const isLoading = !isBalanceFetched || 
