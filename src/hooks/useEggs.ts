@@ -100,9 +100,31 @@ export function useEggs() {
 
     const isInfoLoaded = infoResult?.status === "success" && infoResult?.result !== undefined;
 
-    const info = infoResult?.status === "success"
-      ? (infoResult.result as EggInfo)
-      : { mintedAt: BigInt(0), incubationStartedAt: BigInt(0), isIncubating: false };
+    // Parse EggInfo - wagmi may return as array tuple or object
+    let info: EggInfo;
+    if (infoResult?.status === "success" && infoResult?.result) {
+      const result = infoResult.result as 
+        | { mintedAt?: bigint; incubationStartedAt?: bigint; isIncubating?: boolean }
+        | [bigint, bigint, boolean];
+      
+      if (Array.isArray(result)) {
+        // Tuple format: [mintedAt, incubationStartedAt, isIncubating]
+        info = {
+          mintedAt: BigInt(result[0] ?? 0),
+          incubationStartedAt: BigInt(result[1] ?? 0),
+          isIncubating: Boolean(result[2]),
+        };
+      } else {
+        // Object format
+        info = {
+          mintedAt: BigInt(result.mintedAt ?? 0),
+          incubationStartedAt: BigInt(result.incubationStartedAt ?? 0),
+          isIncubating: Boolean(result.isIncubating),
+        };
+      }
+    } else {
+      info = { mintedAt: BigInt(0), incubationStartedAt: BigInt(0), isIncubating: false };
+    }
 
     return {
       tokenId,
