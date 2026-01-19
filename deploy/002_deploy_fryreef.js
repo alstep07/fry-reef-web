@@ -43,7 +43,7 @@ const func = async function (hre) {
     waitConfirmations: 1,
   };
 
-  // ✅ ethers v6 — корректное увеличение gasPrice (опционально)
+  // ✅ ethers v6 — correctly increasing gasPrice (optional)
   const feeData = await hre.ethers.provider.getFeeData();
   if (feeData.gasPrice) {
     deployOptions.gasPrice = (feeData.gasPrice * 110n) / 100n;

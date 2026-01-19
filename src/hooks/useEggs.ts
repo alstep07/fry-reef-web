@@ -12,6 +12,7 @@ export interface EggWithInfo {
   info: EggInfo;
   canHatch: boolean;
   timeUntilHatch: number;
+  isInfoLoaded: boolean;
 }
 
 export function useEggs() {
@@ -22,7 +23,7 @@ export function useEggs() {
     : undefined;
 
   // Get egg balance
-  const { data: balance, refetch: refetchBalance, isLoading: isBalanceLoading, isFetched: isBalanceFetched } = useReadContract({
+  const { data: balance, refetch: refetchBalance, isFetched: isBalanceFetched } = useReadContract({
     address: contractAddress,
     abi: eggNftAbi,
     functionName: "balanceOf",
@@ -45,7 +46,7 @@ export function useEggs() {
     chainId: DEFAULT_CHAIN_ID,
   }));
 
-  const { data: tokenIdsData } = useReadContracts({
+  const { data: tokenIdsData, isFetched: isTokenIdsFetched, refetch: refetchTokenIds } = useReadContracts({
     contracts: tokenIdContracts,
     query: {
       enabled: eggCount > 0 && !!address,
@@ -82,7 +83,7 @@ export function useEggs() {
     },
   ]);
 
-  const { data: eggInfoData, refetch: refetchEggInfo } = useReadContracts({
+  const { data: eggInfoData, refetch: refetchEggInfo, isFetched: isEggInfoFetched } = useReadContracts({
     contracts: eggInfoContracts,
     query: {
       enabled: tokenIds.length > 0,
@@ -97,6 +98,8 @@ export function useEggs() {
     const canHatchResult = eggInfoData?.[baseIndex + 1];
     const timeResult = eggInfoData?.[baseIndex + 2];
 
+    const isInfoLoaded = infoResult?.status === "success" && infoResult?.result !== undefined;
+
     const info = infoResult?.status === "success"
       ? (infoResult.result as EggInfo)
       : { mintedAt: BigInt(0), incubationStartedAt: BigInt(0), isIncubating: false };
@@ -106,16 +109,20 @@ export function useEggs() {
       info,
       canHatch: canHatchResult?.status === "success" ? Boolean(canHatchResult.result) : false,
       timeUntilHatch: timeResult?.status === "success" ? Number(timeResult.result) : 0,
+      isInfoLoaded,
     };
   });
 
   const refetch = () => {
     refetchBalance();
+    refetchTokenIds();
     refetchEggInfo();
   };
 
-  // Loading until first balance fetch completes
-  const isLoading = !isBalanceFetched || isBalanceLoading;
+  // Loading only on initial fetch (not during refetch with keepPreviousData)
+  const isLoading = !isBalanceFetched || 
+    (eggCount > 0 && !isTokenIdsFetched) ||
+    (tokenIds.length > 0 && !isEggInfoFetched);
 
   return {
     eggs,

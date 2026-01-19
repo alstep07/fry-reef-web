@@ -152,7 +152,7 @@ function EggCard({
         )}
       </div>
 
-      <div className="flex-grow flex flex-col text-center">
+      <div className="grow flex flex-col text-center">
         {!info.isIncubating ? (
           <button
             onClick={() => onIncubate(tokenId)}

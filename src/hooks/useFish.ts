@@ -12,6 +12,7 @@ export interface FishWithInfo {
   info: FishInfo;
   pendingDust: number;
   timeUntilNextEgg: number;
+  isInfoLoaded: boolean;
 }
 
 export function useFish() {
@@ -135,6 +136,9 @@ export function useFish() {
     const dustResult = pendingDustResults?.[index];
     const timeResult = timeUntilNextEggResults?.[index];
 
+    // Check if info was successfully loaded
+    const isInfoLoaded = infoResult?.status === "success" && infoResult?.result !== undefined;
+
     // Extract FishInfo from result
     let info: FishInfo;
     if (infoResult?.result) {
@@ -197,6 +201,7 @@ export function useFish() {
       info,
       pendingDust,
       timeUntilNextEgg,
+      isInfoLoaded,
     };
   });
 

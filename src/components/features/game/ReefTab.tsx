@@ -597,8 +597,8 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
           <>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {sortedFish.map((f) => {
-                // Show skeleton for releasing fish
-                if (releasingFishIds.has(f.tokenId)) {
+                // Show skeleton for releasing fish or fish with unloaded info
+                if (releasingFishIds.has(f.tokenId) || !f.isInfoLoaded) {
                   return <FishCardSkeleton key={f.tokenId} id={f.tokenId} />;
                 }
 
