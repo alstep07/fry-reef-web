@@ -115,7 +115,7 @@ function FishCard({
       )}
 
       {/* Fish Image */}
-      <div className="relative mx-auto mb-2 sm:mb-3 h-16 w-16 sm:h-20 sm:w-20">
+      <div className="relative mx-auto mb-2 sm:mb-3 h-16 w-16 sm:h-20 sm:w-20 animate-[swim_4s_linear_infinite]">
         <Image
           src={fishImage}
           alt={`${config.name} fish`}
