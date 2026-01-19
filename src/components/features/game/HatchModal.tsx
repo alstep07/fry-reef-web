@@ -92,6 +92,25 @@ export function HatchModal({ isOpen, rarity, fishId, onClose, onGoToReef }: Hatc
           <p className="mb-4 sm:mb-6 text-[10px] sm:text-xs text-slate-500">Fish #{fishId}</p>
         )}
 
+        {/* Share Button */}
+        <button
+          onClick={() => {
+            const text = `🐟 Just hatched a ${config.name} fish in FryReef!\n\nBuild your underwater reef on Base 🌊`;
+            const shareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=https://fry-reef.vercel.app`;
+            window.open(shareUrl, '_blank');
+          }}
+          className="mb-3 sm:mb-4 w-full cursor-pointer rounded-xl border border-purple-500/30 bg-purple-500/10 px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium text-purple-300 transition hover:bg-purple-500/20 flex items-center justify-center gap-2"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="18" cy="5" r="3" />
+            <circle cx="6" cy="12" r="3" />
+            <circle cx="18" cy="19" r="3" />
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+          </svg>
+          Share
+        </button>
+
         {/* Actions */}
         <div className="flex gap-2 sm:gap-3">
           <button

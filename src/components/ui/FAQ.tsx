@@ -9,64 +9,64 @@ interface FAQItem {
 
 const faqData: FAQItem[] = [
   {
-    question: "How do I start playing?",
+    question: "What is FryReef?",
     answer:
-      "Connect your wallet and claim your Starter Pack! You'll receive 1 Egg, 2 Pearl Shards, and 100 Spawn Dust to begin your underwater adventure. Your reef starts with capacity for 3 fish.",
+      "FryReef is an on-chain idle game on Base where you collect, breed, and evolve fish NFTs. Hatch eggs, grow your reef, merge fish to higher rarities, and earn resources passively.",
   },
   {
-    question: "What are Pearl Shards?",
+    question: "How do I start?",
     answer:
-      "Pearl Shards 💎 are used to incubate eggs and expand your reef capacity. You need 1 Pearl Shard to start incubation. Earn them by completing a 7-day check-in streak, merging fish, or from the Starter Pack.",
+      "Connect wallet → Claim Starter Pack (free, 1 Egg + 2 Pearl Shards + 100 Spawn Dust) → Incubate egg → Hatch your first fish!",
   },
   {
-    question: "What is Spawn Dust?",
+    question: "How do I get fish?",
     answer:
-      "Spawn Dust ✨ is produced by your fish daily. Different rarity fish produce different amounts: Common (6/day), Rare (12/day), Epic (18/day), Legendary (32/day), Mythic (48/day). Use 100 Spawn Dust to lay a new egg from any fish.",
+      "3 ways: 1) Hatch eggs in Nest tab. 2) Merge 2 same-rarity fish to get 1 higher rarity. 3) Starter Pack gives your first egg.",
   },
   {
-    question: "How does egg incubation work?",
+    question: "Where do I get Pearl Shards 💎?",
     answer:
-      "Go to the Nest tab, select an egg, and click 'Incubate' (costs 1 Pearl Shard). After 24 hours, your egg will be ready to hatch into a fish with a random rarity! Make sure you have space in your reef before hatching.",
+      "Sources: Starter Pack (2), 7-day check-in streak (1), merging fish (1-3 depending on rarity). Used for: incubating eggs (1) and expanding reef capacity.",
   },
   {
-    question: "What are the fish rarities?",
+    question: "Where do I get Spawn Dust ✨?",
     answer:
-      "There are 5 rarities: Common (50% chance), Rare (28%), Epic (14%), Legendary (6%), and Mythic (2%). Rarer fish produce more Spawn Dust per day and give better rewards when merged or released.",
+      "Your fish produce it passively: Common 6/day, Rare 12/day, Epic 18/day, Legendary 32/day, Mythic 48/day. Also earned by releasing fish. Used to lay eggs (100) and merge fish.",
   },
   {
-    question: "How do I get more eggs?",
+    question: "Fish rarities?",
     answer:
-      "There are two ways: 1) Lay eggs - collect 100 Spawn Dust from your fish and use 'Lay Egg' in the Reef tab (24h cooldown per fish). 2) Merge fish - merging higher rarity fish rewards bonus eggs.",
+      "5 tiers: Common (50%), Rare (28%), Epic (14%), Legendary (6%), Mythic (2%). Higher rarity = more Spawn Dust/day + better merge/release rewards.",
   },
   {
-    question: "What is the daily check-in?",
+    question: "How does breeding work?",
     answer:
-      "Visit the Tasks tab daily and click 'Check-in' to build your streak. Complete a 7-day streak to earn 1 Pearl Shard. The streak resets if you miss a day!",
+      "Each fish can lay 1 egg per 24h (costs 100 Spawn Dust). Then incubate the egg (1 Pearl Shard, 24h wait) and hatch to get a new fish with random rarity.",
+  },
+  {
+    question: "How does merging work?",
+    answer:
+      "Evolution tab: combine 2 fish of same rarity → get 1 fish of next rarity + Pearl Shards + bonus eggs. Costs Spawn Dust (50/100/200/400 by tier).",
   },
   {
     question: "What is Reef Capacity?",
     answer:
-      "Reef Capacity limits how many fish you can have. You start with 3 slots. Expand your reef using Pearl Shards - costs increase with each expansion (1, 2, 4, 8, 16 Pearl Shards). You can also release fish to free up space.",
+      "Max fish you can own. Starts at 3. Expand with Pearl Shards (cost doubles each time: 1→2→4→8→16). Or release fish to free space.",
   },
   {
-    question: "How does fish merging work?",
+    question: "What's the daily check-in?",
     answer:
-      "In the Evolution tab, select 2 fish of the same rarity to merge them into one higher-rarity fish. Costs: Common→Rare (50 dust), Rare→Epic (100 dust), Epic→Legendary (200 dust), Legendary→Mythic (400 dust). You also receive Pearl Shards and bonus eggs as rewards!",
+      "Tasks tab → Check-in daily → 7-day streak = 1 Pearl Shard. Miss a day = streak resets.",
   },
   {
-    question: "How do I release fish?",
+    question: "Network?",
     answer:
-      "Click the Release button in the Reef tab to enter release mode. Select fish you want to release and confirm. Released fish are permanently burned, but you receive Spawn Dust: Common (50), Rare (100), Epic (250), Legendary (500), Mythic (1000).",
+      "Base Mainnet. App auto-prompts to switch network if needed.",
   },
   {
-    question: "Which network does FryReef use?",
+    question: "Future token?",
     answer:
-      "FryReef runs on Base Mainnet. Make sure your wallet is connected to Base network. The app will prompt you to switch if needed.",
-  },
-  {
-    question: "Will there be a token?",
-    answer:
-      "Yes! The $FR token is planned for future release. It will be the core currency of the FryReef ecosystem, used for premium fish breeding, marketplace transactions, staking rewards, governance voting, and exclusive in-game features. Early players and active participants may receive $FR token allocation based on their activity, fish collection, and engagement.",
+      "$FR token planned. Will be used for marketplace, staking, governance. Early active players may receive allocation based on activity.",
   },
 ];
 
