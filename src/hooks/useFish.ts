@@ -32,7 +32,7 @@ export function useFish() {
     ? (FRYREEF_ADDRESS as `0x${string}`)
     : undefined;
 
-  // Get fish IDs owned by user (auto-refresh every 15s to catch new/burned fish)
+  // Get fish IDs owned by user (auto-refresh every 30s as fallback)
   const {
     data: fishIds,
     isLoading: isLoadingIds,
@@ -45,7 +45,7 @@ export function useFish() {
     chainId: base.id,
     query: {
       enabled: !!address && !!contractAddress,
-      refetchInterval: 15000, // Check for new fish every 15 seconds
+      refetchInterval: 30000, // Fallback - explicit refetch after transactions is primary
       placeholderData: keepPreviousData,
     },
   });
@@ -103,12 +103,12 @@ export function useFish() {
     contracts: fishInfoContracts,
     query: {
       enabled: fishIdsArray.length > 0 && !!contractAddress,
-      refetchInterval: 30000, // Refresh fish info every 30 seconds (rarely changes)
+      refetchInterval: 60000, // Fallback - explicit refetch after transactions is primary
       placeholderData: keepPreviousData,
     },
   });
 
-  // Get pending dust per fish (auto-refresh every 60s)
+  // Get pending dust per fish (auto-refresh every 30s as fallback)
   const {
     data: pendingDustResults,
     isLoading: isLoadingDust,
@@ -117,12 +117,12 @@ export function useFish() {
     contracts: pendingDustContracts,
     query: {
       enabled: fishIdsArray.length > 0 && !!contractAddress,
-      refetchInterval: 60000,
+      refetchInterval: 30000,
       placeholderData: keepPreviousData,
     },
   });
 
-  // Get time until next egg per fish (auto-refresh every 10 seconds for efficiency)
+  // Get time until next egg per fish (auto-refresh every 30s as fallback)
   const {
     data: timeUntilNextEggResults,
     isLoading: isLoadingTime,
@@ -131,7 +131,7 @@ export function useFish() {
     contracts: timeUntilNextEggContracts,
     query: {
       enabled: fishIdsArray.length > 0 && !!fryReefAddress,
-      refetchInterval: 10000, // Changed from 1000ms to 10000ms to reduce rate limiting
+      refetchInterval: 30000, // Slower fallback - updated more frequently after transactions
       placeholderData: keepPreviousData,
     },
   });
@@ -276,6 +276,21 @@ export function useFish() {
     fishLoadingStartRef.current.clear();
     previousTimeValuesRef.current.clear();
   }, [address]);
+
+  // Aggressively refetch on component mount and when address changes for instant data
+  useEffect(() => {
+    if (!address) return;
+    
+    const timer = setTimeout(() => {
+      refetchIds();
+      refetchInfo();
+      refetchDust();
+      refetchPendingDust();
+      refetchTime();
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [address, refetchIds, refetchInfo, refetchDust, refetchPendingDust, refetchTime]);
 
   return {
     fish,

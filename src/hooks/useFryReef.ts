@@ -48,7 +48,7 @@ export function useFryReef() {
     chainId: DEFAULT_CHAIN_ID,
     query: {
       enabled: !!address && !!contractAddress && isOnCorrectNetwork,
-      refetchInterval: 10000,
+      refetchInterval: 60000, // Fallback - explicit refetch after transactions is primary
       placeholderData: keepPreviousData,
     },
   }) as { data: UserInfo | undefined; isLoading: boolean; refetch: () => void };
@@ -137,58 +137,82 @@ export function useFryReef() {
     refetchExpansionCost();
   }, [queryClient, refetchUserInfo, refetchCheckedInToday, refetchStarterPack, refetchReefCapacity, refetchExpansionCost]);
 
+  // Create refetch functions object for transaction sync
+  const transactionRefetchFunctions = {
+    refetchUserInfo: async () => {
+      await refetchUserInfo();
+    },
+    refetchEggs: async () => {
+      window.dispatchEvent(new Event("eggs:invalidate"));
+      return Promise.resolve();
+    },
+    refetchFish: async () => {
+      window.dispatchEvent(new Event("fish:invalidate"));
+      return Promise.resolve();
+    },
+  };
+
   // Starter pack transaction
   const starterPackTx = useTransaction({
     onSuccess: refetchAllData,
     transactionType: "claim_starter_pack",
+    refetchFunctions: transactionRefetchFunctions,
   });
 
   // Check-in transaction
   const checkInTx = useTransaction({
     onSuccess: refetchAllData,
     transactionType: "check_in",
+    refetchFunctions: transactionRefetchFunctions,
   });
 
   // Collect spawn dust transaction
   const collectDustTx = useTransaction({
     onSuccess: refetchAllData,
     transactionType: "collect_dust",
+    refetchFunctions: transactionRefetchFunctions,
   });
 
   // Start incubation transaction
   const incubationTx = useTransaction({
     onSuccess: refetchAllData,
     transactionType: "start_incubation",
+    refetchFunctions: transactionRefetchFunctions,
   });
 
   // Hatch egg transaction
   const hatchTx = useTransaction({
     onSuccess: refetchAllData,
     transactionType: "hatch_egg",
+    refetchFunctions: transactionRefetchFunctions,
   });
 
   // Lay egg transaction
   const layEggTx = useTransaction({
     onSuccess: refetchAllData,
     transactionType: "lay_egg",
+    refetchFunctions: transactionRefetchFunctions,
   });
 
   // Merge fish transaction
   const mergeTx = useTransaction({
     onSuccess: refetchAllData,
     transactionType: "merge_fish",
+    refetchFunctions: transactionRefetchFunctions,
   });
 
   // Expand reef transaction
   const expandTx = useTransaction({
     onSuccess: refetchAllData,
     transactionType: "expand_reef",
+    refetchFunctions: transactionRefetchFunctions,
   });
 
   // Burn fish transaction
   const burnTx = useTransaction({
     onSuccess: refetchAllData,
     transactionType: "burn_fish",
+    refetchFunctions: transactionRefetchFunctions,
   });
 
   // ============================================================

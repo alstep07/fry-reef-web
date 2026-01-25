@@ -22,6 +22,12 @@ interface SyncConfig {
   queryClient: QueryClient;
   transactionType: TransactionType;
   onDataReady?: () => void;
+  // Optional refetch functions that hooks can provide for immediate data updates
+  refetchFunctions?: {
+    refetchFish?: () => Promise<any>;
+    refetchEggs?: () => Promise<any>;
+    refetchUserInfo?: () => Promise<any>;
+  };
 }
 
 /**
@@ -132,18 +138,35 @@ export function invalidateQueriesByType(
 
 /**
  * Main sync function - call after transaction is confirmed
+ * Combines cache invalidation with explicit refetching for immediate updates
  */
 export async function syncTransactionData(config: SyncConfig) {
-  const { queryClient, transactionType, onDataReady } = config;
+  const { queryClient, transactionType, onDataReady, refetchFunctions } = config;
   
   try {
-    // Invalidate queries
+    // Invalidate queries first
     invalidateQueriesByType(queryClient, transactionType);
     
-    // Wait a bit for refetch to start
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Then immediately refetch critical data based on transaction type
+    // This ensures UI updates instantly instead of waiting for next refetchInterval
+    if (refetchFunctions) {
+      try {
+        if (["lay_egg", "hatch_egg", "start_incubation"].includes(transactionType)) {
+          await Promise.all([
+            refetchFunctions.refetchEggs?.(),
+            refetchFunctions.refetchFish?.(),
+          ]);
+        } else if (["collect_dust", "merge_fish", "burn_fish"].includes(transactionType)) {
+          await refetchFunctions.refetchFish?.();
+        } else if (["check_in", "claim_starter_pack", "expand_reef"].includes(transactionType)) {
+          await refetchFunctions.refetchUserInfo?.();
+        }
+      } catch (err) {
+        console.warn("Refetch failed, will rely on cache invalidation:", err);
+      }
+    }
     
-    // Notify that data should be ready soon
+    // Notify that data should be ready
     onDataReady?.();
   } catch (err) {
     console.error("Failed to sync transaction data:", err);

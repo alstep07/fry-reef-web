@@ -27,7 +27,7 @@ export function useEggs() {
     ? (EGG_NFT_ADDRESS as `0x${string}`)
     : undefined;
 
-  // Get egg balance (auto-refresh every 15s)
+  // Get egg balance (auto-refresh every 30s as fallback)
   const { data: balance, refetch: refetchBalance, isFetched: isBalanceFetched } = useReadContract({
     address: contractAddress,
     abi: eggNftAbi,
@@ -36,7 +36,7 @@ export function useEggs() {
     chainId: DEFAULT_CHAIN_ID,
     query: {
       enabled: !!address && !!contractAddress,
-      refetchInterval: 15000, // Check for new/hatched eggs
+      refetchInterval: 30000, // Fallback - explicit refetch after transactions is primary
       placeholderData: keepPreviousData,
     },
   });
@@ -56,7 +56,7 @@ export function useEggs() {
     contracts: tokenIdContracts,
     query: {
       enabled: eggCount > 0 && !!address,
-      refetchInterval: 15000, // Check for token ID changes
+      refetchInterval: 30000, // Fallback
       placeholderData: keepPreviousData,
     },
   });
@@ -94,7 +94,7 @@ export function useEggs() {
     contracts: eggInfoContracts,
     query: {
       enabled: tokenIds.length > 0,
-      refetchInterval: 10000, // Auto-refresh egg state every 10 seconds
+      refetchInterval: 60000, // Fallback
       placeholderData: keepPreviousData,
     },
   });
@@ -205,6 +205,19 @@ export function useEggs() {
   useEffect(() => {
     eggLoadingStartRef.current.clear();
   }, [address]);
+
+  // Aggressively refetch on component mount and when address changes for instant data
+  useEffect(() => {
+    if (!address) return;
+    
+    const timer = setTimeout(() => {
+      refetchBalance();
+      refetchTokenIds();
+      refetchEggInfo();
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [address, refetchBalance, refetchTokenIds, refetchEggInfo]);
 
   // Loading only on initial fetch (not during refetch with keepPreviousData)
   const isLoading = !isBalanceFetched || 

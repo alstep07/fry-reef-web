@@ -28,6 +28,12 @@ export interface UseTransactionOptions {
   onSuccess?: () => void | Promise<void>;
   onError?: (error: Error) => void;
   transactionType?: TransactionType;
+  // Optional refetch functions for immediate data updates after transaction
+  refetchFunctions?: {
+    refetchFish?: () => Promise<any>;
+    refetchEggs?: () => Promise<any>;
+    refetchUserInfo?: () => Promise<any>;
+  };
 }
 
 /**
@@ -124,18 +130,19 @@ export function useTransaction(options?: UseTransactionOptions) {
         if (receipt.status === "success") {
           setState({ status: "success", hash, error: null });
           
-          // Sync cache invalidation
+          // Sync cache invalidation with explicit refetch
           if (transactionTypeRef.current) {
             await syncTransactionData({
               queryClient,
               transactionType: transactionTypeRef.current,
+              refetchFunctions: options?.refetchFunctions,
               onDataReady: () => {
-                console.log("Transaction data ready to refresh");
+                console.log("Transaction data synced and ready");
               },
             });
           }
           
-          // Call user callback
+          // Call user callback after data is synced
           await onSuccessRef.current?.();
           return true;
         } else {

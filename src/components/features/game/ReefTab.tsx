@@ -115,7 +115,7 @@ function FishCard({
       )}
 
       {/* Fish Image */}
-      <div className="relative mx-auto mb-2 sm:mb-3 h-16 w-16 sm:h-20 sm:w-20 animate-[swim_4s_linear_infinite]">
+      <div className="relative mx-auto mb-2 sm:mb-3 h-20 w-20 sm:h-28 sm:w-28 animate-[swim_4s_linear_infinite]">
         <Image
           src={fishImage}
           alt={`${config.name} fish`}
@@ -179,8 +179,8 @@ function FishCard({
                     "..."
                   ) : (
                     <>
-                      <span className="hidden sm:inline">Lay Egg</span>
-                      <span className="rounded-full bg-white/20 px-1 py-0.5 text-[9px]">
+                      <span>Lay Egg</span>
+                      <span className="rounded-full bg-white/20 ml-2 px-1 py-0.5 text-[9px]">
                         {EGG_LAYING.spawnDustCost}✨
                       </span>
                     </>
