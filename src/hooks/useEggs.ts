@@ -170,8 +170,23 @@ export function useEggs() {
       eggLoadingStartRef.current.clear();
     };
 
+    const handleTransactionSuccess = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const type = customEvent.detail?.type;
+      
+      // Re-fetch if transaction affected eggs
+      if (["lay_egg", "hatch_egg", "start_incubation"].includes(type)) {
+        handleInvalidation();
+      }
+    };
+
     window.addEventListener("eggs:invalidate", handleInvalidation);
-    return () => window.removeEventListener("eggs:invalidate", handleInvalidation);
+    window.addEventListener("transaction:success", handleTransactionSuccess);
+    
+    return () => {
+      window.removeEventListener("eggs:invalidate", handleInvalidation);
+      window.removeEventListener("transaction:success", handleTransactionSuccess);
+    };
   }, [queryClient]);
 
   // Clean up old egg loading timers

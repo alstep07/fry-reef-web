@@ -9,7 +9,10 @@ import {
   useWalletClient,
 } from "wagmi";
 import { base } from "wagmi/chains";
+import { useQueryClient } from "@tanstack/react-query";
 import type { Abi } from "viem";
+import type { TransactionType } from "@/lib/transactionSync";
+import { waitForTransactionSync, syncTransactionData } from "@/lib/transactionSync";
 
 const TARGET_CHAIN_ID = base.id;
 
@@ -22,14 +25,14 @@ export interface TransactionState {
 }
 
 export interface UseTransactionOptions {
-  onSuccess?: () => void;
+  onSuccess?: () => void | Promise<void>;
   onError?: (error: Error) => void;
+  transactionType?: TransactionType;
 }
 
 /**
- * Hook for isolated transaction management.
- * Each call to useTransaction() creates an independent transaction state.
- * This prevents race conditions when multiple transactions are in flight.
+ * Hook for isolated transaction management with Coinbase Wallet support.
+ * Ensures reliable state synchronization after transactions.
  */
 export function useTransaction(options?: UseTransactionOptions) {
   const { address } = useAccount();
@@ -37,6 +40,7 @@ export function useTransaction(options?: UseTransactionOptions) {
   const { switchChain } = useSwitchChain();
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
+  const queryClient = useQueryClient();
 
   const [state, setState] = useState<TransactionState>({
     status: "idle",
@@ -47,8 +51,11 @@ export function useTransaction(options?: UseTransactionOptions) {
   // Store callbacks in refs to avoid stale closures
   const onSuccessRef = useRef(options?.onSuccess);
   const onErrorRef = useRef(options?.onError);
+  const transactionTypeRef = useRef(options?.transactionType);
+  
   onSuccessRef.current = options?.onSuccess;
   onErrorRef.current = options?.onError;
+  transactionTypeRef.current = options?.transactionType;
 
   const isOnCorrectNetwork = chainId === TARGET_CHAIN_ID;
 
@@ -68,7 +75,7 @@ export function useTransaction(options?: UseTransactionOptions) {
 
   /**
    * Execute a contract write transaction with full lifecycle management.
-   * Returns a promise that resolves when the transaction is confirmed.
+   * Includes special handling for Coinbase Wallet sync delays.
    */
   const execute = useCallback(
     async <TAbi extends Abi>(params: {
@@ -108,15 +115,28 @@ export function useTransaction(options?: UseTransactionOptions) {
 
         setState({ status: "confirming", hash, error: null });
 
-        // Wait for confirmation
-        const receipt = await publicClient.waitForTransactionReceipt({
-          hash,
-          confirmations: 1,
+        // Wait for transaction with Coinbase Wallet retry logic
+        const receipt = await waitForTransactionSync(hash, publicClient, {
+          maxAttempts: 5,
+          delayMs: 800,
         });
 
         if (receipt.status === "success") {
           setState({ status: "success", hash, error: null });
-          onSuccessRef.current?.();
+          
+          // Sync cache invalidation
+          if (transactionTypeRef.current) {
+            await syncTransactionData({
+              queryClient,
+              transactionType: transactionTypeRef.current,
+              onDataReady: () => {
+                console.log("Transaction data ready to refresh");
+              },
+            });
+          }
+          
+          // Call user callback
+          await onSuccessRef.current?.();
           return true;
         } else {
           const error = new Error("Transaction failed");
@@ -147,7 +167,7 @@ export function useTransaction(options?: UseTransactionOptions) {
         return false;
       }
     },
-    [address, walletClient, publicClient, isOnCorrectNetwork, switchToTargetNetwork]
+    [address, walletClient, publicClient, isOnCorrectNetwork, switchToTargetNetwork, queryClient]
   );
 
   return {

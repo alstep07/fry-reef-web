@@ -140,46 +140,55 @@ export function useFryReef() {
   // Starter pack transaction
   const starterPackTx = useTransaction({
     onSuccess: refetchAllData,
+    transactionType: "claim_starter_pack",
   });
 
   // Check-in transaction
   const checkInTx = useTransaction({
     onSuccess: refetchAllData,
+    transactionType: "check_in",
   });
 
   // Collect spawn dust transaction
   const collectDustTx = useTransaction({
     onSuccess: refetchAllData,
+    transactionType: "collect_dust",
   });
 
   // Start incubation transaction
   const incubationTx = useTransaction({
     onSuccess: refetchAllData,
+    transactionType: "start_incubation",
   });
 
   // Hatch egg transaction
   const hatchTx = useTransaction({
     onSuccess: refetchAllData,
+    transactionType: "hatch_egg",
   });
 
   // Lay egg transaction
   const layEggTx = useTransaction({
     onSuccess: refetchAllData,
+    transactionType: "lay_egg",
   });
 
   // Merge fish transaction
   const mergeTx = useTransaction({
     onSuccess: refetchAllData,
+    transactionType: "merge_fish",
   });
 
   // Expand reef transaction
   const expandTx = useTransaction({
     onSuccess: refetchAllData,
+    transactionType: "expand_reef",
   });
 
   // Burn fish transaction
   const burnTx = useTransaction({
     onSuccess: refetchAllData,
+    transactionType: "burn_fish",
   });
 
   // ============================================================
@@ -282,9 +291,27 @@ export function useFryReef() {
     }
   }, [switchChain]);
 
-  // ============================================================
-  // RETURN
-  // ============================================================
+  // Listen for transaction success events and refetch critical data
+  useEffect(() => {
+    const handleTransactionSuccess = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const type = customEvent.detail?.type;
+      
+      // Refetch user info for these transactions
+      if (["check_in", "claim_starter_pack", "collect_dust", "expand_reef"].includes(type)) {
+        refetchUserInfo();
+      }
+      
+      // Refetch reef capacity on expansion
+      if (type === "expand_reef") {
+        refetchReefCapacity();
+        refetchExpansionCost();
+      }
+    };
+
+    window.addEventListener("transaction:success", handleTransactionSuccess);
+    return () => window.removeEventListener("transaction:success", handleTransactionSuccess);
+  }, [refetchUserInfo, refetchReefCapacity, refetchExpansionCost]);
 
   return {
     // User info

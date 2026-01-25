@@ -228,7 +228,7 @@ export function useFish() {
     refetchTime();
   };
 
-  // Listen for invalidation signals from transactions (via localStorage or custom event)
+  // Listen for invalidation signals from transactions
   useEffect(() => {
     const handleInvalidation = () => {
       // Invalidate only fish-related queries, not all queries
@@ -240,8 +240,23 @@ export function useFish() {
       fishLoadingStartRef.current.clear();
     };
 
+    const handleTransactionSuccess = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const type = customEvent.detail?.type;
+      
+      // Re-fetch if transaction affected fish
+      if (["lay_egg", "hatch_egg", "merge_fish", "burn_fish", "collect_dust"].includes(type)) {
+        handleInvalidation();
+      }
+    };
+
     window.addEventListener("fish:invalidate", handleInvalidation);
-    return () => window.removeEventListener("fish:invalidate", handleInvalidation);
+    window.addEventListener("transaction:success", handleTransactionSuccess);
+    
+    return () => {
+      window.removeEventListener("fish:invalidate", handleInvalidation);
+      window.removeEventListener("transaction:success", handleTransactionSuccess);
+    };
   }, [queryClient]);
 
   // Clean up old fish loading timers (remove fish that no longer exist)
