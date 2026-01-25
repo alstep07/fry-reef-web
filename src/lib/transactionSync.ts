@@ -39,8 +39,8 @@ export async function waitForTransactionSync(
   publicClient: any,
   options?: { maxAttempts?: number; delayMs?: number }
 ) {
-  const maxAttempts = options?.maxAttempts ?? 5;
-  const delayMs = options?.delayMs ?? 1000;
+  const maxAttempts = options?.maxAttempts ?? 10;  // Больше попыток для Coinbase
+  const delayMs = options?.delayMs ?? 1500;  // Больше задержка между попытками
   
   let lastError: Error | null = null;
   
@@ -48,8 +48,8 @@ export async function waitForTransactionSync(
     try {
       const receipt = await publicClient.getTransactionReceipt({ hash });
       if (receipt) {
-        // Extra delay for Coinbase Wallet to sync state
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Extra delay for Coinbase Wallet RPC sync
+        await new Promise(resolve => setTimeout(resolve, 2000));  // 2 сек вместо 500мс
         return receipt;
       }
     } catch (err) {

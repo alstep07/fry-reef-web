@@ -18,11 +18,9 @@ export interface FishWithInfo {
 export function useFish() {
   const { address } = useAccount();
   const queryClient = useQueryClient();
-  // Store previous timeUntilNextEgg values to prevent flickering during refetch
   const previousTimeValuesRef = useRef<Map<number, number>>(new Map());
-  // Track when each fish started loading - if it takes too long, show it anyway
   const fishLoadingStartRef = useRef<Map<number, number>>(new Map());
-  const LOADING_TIMEOUT = 8000; // 8 seconds - if fish doesn't load, show it anyway
+  const LOADING_TIMEOUT = 8000;
 
   const contractAddress = FISH_NFT_ADDRESS
     ? (FISH_NFT_ADDRESS as `0x${string}`)
@@ -32,11 +30,10 @@ export function useFish() {
     ? (FRYREEF_ADDRESS as `0x${string}`)
     : undefined;
 
-  // Get fish IDs owned by user (auto-refresh every 30s as fallback)
+  // Get fish IDs owned by user
   const {
     data: fishIds,
     isLoading: isLoadingIds,
-    refetch: refetchIds,
   } = useReadContract({
     address: contractAddress,
     abi: fishNftAbi,
@@ -45,16 +42,12 @@ export function useFish() {
     chainId: base.id,
     query: {
       enabled: !!address && !!contractAddress,
-      refetchInterval: 30000, // Fallback - explicit refetch after transactions is primary
-      placeholderData: keepPreviousData,
     },
   });
 
-  // Get total pending spawn dust for user (auto-refresh every 60s)
+  // Get total pending spawn dust for user
   const {
     data: totalPendingDust,
-    isLoading: isLoadingPendingDust,
-    refetch: refetchPendingDust,
   } = useReadContract({
     address: fryReefAddress,
     abi: fryReefAbi,
@@ -63,205 +56,150 @@ export function useFish() {
     chainId: base.id,
     query: {
       enabled: !!address && !!fryReefAddress,
-      refetchInterval: 60000,
-      placeholderData: keepPreviousData,
     },
   });
 
-  // Get info for each fish
   const fishIdsArray = (fishIds as bigint[]) || [];
 
-  const fishInfoContracts = fishIdsArray.map((id) => ({
-    address: contractAddress!,
-    abi: fishNftAbi,
-    functionName: "getFishInfo" as const,
-    args: [id] as const,
-    chainId: base.id,
-  }));
-
-  const pendingDustContracts = fishIdsArray.map((id) => ({
-    address: contractAddress!,
-    abi: fishNftAbi,
-    functionName: "getPendingDustForFish" as const,
-    args: [id] as const,
-    chainId: base.id,
-  }));
-
-  const timeUntilNextEggContracts = fishIdsArray.map((id) => ({
-    address: fryReefAddress!,
-    abi: fryReefAbi,
-    functionName: "getTimeUntilNextEgg" as const,
-    args: [id] as const,
-    chainId: base.id,
-  }));
-
-  const {
-    data: fishInfoResults,
-    isLoading: isLoadingInfo,
-    refetch: refetchInfo,
-  } = useReadContracts({
-    contracts: fishInfoContracts,
-    query: {
-      enabled: fishIdsArray.length > 0 && !!contractAddress,
-      placeholderData: keepPreviousData,
+  // Get ALL fish data in ONE request with polling
+  const fishDataContracts = fishIdsArray.flatMap((id) => [
+    {
+      address: contractAddress!,
+      abi: fishNftAbi,
+      functionName: "getFishInfo" as const,
+      args: [id] as const,
+      chainId: base.id,
     },
-  });
-
-  // Get pending dust per fish (only refetch after transactions)
-  const {
-    data: pendingDustResults,
-    isLoading: isLoadingDust,
-    refetch: refetchDust,
-  } = useReadContracts({
-    contracts: pendingDustContracts,
-    query: {
-      enabled: fishIdsArray.length > 0 && !!contractAddress,
-      placeholderData: keepPreviousData,
+    {
+      address: contractAddress!,
+      abi: fishNftAbi,
+      functionName: "getPendingDustForFish" as const,
+      args: [id] as const,
+      chainId: base.id,
     },
-  });
+    {
+      address: fryReefAddress!,
+      abi: fryReefAbi,
+      functionName: "getTimeUntilNextEgg" as const,
+      args: [id] as const,
+      chainId: base.id,
+    },
+  ]);
 
-  // Get time until next egg per fish (poll every 10s for timer)
   const {
-    data: timeUntilNextEggResults,
-    isLoading: isLoadingTime,
-    refetch: refetchTime,
+    data: fishDataResults,
+    isLoading: isLoadingData,
   } = useReadContracts({
-    contracts: timeUntilNextEggContracts,
+    contracts: fishDataContracts,
     query: {
-      enabled: fishIdsArray.length > 0 && !!fryReefAddress,
-      refetchInterval: 10000, // Only for timer - 10 seconds
+      enabled: fishIdsArray.length > 0 && !!contractAddress && !!fryReefAddress,
+      refetchInterval: 5000, // Poll all data every 5 seconds
+      staleTime: 4000,
       placeholderData: keepPreviousData,
     },
   });
 
   // Combine data
-  const fish: FishWithInfo[] = fishIdsArray.map((id, index) => {
-    const infoResult = fishInfoResults?.[index];
-    const dustResult = pendingDustResults?.[index];
-    const timeResult = timeUntilNextEggResults?.[index];
+  const fish: FishWithInfo[] = useMemo(() => {
+    return fishIdsArray.map((id, index) => {
+      const baseIdx = index * 3;
+      const infoResult = fishDataResults?.[baseIdx];
+      const dustResult = fishDataResults?.[baseIdx + 1];
+      const timeResult = fishDataResults?.[baseIdx + 2];
 
-    const tokenIdNum = Number(id);
-    const now = Date.now();
-    
-    // Track when this fish started loading
-    if (!fishLoadingStartRef.current.has(tokenIdNum)) {
-      fishLoadingStartRef.current.set(tokenIdNum, now);
-    }
-    const loadingStartTime = fishLoadingStartRef.current.get(tokenIdNum) || now;
-    const hasBeenLoadingTooLong = now - loadingStartTime > LOADING_TIMEOUT;
+      const tokenIdNum = Number(id);
+      const now = Date.now();
+      
+      if (!fishLoadingStartRef.current.has(tokenIdNum)) {
+        fishLoadingStartRef.current.set(tokenIdNum, now);
+      }
+      const loadingStartTime = fishLoadingStartRef.current.get(tokenIdNum) || now;
+      const hasBeenLoadingTooLong = now - loadingStartTime > LOADING_TIMEOUT;
 
-    // Check if info was successfully loaded OR if loading has taken too long (then show anyway)
-    const isInfoLoaded = (infoResult?.status === "success" && infoResult?.result !== undefined) || hasBeenLoadingTooLong;
+      const isInfoLoaded = (infoResult?.status === "success" && infoResult?.result !== undefined) || hasBeenLoadingTooLong;
 
-    // Extract FishInfo from result
-    let info: FishInfo;
-    if (infoResult?.result) {
-      const result = infoResult.result as {
-        rarity?: number;
-        mintedAt?: bigint;
-        lastDustCollectedAt?: bigint;
-        lastEggLaidAt?: bigint;
-      } | [number, bigint, bigint, bigint];
+      let info: FishInfo;
+      if (infoResult?.result) {
+        const result = infoResult.result as {
+          rarity?: number;
+          mintedAt?: bigint;
+          lastDustCollectedAt?: bigint;
+          lastEggLaidAt?: bigint;
+        } | [number, bigint, bigint, bigint];
 
-      if (Array.isArray(result)) {
-        // Tuple format: [rarity, mintedAt, lastDustCollectedAt, lastEggLaidAt]
-        info = {
-          rarity: Number(result[0] ?? 0),
-          mintedAt: BigInt(result[1] ?? 0),
-          lastDustCollectedAt: BigInt(result[2] ?? 0),
-          lastEggLaidAt: BigInt(result[3] ?? 0),
-        };
+        if (Array.isArray(result)) {
+          info = {
+            rarity: Number(result[0] ?? 0),
+            mintedAt: BigInt(result[1] ?? 0),
+            lastDustCollectedAt: BigInt(result[2] ?? 0),
+            lastEggLaidAt: BigInt(result[3] ?? 0),
+          };
+        } else {
+          info = {
+            rarity: Number(result.rarity ?? 0),
+            mintedAt: BigInt(result.mintedAt ?? 0),
+            lastDustCollectedAt: BigInt(result.lastDustCollectedAt ?? 0),
+            lastEggLaidAt: BigInt(result.lastEggLaidAt ?? 0),
+          };
+        }
       } else {
-        // Object format
         info = {
-          rarity: Number(result.rarity ?? 0),
-          mintedAt: BigInt(result.mintedAt ?? 0),
-          lastDustCollectedAt: BigInt(result.lastDustCollectedAt ?? 0),
-          lastEggLaidAt: BigInt(result.lastEggLaidAt ?? 0),
+          rarity: 0,
+          mintedAt: BigInt(0),
+          lastDustCollectedAt: BigInt(0),
+          lastEggLaidAt: BigInt(0),
         };
       }
-    } else {
-      info = {
-        rarity: 0,
-        mintedAt: BigInt(0),
-        lastDustCollectedAt: BigInt(0),
-        lastEggLaidAt: BigInt(0),
+
+      const pendingDust = dustResult?.status === "success" && dustResult.result
+        ? Number(dustResult.result as bigint)
+        : 0;
+
+      const timeResultValue = timeResult?.result;
+      const hasTimeResult = timeResultValue !== undefined && timeResultValue !== null;
+      
+      let timeUntilNextEgg: number;
+      if (hasTimeResult) {
+        timeUntilNextEgg = Number(timeResultValue as bigint);
+        previousTimeValuesRef.current.set(tokenIdNum, timeUntilNextEgg);
+      } else {
+        timeUntilNextEgg = previousTimeValuesRef.current.get(tokenIdNum) ?? 0;
+      }
+
+      return {
+        tokenId: tokenIdNum,
+        info,
+        pendingDust,
+        timeUntilNextEgg,
+        isInfoLoaded,
       };
-    }
-
-    const pendingDust = dustResult?.status === "success" && dustResult.result
-      ? Number(dustResult.result as bigint)
-      : 0;
-
-    // Get timeUntilNextEgg, using previous value if current data is still loading
-    // This prevents flickering when data is refetching
-    
-    // Check if we have valid result data
-    const timeResultValue = timeResult?.result;
-    const hasTimeResult = timeResultValue !== undefined && timeResultValue !== null;
-    
-    let timeUntilNextEgg: number;
-    if (hasTimeResult) {
-      timeUntilNextEgg = Number(timeResultValue as bigint);
-      previousTimeValuesRef.current.set(tokenIdNum, timeUntilNextEgg);
-    } else {
-      // No data available, use previous value if exists, otherwise 0
-      timeUntilNextEgg = previousTimeValuesRef.current.get(tokenIdNum) ?? 0;
-    }
-
-    return {
-      tokenId: tokenIdNum,
-      info,
-      pendingDust,
-      timeUntilNextEgg,
-      isInfoLoaded,
-    };
-  });
+    });
+  }, [fishIdsArray, fishDataResults]);
 
   const refetch = () => {
-    refetchIds();
-    refetchPendingDust();
-    refetchInfo();
-    refetchDust();
-    refetchTime();
+    // Handled by wagmi automatically
   };
 
-  // Listen for invalidation signals from transactions
+  // Listen for transaction success events
   useEffect(() => {
-    const handleInvalidation = () => {
-      // Invalidate only fish-related queries, not all queries
-      queryClient.invalidateQueries({
-        queryKey: ["readContract"],
-        exact: false,
-      });
-      // Reset loading timers when data is invalidated
-      fishLoadingStartRef.current.clear();
-      // Force immediate refetch of critical data
-      refetchInfo();
-      refetchDust();
-      refetchTime();
-    };
-
     const handleTransactionSuccess = (event: Event) => {
       const customEvent = event as CustomEvent;
       const type = customEvent.detail?.type;
       
-      // Re-fetch if transaction affected fish
       if (["lay_egg", "hatch_egg", "merge_fish", "burn_fish", "collect_dust"].includes(type)) {
-        handleInvalidation();
+        queryClient.invalidateQueries({
+          queryKey: ["readContract"],
+          exact: false,
+        });
+        fishLoadingStartRef.current.clear();
       }
     };
 
-    window.addEventListener("fish:invalidate", handleInvalidation);
     window.addEventListener("transaction:success", handleTransactionSuccess);
-    
-    return () => {
-      window.removeEventListener("fish:invalidate", handleInvalidation);
-      window.removeEventListener("transaction:success", handleTransactionSuccess);
-    };
-  }, [queryClient, refetchInfo, refetchDust, refetchTime]);
+    return () => window.removeEventListener("transaction:success", handleTransactionSuccess);
+  }, [queryClient]);
 
-  // Clean up old fish loading timers (remove fish that no longer exist)
+  // Clean up old fish loading timers
   useEffect(() => {
     const currentFishIds = new Set(fishIdsArray.map(id => Number(id)));
     const timerKeys = Array.from(fishLoadingStartRef.current.keys());
@@ -279,30 +217,14 @@ export function useFish() {
     previousTimeValuesRef.current.clear();
   }, [address]);
 
-  // Aggressively refetch on component mount and when address changes for instant data
-  useEffect(() => {
-    if (!address) return;
-    
-    const timer = setTimeout(() => {
-      refetchIds();
-      refetchInfo();
-      refetchDust();
-      refetchPendingDust();
-      refetchTime();
-    }, 50);  // Faster - 50ms instead of 100ms
-    
-    return () => clearTimeout(timer);
-  }, [address, refetchIds, refetchInfo, refetchDust, refetchPendingDust, refetchTime]);
-
   return {
     fish,
     fishCount: fishIdsArray.length,
     totalPendingDust: totalPendingDust ? Number(totalPendingDust as bigint) : 0,
-    isLoading: isLoadingIds || isLoadingInfo || isLoadingDust || isLoadingPendingDust || isLoadingTime,
+    isLoading: isLoadingIds || isLoadingData,
     refetch,
-    // Export individual refetch functions for transaction sync
-    refetchInfo,
-    refetchDust,
-    refetchTime,
+    refetchInfo: refetch,
+    refetchDust: refetch,
+    refetchTime: refetch,
   };
 }
