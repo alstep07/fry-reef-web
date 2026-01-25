@@ -103,12 +103,11 @@ export function useFish() {
     contracts: fishInfoContracts,
     query: {
       enabled: fishIdsArray.length > 0 && !!contractAddress,
-      refetchInterval: 60000, // Fallback - explicit refetch after transactions is primary
       placeholderData: keepPreviousData,
     },
   });
 
-  // Get pending dust per fish (auto-refresh every 30s as fallback)
+  // Get pending dust per fish (only refetch after transactions)
   const {
     data: pendingDustResults,
     isLoading: isLoadingDust,
@@ -117,12 +116,11 @@ export function useFish() {
     contracts: pendingDustContracts,
     query: {
       enabled: fishIdsArray.length > 0 && !!contractAddress,
-      refetchInterval: 30000,
       placeholderData: keepPreviousData,
     },
   });
 
-  // Get time until next egg per fish (auto-refresh every 30s as fallback)
+  // Get time until next egg per fish (poll every 10s for timer)
   const {
     data: timeUntilNextEggResults,
     isLoading: isLoadingTime,
@@ -131,7 +129,7 @@ export function useFish() {
     contracts: timeUntilNextEggContracts,
     query: {
       enabled: fishIdsArray.length > 0 && !!fryReefAddress,
-      refetchInterval: 30000, // Slower fallback - updated more frequently after transactions
+      refetchInterval: 10000, // Only for timer - 10 seconds
       placeholderData: keepPreviousData,
     },
   });
@@ -238,6 +236,10 @@ export function useFish() {
       });
       // Reset loading timers when data is invalidated
       fishLoadingStartRef.current.clear();
+      // Force immediate refetch of critical data
+      refetchInfo();
+      refetchDust();
+      refetchTime();
     };
 
     const handleTransactionSuccess = (event: Event) => {
@@ -257,7 +259,7 @@ export function useFish() {
       window.removeEventListener("fish:invalidate", handleInvalidation);
       window.removeEventListener("transaction:success", handleTransactionSuccess);
     };
-  }, [queryClient]);
+  }, [queryClient, refetchInfo, refetchDust, refetchTime]);
 
   // Clean up old fish loading timers (remove fish that no longer exist)
   useEffect(() => {
@@ -287,7 +289,7 @@ export function useFish() {
       refetchDust();
       refetchPendingDust();
       refetchTime();
-    }, 100);
+    }, 50);  // Faster - 50ms instead of 100ms
     
     return () => clearTimeout(timer);
   }, [address, refetchIds, refetchInfo, refetchDust, refetchPendingDust, refetchTime]);
@@ -298,5 +300,9 @@ export function useFish() {
     totalPendingDust: totalPendingDust ? Number(totalPendingDust as bigint) : 0,
     isLoading: isLoadingIds || isLoadingInfo || isLoadingDust || isLoadingPendingDust || isLoadingTime,
     refetch,
+    // Export individual refetch functions for transaction sync
+    refetchInfo,
+    refetchDust,
+    refetchTime,
   };
 }

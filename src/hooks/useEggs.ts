@@ -65,7 +65,7 @@ export function useEggs() {
     ?.map((result) => (result.status === "success" ? Number(result.result) : null))
     .filter((id): id is number => id !== null) || [];
 
-  // Get egg info for each token
+  // Get egg info for each token (basic static info - no polling)
   const eggInfoContracts = tokenIds.flatMap((tokenId) => [
     {
       address: contractAddress,
@@ -81,30 +81,40 @@ export function useEggs() {
       args: [BigInt(tokenId)] as const,
       chainId: DEFAULT_CHAIN_ID,
     },
-    {
-      address: contractAddress,
-      abi: eggNftAbi,
-      functionName: "getTimeUntilHatch" as const,
-      args: [BigInt(tokenId)] as const,
-      chainId: DEFAULT_CHAIN_ID,
-    },
   ]);
 
   const { data: eggInfoData, refetch: refetchEggInfo, isFetched: isEggInfoFetched, status: eggInfoStatus } = useReadContracts({
     contracts: eggInfoContracts,
     query: {
       enabled: tokenIds.length > 0,
-      refetchInterval: 60000, // Fallback
+      placeholderData: keepPreviousData,
+    },
+  });
+
+  // Get time until hatch for each token (only needs polling for timer)
+  const timeUntilHatchContracts = tokenIds.map((tokenId) => ({
+    address: contractAddress,
+    abi: eggNftAbi,
+    functionName: "getTimeUntilHatch" as const,
+    args: [BigInt(tokenId)] as const,
+    chainId: DEFAULT_CHAIN_ID,
+  }));
+
+  const { data: timeUntilHatchData, refetch: refetchTimeUntilHatch } = useReadContracts({
+    contracts: timeUntilHatchContracts,
+    query: {
+      enabled: tokenIds.length > 0,
+      refetchInterval: 10000, // Only for timer - 10 seconds
       placeholderData: keepPreviousData,
     },
   });
 
   // Parse egg data
   const eggs: EggWithInfo[] = tokenIds.map((tokenId, index) => {
-    const baseIndex = index * 3;
-    const infoResult = eggInfoData?.[baseIndex];
-    const canHatchResult = eggInfoData?.[baseIndex + 1];
-    const timeResult = eggInfoData?.[baseIndex + 2];
+    // eggInfoData has 2 items per egg: [info, canHatch, info, canHatch, ...]
+    const infoResult = eggInfoData?.[index * 2];
+    const canHatchResult = eggInfoData?.[index * 2 + 1];
+    const timeResult = timeUntilHatchData?.[index];
 
     const now = Date.now();
     
@@ -115,11 +125,13 @@ export function useEggs() {
     const loadingStartTime = eggLoadingStartRef.current.get(tokenId) || now;
     const hasBeenLoadingTooLong = now - loadingStartTime > LOADING_TIMEOUT;
 
-    const isInfoLoaded = (infoResult?.status === "success" && infoResult?.result !== undefined) || hasBeenLoadingTooLong;
+    // Check if we have valid info result
+    const hasValidInfo = infoResult?.status === "success" && infoResult?.result !== undefined;
+    const isInfoLoaded = hasValidInfo || hasBeenLoadingTooLong;
 
     // Parse EggInfo - wagmi may return as array tuple or object
     let info: EggInfo;
-    if (infoResult?.status === "success" && infoResult?.result) {
+    if (hasValidInfo && infoResult?.result) {
       const result = infoResult.result;
       
       // Check for readonly array (wagmi returns readonly tuples)
@@ -148,7 +160,9 @@ export function useEggs() {
       tokenId,
       info,
       canHatch: canHatchResult?.status === "success" ? Boolean(canHatchResult.result) : false,
-      timeUntilHatch: timeResult?.status === "success" ? Number(timeResult.result) : 0,
+      timeUntilHatch: (timeResult?.status === "success" && timeResult?.result !== undefined) 
+        ? Number(timeResult.result) 
+        : 0,
       isInfoLoaded,
     };
   });
@@ -157,6 +171,7 @@ export function useEggs() {
     refetchBalance();
     refetchTokenIds();
     refetchEggInfo();
+    refetchTimeUntilHatch();
   };
 
   // Listen for invalidation signals from transactions
@@ -168,6 +183,9 @@ export function useEggs() {
       });
       // Reset loading timers
       eggLoadingStartRef.current.clear();
+      // Force immediate refetch of critical data
+      refetchEggInfo();
+      refetchTimeUntilHatch();
     };
 
     const handleTransactionSuccess = (event: Event) => {
@@ -187,7 +205,7 @@ export function useEggs() {
       window.removeEventListener("eggs:invalidate", handleInvalidation);
       window.removeEventListener("transaction:success", handleTransactionSuccess);
     };
-  }, [queryClient]);
+  }, [queryClient, refetchEggInfo, refetchTimeUntilHatch]);
 
   // Clean up old egg loading timers
   useEffect(() => {
@@ -214,10 +232,11 @@ export function useEggs() {
       refetchBalance();
       refetchTokenIds();
       refetchEggInfo();
-    }, 100);
+      refetchTimeUntilHatch();
+    }, 50);  // Faster - 50ms instead of 100ms
     
     return () => clearTimeout(timer);
-  }, [address, refetchBalance, refetchTokenIds, refetchEggInfo]);
+  }, [address, refetchBalance, refetchTokenIds, refetchEggInfo, refetchTimeUntilHatch]);
 
   // Loading only on initial fetch (not during refetch with keepPreviousData)
   const isLoading = !isBalanceFetched || 
@@ -229,6 +248,9 @@ export function useEggs() {
     eggCount,
     refetch,
     isLoading,
+    // Export individual refetch functions for transaction sync
+    refetchEggInfo,
+    refetchTimeUntilHatch,
   };
 }
 
