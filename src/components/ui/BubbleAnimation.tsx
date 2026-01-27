@@ -35,7 +35,7 @@ export function BubbleAnimation() {
     const createBubbles = () => {
       const bubbles: Bubble[] = [];
       const baseBubbleCount = Math.min(40, Math.floor((canvas.width * canvas.height) / 40000));
-      const bubbleCount = Math.floor(baseBubbleCount * 1.5); // More bubbles
+      const bubbleCount = Math.floor(baseBubbleCount * 3); // More bubbles
 
       for (let i = 0; i < bubbleCount; i++) {
         // Depth opacity: closer bubbles are more opaque, farther bubbles are more transparent
@@ -43,7 +43,7 @@ export function BubbleAnimation() {
         bubbles.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          radius: (Math.random() * 35 + 15) * 0.8, // 20% smaller: 12-40px
+          radius: (Math.random() * 35 + 15) * 0.7, // 20% smaller: 12-40px
           vx: (Math.random() - 0.5) * 0.4, // Slower, smoother movement
           vy: (Math.random() - 0.5) * 0.4,
           opacity: depthOpacity, // Individual bubble opacity for depth effect
