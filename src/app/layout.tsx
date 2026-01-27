@@ -19,12 +19,12 @@ const geistMono = Geist_Mono({
 const APP_URL = "https://fry-reef.vercel.app";
 
 export const metadata: Metadata = {
-  title: "FryReef - Breed, merge, evolve onchain",
-  description: "Build your underwater reef by breeding and evolving fish NFTs. Free starter pack, daily rewards, and idle gameplay on Base.",
+  title: "FryReef",
+  description: "Collect, breed & merge fish NFTs. Hatch eggs, evolve rare species, earn daily rewards. No crypto needed to start!",
   keywords: ["NFT", "game", "Base", "fish", "breeding", "merge", "evolve", "onchain", "free-to-play", "web3"],
   openGraph: {
-    title: "FryReef - Breed, merge, evolve onchain",
-    description: "Build your underwater reef by breeding and evolving fish NFTs. Free starter pack, daily rewards, and idle gameplay.",
+    title: "FryReef",
+    description: "Build your underwater reef by breeding and evolving fish NFTs",
     url: APP_URL,
     siteName: "FryReef",
     images: [
@@ -32,16 +32,16 @@ export const metadata: Metadata = {
         url: `${APP_URL}/images/screenshots/hero_image.png`,
         width: 1200,
         height: 630,
-        alt: "FryReef - Breed, merge, evolve onchain",
+        alt: "FryReef",
       },
     ],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "FryReef - Breed, merge, evolve onchain",
-    description: "Build your underwater reef by breeding and evolving fish NFTs. Free starter pack, daily rewards, and idle gameplay.",
-    images: [`${APP_URL}/images/common/logo.png`],
+    title: "FryReef",
+    description: "Build your underwater reef by breeding and evolving fish NFTs",
+    images: [`${APP_URL}/images/screenshots/hero_image.png`],
   },
   appleWebApp: {
     capable: true,
@@ -61,14 +61,14 @@ export const metadata: Metadata = {
     "base:app_id": "696a34857383fd216ccd736b",
     "fc:miniapp": JSON.stringify({
       version: "next",
-      imageUrl: `${APP_URL}/images/common/logo.png`,
+      imageUrl: `${APP_URL}/images/screenshots/hero_image.png`,
       button: {
         title: "Play FryReef",
         action: {
           type: "launch_miniapp",
           name: "FryReef",
           url: APP_URL,
-          splashImageUrl: `${APP_URL}/images/common/logo.png`,
+          splashImageUrl: `${APP_URL}/images/apple-touch-icon.png`,
           splashBackgroundColor: "#0a1628",
         },
       },
