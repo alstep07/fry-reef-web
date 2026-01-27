@@ -160,8 +160,8 @@ export function GameDashboard() {
 
   const tabs = [
     { id: "checkin" as Tab, label: "Tasks", icon: "📅" },
-    { id: "nest" as Tab, label: "Nest", icon: "🟠" },
     { id: "reef" as Tab, label: "Reef", icon: "🐟" },
+    { id: "nest" as Tab, label: "Nest", icon: "🟠" },
     { id: "evolution" as Tab, label: "Evolution", icon: "🧬" },
   ];
 
@@ -257,7 +257,7 @@ export function GameDashboard() {
                   </div>
                   <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-slate-400">
                     {currentStreak % DAILY_CHECKIN.streakForReward === 0
-                      ? "🎉 Claim your Pearl Shard!"
+                      ? "Pearl Shard Rewarded 🎉"
                       : `${
                           DAILY_CHECKIN.streakForReward -
                           (currentStreak % DAILY_CHECKIN.streakForReward)

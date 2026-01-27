@@ -138,7 +138,7 @@ function FishCard({
         </div>
 
         {/* Dust stats */}
-        <div className="mt-1 sm:mt-2 text-xs text-slate-400">
+        <div className="text-xs text-slate-400">
           <span>✨ {dustPerDay}/day</span>
         </div>
 
@@ -147,6 +147,14 @@ function FishCard({
           <div className="mt-auto pt-2 space-y-1.5">
             {/* Lay Egg button with progress */}
             <div className="relative">
+              {/* Time remaining indicator */}
+              {!canLayEggByTime && (
+                <div className="mt-1 text-center">
+                  <span className="text-[9px] text-slate-400">
+                    Cooldown: {formatTime(timeUntilNextEgg)}
+                  </span>
+                </div>
+              )}
               <button
                 onClick={() => onLayEgg(tokenId)}
                 disabled={isLoading || !canLayEgg || !canLayEggByTime}
@@ -187,14 +195,6 @@ function FishCard({
                   )}
                 </span>
               </button>
-              {/* Time remaining indicator */}
-              {!canLayEggByTime && (
-                <div className="mt-1 text-center">
-                  <span className="text-[9px] text-slate-400">
-                    {formatTime(timeUntilNextEgg)}
-                  </span>
-                </div>
-              )}
             </div>
           </div>
         )}
@@ -262,7 +262,7 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
       return total + config.spawnDustPerDay;
     }, 0);
   }, [fish]);
-
+  console.log(fish);
   const sortedFish = useMemo(() => {
     return [...fish].sort((a, b) => b.info.rarity - a.info.rarity);
   }, [fish]);
