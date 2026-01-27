@@ -18,7 +18,6 @@ const manifest = {
     primaryCategory: "games",
     tags: ["nft", "game", "breeding", "onchain", "evolution"],
     screenshotUrls: [
-      `${APP_URL}/images/screenshots/hero_image.png`,
       `${APP_URL}/images/screenshots/screen_1.PNG`,
       `${APP_URL}/images/screenshots/screen_2.PNG`,
       `${APP_URL}/images/screenshots/screen_3.PNG`,
