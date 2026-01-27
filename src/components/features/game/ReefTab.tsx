@@ -125,7 +125,7 @@ function FishCard({
       </div>
 
       {/* Fish Info */}
-      <div className="relative flex-grow flex flex-col text-center">
+      <div className="relative grow flex flex-col text-center">
         {/* Rarity badge */}
         <div
           className="mb-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
@@ -262,7 +262,7 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
       return total + config.spawnDustPerDay;
     }, 0);
   }, [fish]);
-  console.log(fish);
+
   const sortedFish = useMemo(() => {
     return [...fish].sort((a, b) => b.info.rarity - a.info.rarity);
   }, [fish]);
@@ -397,7 +397,7 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
               <button
                 onClick={() => setIsReleaseMode(true)}
                 disabled={fishCount === 0}
-                className="flex items-center gap-1 rounded-full px-1.5 py-1.5 sm:px-2.5 sm:py-1.5 text-xs font-medium text-white transition cursor-pointer bg-red-700/60 hover:bg-red-700/80 disabled:cursor-not-allowed disabled:bg-slate-600/50 disabled:hover:bg-slate-600/50"
+                className="flex items-center gap-1 rounded-full px-2 py-1.5 sm:px-2.5 sm:py-1.5 text-xs font-medium text-white transition cursor-pointer bg-red-700/60 hover:bg-red-700/80 disabled:cursor-not-allowed disabled:bg-slate-600/50 disabled:hover:bg-slate-600/50"
               >
                 <svg
                   className="h-4 w-4 sm:h-3.5 sm:w-3.5"
@@ -412,7 +412,7 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                   />
                 </svg>
-                <span className="hidden sm:inline">Release</span>
+                <span className="inline">Release</span>
               </button>
             ) : (
               <button

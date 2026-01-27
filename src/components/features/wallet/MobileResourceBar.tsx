@@ -24,12 +24,12 @@ export function MobileResourceBar() {
   if (!isConnected) return null;
 
   return (
-    <div className="flex sm:hidden items-center justify-center mt-2">
-      <div className="inline-flex items-center gap-4 py-2 px-4 rounded-full bg-white/5 backdrop-blur-sm">
+    <div className="flex sm:hidden items-center justify-center mt-3 mb-2">
+      <div className="inline-flex items-center gap-6 py-3 px-6 rounded-full bg-white/5 backdrop-blur-sm border border-white/10">
         {/* ETH Balance */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-sm">⟠</span>
-          <span className="font-mono text-sm font-medium text-white tabular-nums">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">⟠</span>
+          <span className="font-mono text-base font-medium text-white tabular-nums">
             {isBalanceLoading ? "-.--" : ethBalance}
           </span>
         </div>
@@ -37,14 +37,14 @@ export function MobileResourceBar() {
         {/* Resources - only show after starter pack claimed */}
         {starterPackClaimed && (
           <>
-            <div className="h-4 w-px bg-white/20" />
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm">{RESOURCE_CONFIG[Resource.PearlShard].icon}</span>
-              <span className="font-mono text-sm font-medium text-white tabular-nums">{pearlShards}</span>
+            <div className="h-5 w-px bg-white/20" />
+            <div className="flex items-center gap-2">
+              <span className="text-lg">{RESOURCE_CONFIG[Resource.PearlShard].icon}</span>
+              <span className="font-mono text-base font-medium text-white tabular-nums">{pearlShards}</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm">{RESOURCE_CONFIG[Resource.SpawnDust].icon}</span>
-              <span className="font-mono text-sm font-medium text-white tabular-nums">{spawnDust}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-lg">{RESOURCE_CONFIG[Resource.SpawnDust].icon}</span>
+              <span className="font-mono text-base font-medium text-white tabular-nums">{spawnDust}</span>
             </div>
           </>
         )}

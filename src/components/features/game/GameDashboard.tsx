@@ -11,6 +11,7 @@ import { ReefTab } from "./ReefTab";
 import { EvolutionTab } from "./EvolutionTab";
 import { StreakRewardModal } from "./StreakRewardModal";
 import { OnboardingModal } from "@/components/features/onboarding/OnboardingModal";
+import { MobileBottomNav } from "@/components/features/navigation/MobileBottomNav";
 import { DAILY_CHECKIN } from "@/constants/gameConfig";
 
 type Tab = "checkin" | "nest" | "reef" | "evolution";
@@ -192,6 +193,9 @@ export function GameDashboard() {
         }}
       />
 
+      {/* Mobile Bottom Navigation - only visible on mobile */}
+      <MobileBottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+
       <div className="w-full max-w-2xl space-y-4 sm:space-y-6">
         {/* Network warning */}
         {!isOnCorrectNetwork && (
@@ -211,8 +215,8 @@ export function GameDashboard() {
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="flex justify-center w-full">
+      {/* Tabs - Desktop only, hidden on mobile (nav is at bottom on mobile) */}
+      <div className="hidden sm:flex justify-center w-full">
         <div className="flex w-full sm:inline-flex sm:w-auto rounded-full bg-white/5 p-1 sm:p-1.5 backdrop-blur-sm">
           {tabs.map((tab) => (
             <button
@@ -235,12 +239,12 @@ export function GameDashboard() {
       {/* Tab Content */}
       <div className={activeTab === "checkin" ? "" : "hidden"}>
         {activeTab === "checkin" && (
-          <div className="rounded-2xl border border-white/5 bg-white/5 p-4 sm:p-6 backdrop-blur-sm">
-            <h2 className="mb-3 sm:mb-4 text-lg sm:text-xl font-semibold text-white">
+          <div className="rounded-2xl border border-white/5 bg-white/5 p-6 sm:p-8 backdrop-blur-sm">
+            <h2 className="mb-6 sm:mb-7 text-lg sm:text-xl font-semibold text-white">
               Daily Check-in
             </h2>
 
-            <div className="mb-3 sm:mb-4 space-y-2 text-sm">
+            <div className="mb-7 sm:mb-8 space-y-4 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-slate-400">Current Streak:</span>
                 <span className="font-semibold text-white">
@@ -264,7 +268,7 @@ export function GameDashboard() {
                 <span className="font-semibold text-white">{totalCheckIns}</span>
               </div>
               {currentStreak > 0 && (
-                <div className="mt-2">
+                <div className="mt-4 sm:mt-5">
                   <div className="h-1.5 sm:h-2 overflow-hidden rounded-full bg-white/10">
                     <div
                       className="h-full transition-all"
@@ -279,7 +283,7 @@ export function GameDashboard() {
                       }}
                     />
                   </div>
-                  <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-slate-400">
+                  <p className="mt-2.5 sm:mt-3 text-xs sm:text-sm text-slate-400">
                     {currentStreak % DAILY_CHECKIN.streakForReward === 0
                       ? "Pearl Shard Rewarded 🎉"
                       : `${
@@ -311,7 +315,7 @@ export function GameDashboard() {
             </div>
 
             {checkInTx.error && (
-              <p className="mt-2 sm:mt-3 text-center text-[10px] sm:text-xs text-red-400">
+              <p className="mt-4 sm:mt-5 text-center text-[10px] sm:text-xs text-red-400">
                 Transaction failed. Please try again.
               </p>
             )}

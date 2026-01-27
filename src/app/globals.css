@@ -82,3 +82,16 @@ body {
     transform: scale(1);
   }
 }
+
+/* Mobile bottom nav adjustments */
+@media (max-width: 640px) {
+  /* Add bottom padding to main content for mobile nav */
+  main {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 4rem) !important;
+  }
+  
+  /* Hide desktop footer on mobile */
+  footer {
+    display: none;
+  }
+}
