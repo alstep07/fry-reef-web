@@ -4,11 +4,14 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount, useBalance } from "wagmi";
 import { base } from "wagmi/chains";
 import { useFryReef } from "@/hooks/useFryReef";
+import { useFarcasterProfile } from "@/hooks/useFarcasterProfile";
 import { RESOURCE_CONFIG, Resource } from "@/constants/gameConfig";
+import Image from "next/image";
 
 export function WalletHeader() {
   const { address, isConnected } = useAccount();
   const { pearlShards, spawnDust, starterPackClaimed } = useFryReef();
+  const { profile } = useFarcasterProfile();
 
   const { data: balanceData, isLoading: isBalanceLoading } = useBalance({
     address,
@@ -52,12 +55,34 @@ export function WalletHeader() {
         </div>
       )}
 
-      {/* Wallet connect button */}
-      <ConnectButton
-        showBalance={false}
-        chainStatus="none"
-        accountStatus={{ smallScreen: "avatar", largeScreen: "full" }}
-      />
+      {/* Wallet connect button or Farcaster profile */}
+      {isConnected && profile ? (
+        <div className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 backdrop-blur-sm">
+          {profile.pfpUrl && (
+            <Image
+              src={profile.pfpUrl}
+              alt={profile.displayName || profile.username || "User"}
+              width={32}
+              height={32}
+              className="rounded-full"
+            />
+          )}
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-white">
+              {profile.displayName || profile.username || "User"}
+            </span>
+            {profile.username && profile.displayName && (
+              <span className="text-xs text-slate-400">@{profile.username}</span>
+            )}
+          </div>
+        </div>
+      ) : (
+        <ConnectButton
+          showBalance={false}
+          chainStatus="none"
+          accountStatus={{ smallScreen: "avatar", largeScreen: "full" }}
+        />
+      )}
     </div>
   );
 }
