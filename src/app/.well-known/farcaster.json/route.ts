@@ -14,7 +14,7 @@ const manifest = {
     splashImageUrl: `${APP_URL}/images/apple-touch-icon.png`,
     splashBackgroundColor: "#0a1628",
     subtitle: "Breed, merge, evolve fish NFTs",
-    description: "Collect, breed & merge fish NFTs. Hatch eggs, evolve rare species, earn daily rewards. No crypto needed to start!",
+    description: "Collect, breed & merge fish NFTs. Hatch eggs, evolve rare species.",
     primaryCategory: "games",
     tags: ["nft", "game", "breeding", "onchain", "evolution"],
     screenshotUrls: [

@@ -20,7 +20,7 @@ const APP_URL = "https://fry-reef.vercel.app";
 
 export const metadata: Metadata = {
   title: "FryReef",
-  description: "Collect, breed & merge fish NFTs. Hatch eggs, evolve rare species, earn daily rewards. No crypto needed to start!",
+  description: "Collect, breed & merge fish NFTs. Hatch eggs, evolve rare species.",
   keywords: ["NFT", "game", "Base", "fish", "breeding", "merge", "evolve", "onchain", "free-to-play", "web3"],
   openGraph: {
     title: "FryReef",
