@@ -26,7 +26,7 @@ const manifest = {
     tagline: "Breed, merge, evolve onchain",
     ogTitle: "FryReef",
     ogDescription: "Build your underwater reef by breeding and evolving fish NFTs",
-    ogImageUrl: `${APP_URL}/images/apple-touch-icon.png`,
+    ogImageUrl: `${APP_URL}/images/screenshots/hero_image.png`,
     noindex: false,
   },
 };
