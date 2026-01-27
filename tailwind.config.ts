@@ -5,6 +5,7 @@ const config: Config = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  darkMode: "class",
   theme: {
     extend: {
       fontFamily: {
@@ -28,11 +29,25 @@ const config: Config = {
           "50%": { transform: "translateY(-6px)" },
         },
       },
+      backgroundColor: {
+        light: {
+          primary: "#FFFFFF",
+          secondary: "#F9FAFB",
+          tertiary: "#F3F4F6",
+        },
+      },
+      textColor: {
+        light: {
+          primary: "#1F2937",
+          secondary: "#6B7280",
+        },
+      },
     },
   },
   plugins: [],
 };
 
 export default config;
+
 
 

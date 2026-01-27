@@ -283,7 +283,7 @@ export function NestTab({ onGoToReef }: NestTabProps) {
       if (success) {
         // Emit event to invalidate egg cache - egg state changed
         window.dispatchEvent(new Event("eggs:invalidate"));
-        
+
         // Multiple refetch attempts to ensure state updates
         const doRefetch = () => {
           refetch();
@@ -307,7 +307,7 @@ export function NestTab({ onGoToReef }: NestTabProps) {
       if (success) {
         // Emit event to invalidate egg cache
         window.dispatchEvent(new Event("eggs:invalidate"));
-        
+
         // Wait a bit for RPC to sync
         await new Promise(resolve => setTimeout(resolve, 2000));
 

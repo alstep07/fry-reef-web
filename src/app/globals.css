@@ -7,6 +7,29 @@
   --color-baseCard: #0b1120;
 }
 
+/* CSS Variables for theming */
+:root {
+  /* Dark mode colors */
+  --bg-primary: #000000;
+  --bg-secondary: #020617;
+  --bg-card: #0b1120;
+  --bg-card-light: #1a1f3a;
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --border-color: rgba(255, 255, 255, 0.1);
+}
+
+html.light {
+  /* Light mode - ocean/sea theme */
+  --bg-primary: #e0f2fe;
+  --bg-secondary: #e0f2fe;
+  --bg-card: #f0f9ff;
+  --bg-card-light: #cffafe;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --border-color: rgba(2, 132, 199, 0.2);
+}
+
 /* Fullscreen background for iOS Safari */
 html {
   background: #000;
@@ -14,7 +37,7 @@ html {
   min-height: 100dvh;
 }
 
-/* Fixed background that covers everything including safe areas */
+/* Dark mode (default) background */
 html::before {
   content: "";
   position: fixed;
@@ -23,11 +46,17 @@ html::before {
   background: radial-gradient(circle at top, #020617 0%, #020617 40%, #000 100%);
 }
 
+/* Light mode background - ocean/sea theming */
+html.light::before {
+  background: linear-gradient(135deg, #e0f2fe 0%, #cffafe 25%, #a5f3fc 50%, #7dd3fc 100%);
+}
+
 body {
   background: transparent;
-  color: #e5e7eb;
+  color: var(--text-primary);
   min-height: 100vh;
   min-height: 100dvh; /* Dynamic viewport height for mobile */
+  transition: color 0.3s ease, background-color 0.3s ease;
 }
 
 /* Hide network switcher in RainbowKit modal */
@@ -36,6 +65,10 @@ body {
 [data-rk] button[aria-label*="chain"],
 [data-rk] button[aria-label*="network"] {
   display: none !important;
+}
+
+html.light [class*="text-slate-500"] {
+  color: #6b7280 !important;
 }
 
 /* Float animation for eggs */
@@ -94,4 +127,246 @@ body {
   footer {
     display: none;
   }
+}
+
+/* ========== LIGHT MODE OVERRIDES ========== */
+html.light {
+  color-scheme: light;
+}
+
+/* Override all text colors for light mode */
+html.light,
+html.light * {
+  --tw-text-opacity: 1;
+}
+
+html.light [class*="text-white"] {
+  color: #1f2937 !important;
+}
+
+html.light [class*="text-slate-100"] {
+  color: #1f2937 !important;
+}
+
+html.light [class*="text-slate-200"] {
+  color: #374151 !important;
+}
+
+html.light [class*="text-slate-300"] {
+  color: #4b5563 !important;
+}
+
+html.light [class*="text-slate-400"] {
+  color: #6b7280 !important;
+}
+
+html.light [class*="text-slate-500"] {
+  color: #6b7280 !important;
+}
+
+html.light [class*="text-slate-600"] {
+  color: #4b5563 !important;
+}
+
+/* Override backgrounds */
+html.light [class*="bg-black"] {
+  background-color: #f0f9ff !important;
+}
+
+html.light [class*="bg-white/5"] {
+  background-color: rgba(240, 249, 255, 0.8) !important;
+}
+
+html.light [class*="bg-white/10"] {
+  background-color: rgba(224, 242, 254, 0.8) !important;
+}
+
+html.light [class*="bg-white/20"] {
+  background-color: rgba(206, 250, 254, 0.5) !important;
+}
+
+html.light [class*="bg-white/30"] {
+  background-color: rgba(125, 211, 252, 0.3) !important;
+}
+
+html.light [class*="bg-slate-900"] {
+  background-color: #e0f2fe !important;
+}
+
+html.light [class*="bg-slate-800"] {
+  background-color: #f0f9ff !important;
+}
+
+/* Override borders */
+html.light [class*="border-white/5"] {
+  border-color: rgba(125, 211, 252, 0.4) !important;
+}
+
+html.light [class*="border-white/10"] {
+  border-color: rgba(125, 211, 252, 0.5) !important;
+}
+
+html.light [class*="border-white/20"] {
+  border-color: rgba(125, 211, 252, 0.6) !important;
+}
+
+/* Light mode buttons - DISABLED states first (highest priority) */
+html.light button:disabled,
+html.light button[disabled] {
+  background-color: #e2e8f0 !important; /* slate-200 - light grey */
+  color: #94a3b8 !important; /* slate-400 - muted grey text */
+  box-shadow: none !important;
+}
+
+/* Disabled button internal background divs */
+html.light button:disabled div[class~="bg-slate-600\/40"],
+html.light button[disabled] div[class~="bg-slate-600\/40"] {
+  background-color: rgba(226, 232, 240, 0.4) !important; /* slate-200 with low opacity */
+}
+
+/* Disabled button internal progress bar (the filling part) */
+html.light button:disabled div[class~="bg-slate-500\/60"],
+html.light button[disabled] div[class~="bg-slate-500\/60"] {
+  background-color: rgba(148, 163, 184, 0.4) !important; /* slate-400 - lighter progress */
+}
+
+/* Light mode buttons - PRIMARY/TABS (light blue) */
+html.light .bg-baseBlue:not(:disabled),
+html.light button.bg-baseBlue:not(:disabled) {
+  background-color: #7dd3fc !important; /* sky-300 - light blue */
+  color: #0c4a6e !important; /* sky-900 - dark blue text */
+}
+
+html.light .bg-baseBlue:not(:disabled):hover,
+html.light button.bg-baseBlue:not(:disabled):hover {
+  background-color: #38bdf8 !important; /* sky-400 */
+}
+
+/* Light mode RELEASE buttons (light red) - with all opacity variants */
+html.light button:not(:disabled)[class~="bg-red-700\/60"],
+html.light button:not(:disabled)[class~="bg-red-700\/80"],
+html.light button:not(:disabled)[class~="bg-red-700\/90"] {
+  background-color: #fca5a5 !important; /* red-300 - light red */
+  color: #7f1d1d !important; /* red-900 - dark red text */
+}
+
+/* Light mode COLLECT buttons (light yellow) */
+html.light button:not(:disabled)[class~="bg-amber-500\/50"],
+html.light button:not(:disabled)[class~="bg-amber-500\/80"] {
+  background-color: #fde68a !important; /* amber-200 - light yellow */
+  color: #78350f !important; /* amber-900 - dark text */
+}
+
+/* Light mode EXPAND buttons (light emerald) */
+html.light button:not(:disabled)[class~="bg-emerald-500\/40"],
+html.light button:not(:disabled)[class~="bg-emerald-500\/60"] {
+  background-color: #6ee7b7 !important; /* emerald-300 - light emerald */
+  color: #064e3b !important; /* emerald-900 - dark text */
+}
+
+/* Light mode LAY EGG buttons (light purple) */
+html.light button:not(:disabled)[class~="bg-purple-500\/80"],
+html.light button:not(:disabled)[class~="bg-purple-500"] {
+  background-color: #d8b4fe !important; /* purple-300 - light purple */
+  color: #581c87 !important; /* purple-900 - dark text */
+}
+
+/* Light mode purple button internal backgrounds */
+html.light button:not(:disabled) [class~="bg-purple-500\/80"],
+html.light button:not(:disabled) .bg-purple-500\/80 {
+  background-color: #d8b4fe !important; /* purple-300 */
+}
+
+/* Light mode CANCEL/SLATE buttons (light grey) */
+html.light button:not(:disabled)[class~="bg-slate-600\/50"],
+html.light button:not(:disabled)[class~="bg-slate-600\/80"] {
+  background-color: #cbd5e1 !important; /* slate-300 */
+  color: #334155 !important; /* slate-700 - dark text */
+}
+
+/* Light mode warning messages - better contrast */
+html.light [class*="bg-yellow-500/10"],
+html.light [class*="bg-yellow-500\/10"] {
+  background-color: rgba(254, 243, 199, 0.9) !important; /* yellow-100 - light yellow bg */
+}
+
+html.light [class*="border-yellow-500"],
+html.light [class*="border-yellow-500\/30"] {
+  border-color: rgba(251, 191, 36, 0.6) !important; /* amber-400 */
+}
+
+html.light [class*="text-yellow-400"],
+html.light [class*="text-yellow-300"] {
+  color: #b45309 !important; /* amber-700 - much darker for contrast */
+}
+
+html.light [class*="bg-yellow-500/20"],
+html.light [class*="bg-yellow-500\/20"] {
+  background-color: rgba(251, 191, 36, 0.4) !important; /* amber-400 */
+}
+
+/* Light mode amber warning messages */
+html.light [class*="bg-amber-500/10"],
+html.light [class*="bg-amber-500\/10"] {
+  background-color: rgba(254, 243, 199, 0.9) !important; /* yellow-100 */
+}
+
+html.light [class*="border-amber-500"],
+html.light [class*="border-amber-500\/30"] {
+  border-color: rgba(251, 191, 36, 0.6) !important; /* amber-400 */
+}
+
+html.light [class*="text-amber-400"] {
+  color: #b45309 !important; /* amber-700 - darker for contrast */
+}
+
+/* Light mode red warning/selected states */
+html.light [class*="border-red-600"] {
+  border-color: rgba(239, 68, 68, 0.8) !important; /* red-500 - visible red border */
+}
+
+html.light [class*="bg-red-600/10"],
+html.light [class*="bg-red-600\/10"],
+html.light [class*="bg-red-500/10"],
+html.light [class*="bg-red-500\/10"] {
+  background-color: rgba(254, 202, 202, 0.7) !important; /* red-200 - light red bg */
+}
+
+html.light [class*="bg-red-500"] {
+  background-color: #ef4444 !important; /* red-500 - checkmark circle */
+}
+
+/* Light mode error messages */
+html.light [class*="bg-red-500\/10"] {
+  background-color: rgba(254, 202, 202, 0.9) !important; /* red-200 */
+}
+
+html.light [class*="border-red-500"],
+html.light [class*="border-red-500\/30"] {
+  border-color: rgba(239, 68, 68, 0.6) !important; /* red-500 */
+}
+
+html.light [class*="text-red-400"] {
+  color: #b91c1c !important; /* red-700 - darker for contrast */
+}
+
+/* Light mode progress bars - light blue */
+html.light .bg-linear-to-r.from-blue-500.to-blue-400,
+html.light [class~="bg-linear-to-r"][class~="from-blue-500"][class~="to-blue-400"] {
+  background-image: linear-gradient(to right, #7dd3fc, #38bdf8) !important; /* sky-300 to sky-400 - light blue */
+}
+
+html.light .bg-linear-to-r.from-emerald-500\/50.to-emerald-400\/50,
+html.light [class~="bg-linear-to-r"][class*="from-emerald-500"][class*="to-emerald-400"] {
+  background-image: linear-gradient(to right, rgba(110, 231, 183, 0.5), rgba(52, 211, 153, 0.5)) !important; /* emerald-300 - light green */
+}
+
+html.light .bg-linear-to-r.from-amber-500.to-amber-400,
+html.light [class~="bg-linear-to-r"][class~="from-amber-500"][class~="to-amber-400"] {
+  background-image: linear-gradient(to right, #fcd34d, #fbbf24) !important; /* amber-300 to amber-400 - light yellow */
+}
+
+/* Light mode circular progress (NestTab) */
+html.light circle[stroke="#0052FF"] {
+  stroke: #3b82f6 !important; /* blue-500 - visible blue */
 }

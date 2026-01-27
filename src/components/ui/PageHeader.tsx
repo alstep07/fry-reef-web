@@ -3,6 +3,7 @@
 import { ReactNode } from "react";
 import Image from "next/image";
 import { MobileHeader } from "./MobileHeader";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 interface PageHeaderProps {
   title: string;
@@ -29,6 +30,7 @@ export function PageHeader({ title, description, action }: PageHeaderProps) {
           </h1>
         </div>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <MobileHeader />
           {action && <div className="shrink-0">{action}</div>}
         </div>

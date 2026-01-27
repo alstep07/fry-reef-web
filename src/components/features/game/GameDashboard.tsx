@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import { useFryReef } from "@/hooks/useFryReef";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import { useTheme } from "@/hooks/useTheme";
 import { StarterPackCard } from "./StarterPackCard";
 import { NestTab } from "./NestTab";
 import { ReefTab } from "./ReefTab";
@@ -62,6 +63,7 @@ function DashboardSkeleton() {
 }
 
 export function GameDashboard() {
+  const theme = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { address, isConnected } = useAccount();
@@ -278,8 +280,9 @@ export function GameDashboard() {
                             DAILY_CHECKIN.streakForReward) *
                           100
                         }%`,
-                        background:
-                          "linear-gradient(90deg, #E8D5E2 0%, #F5E6EA 30%, #FFFFFF 50%, #E0F4F8 70%, #D4E5ED 100%)",
+                        background: theme === "light"
+                          ? "linear-gradient(90deg, #7dd3fc 0%, #38bdf8 50%, #0ea5e9 100%)"
+                          : "linear-gradient(90deg, #E8D5E2 0%, #F5E6EA 30%, #FFFFFF 50%, #E0F4F8 70%, #D4E5ED 100%)",
                       }}
                     />
                   </div>

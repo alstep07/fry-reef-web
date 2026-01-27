@@ -79,8 +79,12 @@ function FishCard({
     >
       {/* Rarity glow */}
       <div
-        className="pointer-events-none absolute inset-0 rounded-xl sm:rounded-2xl opacity-10 sm:opacity-20 blur-md sm:blur-xl"
-        style={{ backgroundColor: config.color }}
+        className={`pointer-events-none absolute inset-0 rounded-xl sm:rounded-2xl ${
+          rarity === Rarity.Common 
+            ? "opacity-10 sm:opacity-20 blur-2xl sm:blur-3xl" 
+            : "opacity-8 sm:opacity-12 blur-xl sm:blur-2xl"
+        }`}
+        style={{ backgroundColor: rarity === Rarity.Common ? "#7dd3fc" : config.color }}
       />
 
       {/* Token ID - top left */}
@@ -450,10 +454,8 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
                 <>
                   <span className="hidden sm:inline">Collect</span>
                   <span className="sm:hidden">+</span>
-                  <span className="rounded-full sm:bg-white/20 sm:px-1.5 sm:py-0.5 text-[10px]">
-                    <span className="hidden sm:inline">+</span>
-                    {totalPendingDust} ✨
-                  </span>
+                  <span className="hidden sm:inline">+</span>
+                  {totalPendingDust} ✨
                 </>
               )}
             </button>
