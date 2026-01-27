@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     siteName: "FryReef",
     images: [
       {
-        url: `${APP_URL}/images/screenshots/hero_image.png`,
+        url: `${APP_URL}/images/screenshots/hero_image.png?v=2`,
         width: 1200,
         height: 630,
         alt: "FryReef",
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "FryReef",
     description: "Build your underwater reef by breeding and evolving fish NFTs",
-    images: [`${APP_URL}/images/screenshots/hero_image.png`],
+    images: [`${APP_URL}/images/screenshots/hero_image.png?v=2`],
   },
   appleWebApp: {
     capable: true,
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     "base:app_id": "696a34857383fd216ccd736b",
     "fc:miniapp": JSON.stringify({
       version: "next",
-      imageUrl: `${APP_URL}/images/screenshots/hero_image.png`,
+      imageUrl: `${APP_URL}/images/screenshots/hero_image.png?v=2`,
       button: {
         title: "Play FryReef",
         action: {
