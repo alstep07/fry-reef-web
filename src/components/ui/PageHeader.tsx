@@ -2,8 +2,7 @@
 
 import { ReactNode } from "react";
 import Image from "next/image";
-import { MobileHeader } from "./MobileHeader";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { BurgerMenu } from "./BurgerMenu";
 
 interface PageHeaderProps {
   title: string;
@@ -11,11 +10,11 @@ interface PageHeaderProps {
   action?: ReactNode;
 }
 
-export function PageHeader({ title, description, action }: PageHeaderProps) {
+export function PageHeader({ title, description }: PageHeaderProps) {
   return (
     <header className="mb-6 sm:mb-10">
-      {/* Mobile: stacked layout */}
-      <div className="flex items-center justify-between gap-2 relative">
+      {/* Logo and Burger */}
+      <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 sm:gap-3">
           <Image
             src="/images/common/logo.png"
@@ -29,11 +28,7 @@ export function PageHeader({ title, description, action }: PageHeaderProps) {
             {title}
           </h1>
         </div>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <MobileHeader />
-          {action && <div className="shrink-0">{action}</div>}
-        </div>
+        <BurgerMenu />
       </div>
       <p className="mt-1 text-xs text-slate-400 sm:text-sm sm:mt-2">
         {description}

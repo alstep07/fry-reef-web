@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@base-org/account": "^2.5.0",
+    "@coinbase/onchainkit": "^1.1.2",
     "@farcaster/miniapp-sdk": "^0.2.1",
     "@metamask/sdk": "^0.34.0",
     "@openzeppelin/contracts": "^5.4.0",

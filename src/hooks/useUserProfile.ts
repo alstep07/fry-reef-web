@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { sdk } from "@farcaster/miniapp-sdk";
 
-export function useFarcasterProfile() {
+export function useUserProfile() {
   const [profile, setProfile] = useState<{
     username?: string;
     displayName?: string;
@@ -15,7 +15,7 @@ export function useFarcasterProfile() {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        // Get Farcaster context
+        // Get user context from mini app SDK
         const context = await sdk.context;
         
         if (context?.user) {
@@ -27,7 +27,7 @@ export function useFarcasterProfile() {
           });
         }
       } catch (error) {
-        console.error("Failed to load Farcaster profile:", error);
+        console.error("Failed to load user profile:", error);
         setProfile(null);
       } finally {
         setIsLoading(false);

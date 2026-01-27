@@ -3,6 +3,8 @@
 import { useEffect } from "react";
 import Image from "next/image";
 import { Rarity, RARITY_CONFIG, getFishImage } from "@/constants/gameConfig";
+import { useComposeCast } from "@coinbase/onchainkit/minikit";
+import { sdk } from "@farcaster/miniapp-sdk";
 
 interface HatchModalProps {
   isOpen: boolean;
@@ -13,6 +15,8 @@ interface HatchModalProps {
 }
 
 export function HatchModal({ isOpen, rarity, fishId, onClose, onGoToReef }: HatchModalProps) {
+  const { composeCast } = useComposeCast();
+  
   // Close on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -42,7 +46,7 @@ export function HatchModal({ isOpen, rarity, fishId, onClose, onGoToReef }: Hatc
       />
 
       {/* Modal */}
-      <div className="relative z-10 mx-4 w-full max-w-xs sm:max-w-sm animate-[scaleIn_0.3s_ease-out] rounded-2xl border border-white/10 bg-gradient-to-b from-slate-800/90 to-slate-900/90 p-4 sm:p-6 text-center shadow-2xl backdrop-blur-md">
+      <div className="relative z-10 mx-4 w-full max-w-xs sm:max-w-sm animate-[scaleIn_0.3s_ease-out] rounded-2xl border border-white/10 bg-linear-to-b from-slate-800/90 to-slate-900/90 p-4 sm:p-6 text-center shadow-2xl backdrop-blur-md">
         {/* Confetti effect for rare+ */}
         {rarity !== Rarity.Common && (
           <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
@@ -92,12 +96,37 @@ export function HatchModal({ isOpen, rarity, fishId, onClose, onGoToReef }: Hatc
           <p className="mb-4 sm:mb-6 text-[10px] sm:text-xs text-slate-500">Fish #{fishId}</p>
         )}
 
-        {/* Share Button */}
+        {/* Share Button - Base/Farcaster native composer */}
         <button
-          onClick={() => {
+          onClick={async () => {
             const text = `🐟 Just hatched a ${config.name} fish in FryReef!\n\nBuild your underwater reef on Base 🌊`;
-            const shareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=https://fry-reef.vercel.app`;
-            window.open(shareUrl, '_blank');
+            const appUrl = 'https://fry-reef.vercel.app';
+            
+            // Check if in mini app context
+            const isInMiniApp = await sdk.isInMiniApp();
+            
+            if (isInMiniApp && composeCast) {
+              // Use Base/Farcaster native composer
+              composeCast({
+                text: text,
+                embeds: [appUrl]
+              });
+            } else if (navigator.share) {
+              // Fallback to native share API
+              try {
+                await navigator.share({
+                  title: 'FryReef',
+                  text: text,
+                  url: appUrl
+                });
+              } catch (err) {
+                // User cancelled share
+              }
+            } else {
+              // Fallback: copy to clipboard
+              const fullText = `${text}\n\n${appUrl}`;
+              await navigator.clipboard.writeText(fullText);
+            }
           }}
           className="mb-3 sm:mb-4 w-full cursor-pointer rounded-xl border border-purple-500/30 bg-purple-500/10 px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium text-purple-300 transition hover:bg-purple-500/20 flex items-center justify-center gap-2"
         >

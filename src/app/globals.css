@@ -71,7 +71,7 @@ html.light [class*="text-slate-500"] {
   color: #6b7280 !important;
 }
 
-/* Farcaster/Base profile display in light mode */
+/* User profile display in light mode */
 html.light .bg-white\/5 {
   background-color: rgba(186, 230, 253, 0.6) !important;
   border: 1px solid rgba(14, 165, 233, 0.3);
@@ -87,6 +87,21 @@ html.light .text-slate-400 {
 
 html.light .bg-white\/20 {
   background-color: rgba(14, 165, 233, 0.3) !important;
+}
+
+/* Burger menu in light mode */
+html.light .bg-slate-900\/95 {
+  background-color: rgba(240, 249, 255, 0.95) !important;
+  border-color: rgba(14, 165, 233, 0.3) !important;
+}
+
+html.light .border-white\/10 {
+  border-color: rgba(14, 165, 233, 0.2) !important;
+}
+
+html.light .bg-white\/5:hover,
+html.light .hover\:bg-white\/5:hover {
+  background-color: rgba(186, 230, 253, 0.3) !important;
 }
 
 /* Float animation for eggs */

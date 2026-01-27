@@ -4,6 +4,7 @@ import "./globals.css";
 import { Web3Providers } from "@/lib/web3";
 import { MiniAppReady } from "@/components/MiniAppReady";
 import { ThemeInitializer } from "@/components/ThemeInitializer";
+import { MiniKitProvider } from "@coinbase/onchainkit/minikit";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -92,7 +93,9 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <ThemeInitializer />
         <MiniAppReady />
-        <Web3Providers>{children}</Web3Providers>
+        <MiniKitProvider>
+          <Web3Providers>{children}</Web3Providers>
+        </MiniKitProvider>
       </body>
     </html>
   );
