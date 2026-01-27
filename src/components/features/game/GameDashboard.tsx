@@ -4,11 +4,13 @@ import { useTransition, useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import { useFryReef } from "@/hooks/useFryReef";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { StarterPackCard } from "./StarterPackCard";
 import { NestTab } from "./NestTab";
 import { ReefTab } from "./ReefTab";
 import { EvolutionTab } from "./EvolutionTab";
 import { StreakRewardModal } from "./StreakRewardModal";
+import { OnboardingModal } from "@/components/features/onboarding/OnboardingModal";
 import { DAILY_CHECKIN } from "@/constants/gameConfig";
 
 type Tab = "checkin" | "nest" | "reef" | "evolution";
@@ -63,6 +65,15 @@ export function GameDashboard() {
   const searchParams = useSearchParams();
   const { address, isConnected } = useAccount();
   const [isPending, startTransition] = useTransition();
+  const { isOnboarded, isLoading: isOnboardingLoading, completeOnboarding, skipOnboarding } = useOnboarding();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Show onboarding modal when user hasn't been onboarded yet
+  useEffect(() => {
+    if (!isOnboardingLoading && !isOnboarded) {
+      setShowOnboarding(true);
+    }
+  }, [isOnboarded, isOnboardingLoading]);
 
   const tabFromUrl = searchParams.get("tab") as Tab | null;
   const activeTab: Tab =
@@ -168,9 +179,22 @@ export function GameDashboard() {
   const isCheckingIn = checkInTx.isLoading;
 
   return (
-    <div className="w-full max-w-2xl space-y-4 sm:space-y-6">
-      {/* Network warning */}
-      {!isOnCorrectNetwork && (
+    <>
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onClose={() => {
+          setShowOnboarding(false);
+          completeOnboarding();
+        }}
+        onSkip={() => {
+          setShowOnboarding(false);
+          skipOnboarding();
+        }}
+      />
+
+      <div className="w-full max-w-2xl space-y-4 sm:space-y-6">
+        {/* Network warning */}
+        {!isOnCorrectNetwork && (
         <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3 sm:p-4 text-center">
           <p className="mb-1.5 sm:mb-2 text-xs sm:text-sm font-medium text-yellow-400">
             ⚠️ Wrong Network
@@ -315,5 +339,6 @@ export function GameDashboard() {
         onClose={() => setShowStreakReward(false)}
       />
     </div>
+    </>
   );
 }
