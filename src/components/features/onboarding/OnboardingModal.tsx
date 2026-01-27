@@ -24,7 +24,7 @@ export function OnboardingModal({ isOpen, onClose, onSkip }: OnboardingModalProp
     {
       id: "welcome",
       title: "Welcome to FryReef",
-      description: "Breed, merge, and evolve fish NFTs on Base",
+      description: "Breed, merge, and evolve fish NFTs onchain",
       content: (
         <div className="space-y-4 sm:space-y-6">
           <p className="text-sm sm:text-base text-slate-300 leading-relaxed">

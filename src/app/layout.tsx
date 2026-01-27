@@ -18,12 +18,12 @@ const geistMono = Geist_Mono({
 const APP_URL = "https://fry-reef.vercel.app";
 
 export const metadata: Metadata = {
-  title: "FryReef - Fish NFT Game on Base",
-  description: "Collect, breed & merge fish NFTs. Free-to-play game on Base. Earn rewards daily!",
-  keywords: ["NFT", "game", "Base", "fish", "breeding", "free-to-play", "web3"],
+  title: "FryReef - Breed, merge, evolve onchain",
+  description: "Build your underwater reef by breeding and evolving fish NFTs. Free starter pack, daily rewards, and idle gameplay on Base.",
+  keywords: ["NFT", "game", "Base", "fish", "breeding", "merge", "evolve", "onchain", "free-to-play", "web3"],
   openGraph: {
-    title: "FryReef - Fish NFT Game on Base",
-    description: "Collect, breed & merge fish NFTs on Base. Free-to-play!",
+    title: "FryReef - Breed, merge, evolve onchain",
+    description: "Build your underwater reef by breeding and evolving fish NFTs. Free starter pack, daily rewards, and idle gameplay.",
     url: APP_URL,
     siteName: "FryReef",
     images: [
@@ -38,8 +38,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "FryReef - Fish NFT Game on Base",
-    description: "Collect, breed & merge fish NFTs on Base. Free-to-play!",
+    title: "FryReef - Breed, merge, evolve onchain",
+    description: "Build your underwater reef by breeding and evolving fish NFTs. Free starter pack, daily rewards, and idle gameplay.",
     images: [`${APP_URL}/images/common/logo.png`],
   },
   appleWebApp: {

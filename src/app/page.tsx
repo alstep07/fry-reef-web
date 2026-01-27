@@ -18,7 +18,7 @@ export default function Home() {
       <main className="relative z-10 container mx-auto flex flex-1 flex-col px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-6 sm:px-6 sm:pt-10 sm:pb-10 lg:max-w-5xl">
         <PageHeader
           title="FryReef"
-          description="Breed, merge, evolve on Base"
+          description="Breed, merge, evolve onchain"
           action={<WalletHeader />}
         />
         <MobileResourceBar />

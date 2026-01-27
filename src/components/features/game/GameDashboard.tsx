@@ -281,7 +281,7 @@ export function GameDashboard() {
                           100
                         }%`,
                         background: theme === "light"
-                          ? "linear-gradient(90deg, #7dd3fc 0%, #38bdf8 50%, #0ea5e9 100%)"
+                          ? "linear-gradient(90deg, #38bdf8 0%, #0ea5e9 50%, #0284c7 100%)"
                           : "linear-gradient(90deg, #E8D5E2 0%, #F5E6EA 30%, #FFFFFF 50%, #E0F4F8 70%, #D4E5ED 100%)",
                       }}
                     />
