@@ -29,10 +29,10 @@ export const metadata: Metadata = {
     siteName: "FryReef",
     images: [
       {
-        url: `${APP_URL}/images/screenshots/screenshot_1.jpg`,
+        url: `${APP_URL}/images/screenshots/hero_image.png`,
         width: 1200,
         height: 630,
-        alt: "FryReef - Fish NFT Game",
+        alt: "FryReef - Breed, merge, evolve onchain",
       },
     ],
     type: "website",
