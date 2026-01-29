@@ -105,6 +105,8 @@ export function useEggs() {
         refetchInterval: 5000, // Poll every 5s for incubation timer updates
         staleTime: 4000,
         placeholderData: keepPreviousData,
+        retry: 3, // Retry 3 times if RPC fails (Coinbase Wallet fix)
+        retryDelay: 1000, // Wait 1s between retries
       },
     });
 
@@ -128,16 +130,16 @@ export function useEggs() {
 
     let info: EggInfo;
     const cachedInfo = previousEggInfoRef.current.get(tokenId);
-    
+
     // Debug logging
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === "development") {
       console.log(`[useEggs] Egg #${tokenId}:`, {
         hasValidInfo,
         hasCachedInfo: !!cachedInfo,
         cachedIsIncubating: cachedInfo?.isIncubating,
       });
     }
-    
+
     if (hasValidInfo && infoResult?.result) {
       const result = infoResult.result;
       let newInfo: EggInfo;
@@ -165,33 +167,50 @@ export function useEggs() {
         };
       }
 
-      // Validate new data - mintedAt should always be positive for existing eggs
+      // STRICT validation - Coinbase Wallet проблема
       const isValidNewData = newInfo.mintedAt > BigInt(0);
 
-      if (isValidNewData) {
-        // New data is valid, use and cache it
+      // Если есть кэш, проверяем что новые данные не хуже
+      // ВАЖНО: если яйцо инкубируется в кэше, не принимаем isIncubating: false
+      const isNewDataAcceptable =
+        !cachedInfo ||
+        (isValidNewData &&
+          newInfo.mintedAt >= cachedInfo.mintedAt &&
+          // Если было инкубируется, новые данные тоже должны показывать инкубацию
+          (!cachedInfo.isIncubating ||
+            newInfo.isIncubating ||
+            newInfo.incubationStartedAt > BigInt(0)));
+
+      if (isValidNewData && isNewDataAcceptable) {
+        // Новые данные валидны и приемлемы
         info = newInfo;
         previousEggInfoRef.current.set(tokenId, info);
-        
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`[useEggs] Egg #${tokenId}: Using NEW data`, {
+
+        if (process.env.NODE_ENV === "development") {
+          console.log(`[useEggs] Egg #${tokenId}: NEW data`, {
             isIncubating: info.isIncubating,
             incubationStartedAt: info.incubationStartedAt.toString(),
           });
         }
       } else if (cachedInfo) {
-        // New data is invalid, use cached
+        // Новые данные невалидны или неприемлемы - используем кэш
         info = cachedInfo;
-        
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`[useEggs] Egg #${tokenId}: Using CACHED data (new data invalid)`);
+
+        if (process.env.NODE_ENV === "development") {
+          console.log(`[useEggs] Egg #${tokenId}: CACHED data`, {
+            reason: !isValidNewData ? "invalid" : "worse than cache",
+            newIsIncubating: newInfo.isIncubating,
+            cachedIsIncubating: cachedInfo.isIncubating,
+          });
         }
       } else {
-        // No cache, have to use new data even if it looks invalid
+        // Нет кэша - используем новые, но не кэшируем если невалидны
         info = newInfo;
-        
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`[useEggs] Egg #${tokenId}: Using INVALID data (no cache)`);
+
+        if (process.env.NODE_ENV === "development") {
+          console.log(`[useEggs] Egg #${tokenId}: UNCACHED (first load)`, {
+            mintedAt: newInfo.mintedAt.toString(),
+          });
         }
       }
     } else {

@@ -121,6 +121,8 @@ export function useFish() {
       refetchInterval: 5000, // Poll every 5s for dust/time updates
       staleTime: 4000,
       placeholderData: keepPreviousData,
+      retry: 3, // Retry 3 times if RPC fails (Coinbase Wallet fix)
+      retryDelay: 1000, // Wait 1s between retries
     },
   });
 
@@ -209,37 +211,43 @@ export function useFish() {
           };
         }
 
-        // Validate new data - if it looks invalid, keep cached data
-        const isValidNewData =
-          newInfo.mintedAt > BigInt(0) && newInfo.rarity !== undefined;
+        // STRICT validation - Coinbase Wallet часто возвращает плохие данные
+        const isValidNewData = newInfo.mintedAt > BigInt(0);
 
-        if (isValidNewData) {
-          // New data is valid, use and cache it
+        // Если есть кэш, новые данные должны быть не хуже
+        const isNewDataAcceptable =
+          !cachedInfo ||
+          (isValidNewData && newInfo.mintedAt >= cachedInfo.mintedAt);
+
+        if (isValidNewData && isNewDataAcceptable) {
+          // Новые данные валидны и приемлемы - используем и кэшируем
           info = newInfo;
           previousFishInfoRef.current.set(tokenIdNum, info);
 
-          if (process.env.NODE_ENV === "development" && tokenIdNum) {
-            console.log(`[useFish] Fish #${tokenIdNum}: Using NEW data`, {
+          if (process.env.NODE_ENV === "development") {
+            console.log(`[useFish] Fish #${tokenIdNum}: NEW data`, {
               rarity: info.rarity,
               mintedAt: info.mintedAt.toString(),
             });
           }
         } else if (cachedInfo) {
-          // New data is invalid, use cached
+          // Новые данные невалидны ИЛИ хуже кэша - используем кэш
           info = cachedInfo;
 
-          if (process.env.NODE_ENV === "development" && tokenIdNum) {
+          if (process.env.NODE_ENV === "development") {
             console.log(
-              `[useFish] Fish #${tokenIdNum}: Using CACHED data (new data invalid)`,
+              `[useFish] Fish #${tokenIdNum}: CACHED data (new invalid)`,
+              { newMintedAt: newInfo.mintedAt.toString() },
             );
           }
         } else {
-          // No cache, have to use new data even if it looks invalid
+          // Нет кэша - используем новые данные, НО НЕ кэшируем если невалидны
           info = newInfo;
 
-          if (process.env.NODE_ENV === "development" && tokenIdNum) {
+          if (process.env.NODE_ENV === "development") {
             console.log(
-              `[useFish] Fish #${tokenIdNum}: Using INVALID data (no cache)`,
+              `[useFish] Fish #${tokenIdNum}: UNCACHED (first load)`,
+              { mintedAt: newInfo.mintedAt.toString() },
             );
           }
         }
