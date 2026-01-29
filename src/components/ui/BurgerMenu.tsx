@@ -129,7 +129,7 @@ export function BurgerMenu() {
               FAQ
             </Link>
             <a
-              href="https://opensea.io/collection/fryreef-fish"
+              href="https://opensea.io/collection/fryreef-fish-774329671"
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setIsOpen(false)}
