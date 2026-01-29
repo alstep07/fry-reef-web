@@ -81,7 +81,6 @@ function FishCard({
           : "border-white/10 bg-white/5"
       }`}
       onClick={isReleaseMode && onSelect ? () => onSelect(tokenId) : undefined}
-      title={!isActive ? "⚠️ Inactive: This fish doesn't fit in your reef capacity. It won't produce Spawn Dust or lay eggs until you expand your reef or release other fish." : undefined}
     >
       {/* Rarity glow */}
       <div
