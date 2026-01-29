@@ -107,6 +107,7 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
         rarity: CONTRACT_RARITY_MAP[f.info.rarity] || Rarity.Common,
         info: f.info,
         pendingDust: f.pendingDust,
+        isActive: f.isActive, // Include active status
       }));
   }, [fish]);
 
@@ -122,10 +123,10 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
     });
   }, [fish]);
 
-  // Mergeable fish (not Mythic, sorted by rarity)
+  // Mergeable fish (not Mythic, only active fish, sorted by rarity)
   const mergeableFish = useMemo(() => {
     return fishWithRarity
-      .filter((f) => f.rarity !== Rarity.Mythic)
+      .filter((f) => f.rarity !== Rarity.Mythic && f.isActive) // Only active fish can be merged
       .sort((a, b) => b.info.rarity - a.info.rarity);
   }, [fishWithRarity]);
 
@@ -264,6 +265,13 @@ export function EvolutionTab({ onGoToReef }: EvolutionTabProps) {
           <p className="text-xs sm:text-sm text-slate-400">
             Select 2 fish of the same rarity to merge them into a higher rarity
           </p>
+          {fishWithRarity.some(f => !f.isActive) && (
+            <div className="mt-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-2">
+              <p className="text-xs text-amber-400">
+                ⚠️ Some fish are inactive (reef capacity full) and cannot be merged. Expand your reef to activate them.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Selected Fish Info */}
