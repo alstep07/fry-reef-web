@@ -1,0 +1,723 @@
+{
+  "timestamp": "2026-01-29T10:54:24.912Z",
+  "blockNumber": 41447358,
+  "contracts": {
+    "fishNFT": "0xC73cB204010FF33Be2216766167f87e4BaeC0B6B",
+    "eggNFT": "0x9Fa8dCcAb21aF36A9f06d78C80c5dB58BF9d4dE0",
+    "fryReef": "0xB0feb337d1E867FcB1b68bd438bb1fAC78b996EB"
+  },
+  "totalSupply": {
+    "fish": "26",
+    "eggs": "20"
+  },
+  "users": {
+    "0x96b92cd90bbef253145a6de4182b76172f3193ee": {
+      "resources": {
+        "pearlShards": "0",
+        "spawnDust": "7",
+        "reefCapacity": "3"
+      },
+      "stats": {
+        "currentStreak": "3",
+        "totalCheckIns": "3",
+        "lastCheckIn": "1769624595",
+        "starterPackClaimed": true
+      },
+      "fish": [
+        {
+          "tokenId": "23",
+          "rarity": "0",
+          "mintedAt": "1769509635",
+          "lastDustCollectedAt": "1769624759",
+          "lastEggLaidAt": "1769509651"
+        },
+        {
+          "tokenId": "27",
+          "rarity": "0",
+          "mintedAt": "1769624629",
+          "lastDustCollectedAt": "1769624629",
+          "lastEggLaidAt": "0"
+        }
+      ],
+      "eggs": []
+    },
+    "0xf7421b336607d51bcfc0425cb94703d1a9df5d1b": {
+      "resources": {
+        "pearlShards": "0",
+        "spawnDust": "33",
+        "reefCapacity": "4"
+      },
+      "stats": {
+        "currentStreak": "1",
+        "totalCheckIns": "3",
+        "lastCheckIn": "1768810203",
+        "starterPackClaimed": true
+      },
+      "fish": [
+        {
+          "tokenId": "1",
+          "rarity": "2",
+          "mintedAt": "1768656841",
+          "lastDustCollectedAt": "1768823407",
+          "lastEggLaidAt": "1768656885"
+        }
+      ],
+      "eggs": [
+        {
+          "tokenId": "12",
+          "isIncubating": false,
+          "incubationStartTime": "0"
+        }
+      ]
+    },
+    "0x18915b237d68a54ec5d31a998108eeb5ed65a7a6": {
+      "resources": {
+        "pearlShards": "0",
+        "spawnDust": "0",
+        "reefCapacity": "4"
+      },
+      "stats": {
+        "currentStreak": "2",
+        "totalCheckIns": "2",
+        "lastCheckIn": "1768693925",
+        "starterPackClaimed": true
+      },
+      "fish": [
+        {
+          "tokenId": "2",
+          "rarity": "0",
+          "mintedAt": "1768693935",
+          "lastDustCollectedAt": "1768693935",
+          "lastEggLaidAt": "1768693953"
+        }
+      ],
+      "eggs": [
+        {
+          "tokenId": "16",
+          "isIncubating": false,
+          "incubationStartTime": "0"
+        }
+      ]
+    },
+    "0x26a541a5d6c9b46307fa9d1bc2f49b174e7f6e96": {
+      "resources": {
+        "pearlShards": "0",
+        "spawnDust": "25",
+        "reefCapacity": "4"
+      },
+      "stats": {
+        "currentStreak": "7",
+        "totalCheckIns": "12",
+        "lastCheckIn": "1769675657",
+        "starterPackClaimed": true
+      },
+      "fish": [
+        {
+          "tokenId": "3",
+          "rarity": "1",
+          "mintedAt": "1768732847",
+          "lastDustCollectedAt": "1769675703",
+          "lastEggLaidAt": "1769531477"
+        }
+      ],
+      "eggs": [
+        {
+          "tokenId": "20",
+          "isIncubating": true,
+          "incubationStartTime": "1769675687"
+        },
+        {
+          "tokenId": "47",
+          "isIncubating": false,
+          "incubationStartTime": "0"
+        }
+      ]
+    },
+    "0x14a5cb179055763b5a08b9938ea6cc461d809e77": {
+      "resources": {
+        "pearlShards": "0",
+        "spawnDust": "0",
+        "reefCapacity": "4"
+      },
+      "stats": {
+        "currentStreak": "3",
+        "totalCheckIns": "3",
+        "lastCheckIn": "1768806601",
+        "starterPackClaimed": true
+      },
+      "fish": [
+        {
+          "tokenId": "4",
+          "rarity": "0",
+          "mintedAt": "1768768801",
+          "lastDustCollectedAt": "1768768801",
+          "lastEggLaidAt": "1768768821"
+        }
+      ],
+      "eggs": [
+        {
+          "tokenId": "19",
+          "isIncubating": false,
+          "incubationStartTime": "0"
+        }
+      ]
+    },
+    "0x536b4d6d3b95ccf8e2894f199fc49fd4c3b151d9": {
+      "resources": {
+        "pearlShards": "0",
+        "spawnDust": "0",
+        "reefCapacity": "3"
+      },
+      "stats": {
+        "currentStreak": "1",
+        "totalCheckIns": "2",
+        "lastCheckIn": "1768810389",
+        "starterPackClaimed": true
+      },
+      "fish": [
+        {
+          "tokenId": "5",
+          "rarity": "0",
+          "mintedAt": "1768810405",
+          "lastDustCollectedAt": "1768810405",
+          "lastEggLaidAt": "1768810421"
+        }
+      ],
+      "eggs": [
+        {
+          "tokenId": "22",
+          "isIncubating": true,
+          "incubationStartTime": "1768810439"
+        }
+      ]
+    },
+    "0x31437c81fcc48c50dfe7c89e928b81cfa4931cf0": {
+      "resources": {
+        "pearlShards": "0",
+        "spawnDust": "5",
+        "reefCapacity": "3"
+      },
+      "stats": {
+        "currentStreak": "3",
+        "totalCheckIns": "6",
+        "lastCheckIn": "1769507789",
+        "starterPackClaimed": true
+      },
+      "fish": [
+        {
+          "tokenId": "6",
+          "rarity": "1",
+          "mintedAt": "1768810517",
+          "lastDustCollectedAt": "1769506967",
+          "lastEggLaidAt": "1769506979"
+        },
+        {
+          "tokenId": "14",
+          "rarity": "0",
+          "mintedAt": "1769332235",
+          "lastDustCollectedAt": "1769506967",
+          "lastEggLaidAt": "0"
+        }
+      ],
+      "eggs": [
+        {
+          "tokenId": "44",
+          "isIncubating": false,
+          "incubationStartTime": "0"
+        }
+      ]
+    },
+    "0x48f4e787afe38381176f89ac202710dde3b7660a": {
+      "resources": {
+        "pearlShards": "0",
+        "spawnDust": "49",
+        "reefCapacity": "3"
+      },
+      "stats": {
+        "currentStreak": "1",
+        "totalCheckIns": "3",
+        "lastCheckIn": "1769529131",
+        "starterPackClaimed": true
+      },
+      "fish": [
+        {
+          "tokenId": "7",
+          "rarity": "0",
+          "mintedAt": "1768810841",
+          "lastDustCollectedAt": "1769529143",
+          "lastEggLaidAt": "1768810885"
+        },
+        {
+          "tokenId": "24",
+          "rarity": "0",
+          "mintedAt": "1769529171",
+          "lastDustCollectedAt": "1769529171",
+          "lastEggLaidAt": "0"
+        }
+      ],
+      "eggs": []
+    },
+    "0xdabd0ef3cfc60f4a6f1d08b8d39f97c2a8d7b456": {
+      "resources": {
+        "pearlShards": "0",
+        "spawnDust": "0",
+        "reefCapacity": "4"
+      },
+      "stats": {
+        "currentStreak": "1",
+        "totalCheckIns": "2",
+        "lastCheckIn": "1768811451",
+        "starterPackClaimed": true
+      },
+      "fish": [
+        {
+          "tokenId": "8",
+          "rarity": "0",
+          "mintedAt": "1768811491",
+          "lastDustCollectedAt": "1768811491",
+          "lastEggLaidAt": "1768819291"
+        }
+      ],
+      "eggs": [
+        {
+          "tokenId": "28",
+          "isIncubating": false,
+          "incubationStartTime": "0"
+        }
+      ]
+    },
+    "0x9ff507683e602590ad1ed484cb3d62cbb564f99a": {
+      "resources": {
+        "pearlShards": "1",
+        "spawnDust": "55",
+        "reefCapacity": "3"
+      },
+      "stats": {
+        "currentStreak": "1",
+        "totalCheckIns": "6",
+        "lastCheckIn": "1769676395",
+        "starterPackClaimed": true
+      },
+      "fish": [
+        {
+          "tokenId": "9",
+          "rarity": "0",
+          "mintedAt": "1768811917",
+          "lastDustCollectedAt": "1769676417",
+          "lastEggLaidAt": "1768811963"
+        },
+        {
+          "tokenId": "29",
+          "rarity": "1",
+          "mintedAt": "1769676433",
+          "lastDustCollectedAt": "1769676433",
+          "lastEggLaidAt": "0"
+        },
+        {
+          "tokenId": "19",
+          "rarity": "2",
+          "mintedAt": "1769444837",
+          "lastDustCollectedAt": "1769444837",
+          "lastEggLaidAt": "0"
+        }
+      ],
+      "eggs": []
+    },
+    "0x9fd6eb9041a0d462a706c5fd6e8d8cde85928da8": {
+      "resources": {
+        "pearlShards": "0",
+        "spawnDust": "52",
+        "reefCapacity": "3"
+      },
+      "stats": {
+        "currentStreak": "5",
+        "totalCheckIns": "9",
+        "lastCheckIn": "1769670143",
+        "starterPackClaimed": true
+      },
+      "fish": [
+        {
+          "tokenId": "10",
+          "rarity": "0",
+          "mintedAt": "1768928197",
+          "lastDustCollectedAt": "1769593103",
+          "lastEggLaidAt": "1768928869"
+        },
+        {
+          "tokenId": "11",
+          "rarity": "2",
+          "mintedAt": "1769068073",
+          "lastDustCollectedAt": "1769593103",
+          "lastEggLaidAt": "1769436593"
+        }
+      ],
+      "eggs": [
+        {
+          "tokenId": "40",
+          "isIncubating": false,
+          "incubationStartTime": "0"
+        }
+      ]
+    },
+    "0x9f04fe49ccdedafb773573d1ac19062430f00ff2": {
+      "resources": {
+        "pearlShards": "0",
+        "spawnDust": "31",
+        "reefCapacity": "4"
+      },
+      "stats": {
+        "currentStreak": "1",
+        "totalCheckIns": "7",
+        "lastCheckIn": "1769682877",
+        "starterPackClaimed": true
+      },
+      "fish": [
+        {
+          "tokenId": "13",
+          "rarity": "0",
+          "mintedAt": "1769211865",
+          "lastDustCollectedAt": "1769682899",
+          "lastEggLaidAt": "1769211891"
+        }
+      ],
+      "eggs": [
+        {
+          "tokenId": "32",
+          "isIncubating": false,
+          "incubationStartTime": "0"
+        }
+      ]
+    },
+    "0x5d5c6e3407a571c1681bae50a79b7fbabc79474c": {
+      "resources": {
+        "pearlShards": "2",
+        "spawnDust": "44",
+        "reefCapacity": "4"
+      },
+      "stats": {
+        "currentStreak": "14",
+        "totalCheckIns": "14",
+        "lastCheckIn": "1769667151",
+        "starterPackClaimed": true
+      },
+      "fish": [
+        {
+          "tokenId": "16",
+          "rarity": "1",
+          "mintedAt": "1769333737",
+          "lastDustCollectedAt": "1769680237",
+          "lastEggLaidAt": "0"
+        }
+      ],
+      "eggs": []
+    },
+    "0x0b08b76df9788e52858db9519bd5d2cb5b457800": {
+      "resources": {
+        "pearlShards": "0",
+        "spawnDust": "23",
+        "reefCapacity": "3"
+      },
+      "stats": {
+        "currentStreak": "5",
+        "totalCheckIns": "5",
+        "lastCheckIn": "1769648689",
+        "starterPackClaimed": true
+      },
+      "fish": [
+        {
+          "tokenId": "22",
+          "rarity": "1",
+          "mintedAt": "1769489835",
+          "lastDustCollectedAt": "1769648711",
+          "lastEggLaidAt": "1769489863"
+        },
+        {
+          "tokenId": "28",
+          "rarity": "1",
+          "mintedAt": "1769629313",
+          "lastDustCollectedAt": "1769648711",
+          "lastEggLaidAt": "0"
+        }
+      ],
+      "eggs": []
+    },
+    "0xce5f97ff62e8c1c3186cd7b26a1ff4c7b6c42e16": {
+      "resources": {
+        "pearlShards": "0",
+        "spawnDust": "59",
+        "reefCapacity": "3"
+      },
+      "stats": {
+        "currentStreak": "5",
+        "totalCheckIns": "6",
+        "lastCheckIn": "1769676673",
+        "starterPackClaimed": true
+      },
+      "fish": [
+        {
+          "tokenId": "18",
+          "rarity": "1",
+          "mintedAt": "1769336281",
+          "lastDustCollectedAt": "1769676655",
+          "lastEggLaidAt": "1769336437"
+        },
+        {
+          "tokenId": "20",
+          "rarity": "0",
+          "mintedAt": "1769446447",
+          "lastDustCollectedAt": "1769676655",
+          "lastEggLaidAt": "0"
+        }
+      ],
+      "eggs": []
+    },
+    "0x2ea1e3d2a4d91ffc462a97251e87f69f1e34c5e7": {
+      "resources": {
+        "pearlShards": "1",
+        "spawnDust": "0",
+        "reefCapacity": "3"
+      },
+      "stats": {
+        "currentStreak": "3",
+        "totalCheckIns": "3",
+        "lastCheckIn": "1769499587",
+        "starterPackClaimed": true
+      },
+      "fish": [
+        {
+          "tokenId": "21",
+          "rarity": "0",
+          "mintedAt": "1769456903",
+          "lastDustCollectedAt": "1769456903",
+          "lastEggLaidAt": "1769456933"
+        }
+      ],
+      "eggs": [
+        {
+          "tokenId": "42",
+          "isIncubating": false,
+          "incubationStartTime": "0"
+        }
+      ]
+    },
+    "0x170f04d43cb4fc5dc7c680c67728b6237af3a0ea": {
+      "resources": {
+        "pearlShards": "0",
+        "spawnDust": "12",
+        "reefCapacity": "3"
+      },
+      "stats": {
+        "currentStreak": "4",
+        "totalCheckIns": "4",
+        "lastCheckIn": "1769676055",
+        "starterPackClaimed": true
+      },
+      "fish": [
+        {
+          "tokenId": "25",
+          "rarity": "0",
+          "mintedAt": "1769529565",
+          "lastDustCollectedAt": "1769676071",
+          "lastEggLaidAt": "1769529587"
+        },
+        {
+          "tokenId": "26",
+          "rarity": "0",
+          "mintedAt": "1769618485",
+          "lastDustCollectedAt": "1769676071",
+          "lastEggLaidAt": "0"
+        }
+      ],
+      "eggs": []
+    },
+    "0x47f31bdf91413727c9b917bf4b8e2fdd889be408": {
+      "resources": {
+        "pearlShards": "1",
+        "spawnDust": "100",
+        "reefCapacity": "3"
+      },
+      "stats": {
+        "currentStreak": "1",
+        "totalCheckIns": "1",
+        "lastCheckIn": "1768811767",
+        "starterPackClaimed": true
+      },
+      "fish": [],
+      "eggs": [
+        {
+          "tokenId": "25",
+          "isIncubating": true,
+          "incubationStartTime": "1768811783"
+        }
+      ]
+    },
+    "0xdcfa3a91bf30d18148cc788e6b8bad0988356c61": {
+      "resources": {
+        "pearlShards": "0",
+        "spawnDust": "100",
+        "reefCapacity": "4"
+      },
+      "stats": {
+        "currentStreak": "1",
+        "totalCheckIns": "1",
+        "lastCheckIn": "1768637579",
+        "starterPackClaimed": true
+      },
+      "fish": [],
+      "eggs": [
+        {
+          "tokenId": "10",
+          "isIncubating": true,
+          "incubationStartTime": "1768637607"
+        }
+      ]
+    },
+    "0x1fb69ea05ff91424b118f5673e08814cce908d38": {
+      "resources": {
+        "pearlShards": "0",
+        "spawnDust": "100",
+        "reefCapacity": "4"
+      },
+      "stats": {
+        "currentStreak": "1",
+        "totalCheckIns": "1",
+        "lastCheckIn": "1768693905",
+        "starterPackClaimed": true
+      },
+      "fish": [],
+      "eggs": [
+        {
+          "tokenId": "15",
+          "isIncubating": true,
+          "incubationStartTime": "1768693917"
+        }
+      ]
+    },
+    "0x2ec4a1ece5e07aa66c59efcce6efd9d9adcf014c": {
+      "resources": {
+        "pearlShards": "1",
+        "spawnDust": "100",
+        "reefCapacity": "3"
+      },
+      "stats": {
+        "currentStreak": "1",
+        "totalCheckIns": "1",
+        "lastCheckIn": "1768601637",
+        "starterPackClaimed": true
+      },
+      "fish": [],
+      "eggs": [
+        {
+          "tokenId": "8",
+          "isIncubating": true,
+          "incubationStartTime": "1768601655"
+        }
+      ]
+    },
+    "0x37ddc8bfd8a20e6b99074cf85fbadd1b854c60bf": {
+      "resources": {
+        "pearlShards": "1",
+        "spawnDust": "100",
+        "reefCapacity": "3"
+      },
+      "stats": {
+        "currentStreak": "1",
+        "totalCheckIns": "1",
+        "lastCheckIn": "1768758889",
+        "starterPackClaimed": true
+      },
+      "fish": [],
+      "eggs": [
+        {
+          "tokenId": "18",
+          "isIncubating": true,
+          "incubationStartTime": "1768758913"
+        }
+      ]
+    },
+    "0x9c8e4e1b0d0dbd0ea2cd8105069001c5c4509bf7": {
+      "resources": {
+        "pearlShards": "1",
+        "spawnDust": "100",
+        "reefCapacity": "3"
+      },
+      "stats": {
+        "currentStreak": "1",
+        "totalCheckIns": "1",
+        "lastCheckIn": "1768683029",
+        "starterPackClaimed": true
+      },
+      "fish": [],
+      "eggs": [
+        {
+          "tokenId": "14",
+          "isIncubating": true,
+          "incubationStartTime": "1768683043"
+        }
+      ]
+    },
+    "0x86a9f19955933605e4f91520edb2a5f9e224a2cc": {
+      "resources": {
+        "pearlShards": "2",
+        "spawnDust": "100",
+        "reefCapacity": "3"
+      },
+      "stats": {
+        "currentStreak": "0",
+        "totalCheckIns": "0",
+        "lastCheckIn": "0",
+        "starterPackClaimed": true
+      },
+      "fish": [],
+      "eggs": [
+        {
+          "tokenId": "17",
+          "isIncubating": false,
+          "incubationStartTime": "0"
+        }
+      ]
+    },
+    "0xbc57eb3b787aa22fd1fb9d8ba8314e6c66863439": {
+      "resources": {
+        "pearlShards": "1",
+        "spawnDust": "100",
+        "reefCapacity": "4"
+      },
+      "stats": {
+        "currentStreak": "1",
+        "totalCheckIns": "1",
+        "lastCheckIn": "1769347801",
+        "starterPackClaimed": true
+      },
+      "fish": [],
+      "eggs": [
+        {
+          "tokenId": "35",
+          "isIncubating": false,
+          "incubationStartTime": "0"
+        }
+      ]
+    },
+    "0x029ac2ebc90d4e936d9ed38bd37b9d52bafca148": {
+      "resources": {
+        "pearlShards": "1",
+        "spawnDust": "100",
+        "reefCapacity": "3"
+      },
+      "stats": {
+        "currentStreak": "1",
+        "totalCheckIns": "1",
+        "lastCheckIn": "1769431425",
+        "starterPackClaimed": true
+      },
+      "fish": [],
+      "eggs": [
+        {
+          "tokenId": "39",
+          "isIncubating": true,
+          "incubationStartTime": "1769431461"
+        }
+      ]
+    }
+  }
+}

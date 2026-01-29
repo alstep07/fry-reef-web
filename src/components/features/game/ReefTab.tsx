@@ -81,6 +81,7 @@ function FishCard({
           : "border-white/10 bg-white/5"
       }`}
       onClick={isReleaseMode && onSelect ? () => onSelect(tokenId) : undefined}
+      title={!isActive ? "⚠️ Inactive: This fish doesn't fit in your reef capacity. It won't produce Spawn Dust or lay eggs until you expand your reef or release other fish." : undefined}
     >
       {/* Rarity glow */}
       <div
@@ -97,17 +98,32 @@ function FishCard({
         #{tokenId}
       </span>
 
-      {/* Inactive badge */}
+      {/* Inactive overlay with explanation */}
       {!isActive && (
-        <div 
-          className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-amber-500/20 border border-amber-500/40 px-2 py-0.5"
-          title="This fish doesn't fit in your reef. Expand capacity to activate."
-        >
-          <svg className="h-3 w-3 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <span className="text-[9px] font-semibold text-amber-400 uppercase">Inactive</span>
-        </div>
+        <>
+          {/* Semi-transparent overlay */}
+          <div className="absolute inset-0 bg-black/30 rounded-xl sm:rounded-2xl z-10 pointer-events-none" />
+          
+          {/* Inactive badge */}
+          <div 
+            className="absolute top-3 right-3 z-20 flex items-center gap-1 rounded-full bg-amber-500/90 border border-amber-400 px-2 py-1 shadow-lg"
+          >
+            <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span className="text-[10px] font-bold text-white uppercase">Inactive</span>
+          </div>
+
+          {/* Explanation tooltip on hover */}
+          <div className="absolute inset-x-2 top-1/2 -translate-y-1/2 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+            <div className="rounded-lg bg-amber-500/95 border border-amber-400 p-2 shadow-xl">
+              <p className="text-[10px] text-white font-medium text-center leading-tight">
+                Reef capacity full!<br/>
+                Expand reef to activate
+              </p>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Selected indicator */}
@@ -161,7 +177,11 @@ function FishCard({
 
         {/* Dust stats */}
         <div className="text-xs text-slate-400">
-          <span>✨ {dustPerDay}/day</span>
+          {isActive ? (
+            <span>✨ {dustPerDay}/day</span>
+          ) : (
+            <span className="text-amber-400/80">⚠️ Not producing</span>
+          )}
         </div>
 
         {/* Action buttons */}
