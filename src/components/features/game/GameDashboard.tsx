@@ -219,7 +219,7 @@ export function GameDashboard() {
 
       {/* Tabs - Desktop only, hidden on mobile (nav is at bottom on mobile) */}
       <div className="hidden sm:flex justify-center w-full">
-        <div className="flex w-full sm:inline-flex sm:w-auto rounded-full bg-white/5 p-1 sm:p-1.5 backdrop-blur-sm">
+        <div className="flex w-full sm:inline-flex sm:w-auto rounded-full bg-white/5 p-1 sm:p-1.5 backdrop-blur-xs">
           {tabs.map((tab) => (
             <button
               key={tab.id}
