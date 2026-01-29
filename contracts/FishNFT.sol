@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  * @title FishNFT
@@ -64,6 +65,26 @@ contract FishNFT is ERC721, ERC721Enumerable, Ownable {
         require(gameContract == address(0), "Game contract already set");
         require(_gameContract != address(0), "Invalid address");
         gameContract = _gameContract;
+    }
+
+    /**
+     * @notice Returns the contract-level metadata URI for OpenSea
+     */
+    function contractURI() public pure returns (string memory) {
+        return "https://fry-reef.vercel.app/api/collection/fish";
+    }
+
+    /**
+     * @notice Returns the token metadata URI for OpenSea
+     */
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+        require(_exists(tokenId), "Token does not exist");
+        return string(abi.encodePacked(
+            "https://fry-reef.vercel.app/api/token/base/",
+            Strings.toHexString(uint160(address(this)), 20),
+            "/",
+            Strings.toString(tokenId)
+        ));
     }
 
     // ============ Minting ============
@@ -190,6 +211,30 @@ contract FishNFT is ERC721, ERC721Enumerable, Ownable {
         return totalDust;
     }
 
+    /**
+     * @notice Collect Spawn Dust from specific fish (for active fish only)
+     * @param _fishIds Array of fish token IDs to collect from
+     * @return totalDust Total dust collected
+     */
+    function collectSpawnDustFromFish(uint256[] calldata _fishIds) external onlyGameContract returns (uint256) {
+        uint256 totalDust = 0;
+        
+        for (uint256 i = 0; i < _fishIds.length; i++) {
+            uint256 tokenId = _fishIds[i];
+            require(_exists(tokenId), "Fish does not exist");
+            
+            uint256 dust = getPendingDustForFish(tokenId);
+            
+            if (dust > 0) {
+                fish[tokenId].lastDustCollectedAt = block.timestamp;
+                totalDust += dust;
+                emit SpawnDustCollected(ownerOf(tokenId), tokenId, dust);
+            }
+        }
+        
+        return totalDust;
+    }
+
     // ============ Egg Laying ============
 
     /**
@@ -292,6 +337,7 @@ contract FishNFT is ERC721, ERC721Enumerable, Ownable {
         override(ERC721, ERC721Enumerable)
         returns (address)
     {
+        // No special logic needed - unclaimed dust transfers with the fish
         return super._update(to, tokenId, auth);
     }
 

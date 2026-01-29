@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\Users\\Oleksandr\\Desktop\\projects\\personal\\based-repo\\contracts\\EggNFT.sol": {
-      "lastModificationDate": 1768561516442,
-      "contentHash": "587d879c7dc7f3e57ca6bc200cb9dd49",
+      "lastModificationDate": 1769679514267,
+      "contentHash": "ec752e6cf6ee556d508122d83f742a6e",
       "sourceName": "contracts/EggNFT.sol",
       "solcConfig": {
         "version": "0.8.24",
@@ -39,7 +39,8 @@
       "imports": [
         "@openzeppelin/contracts/token/ERC721/ERC721.sol",
         "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol",
-        "@openzeppelin/contracts/access/Ownable.sol"
+        "@openzeppelin/contracts/access/Ownable.sol",
+        "@openzeppelin/contracts/utils/Strings.sol"
       ],
       "versionPragmas": [
         "^0.8.24"
@@ -816,8 +817,8 @@
       ]
     },
     "C:\\Users\\Oleksandr\\Desktop\\projects\\personal\\based-repo\\contracts\\FryReef.sol": {
-      "lastModificationDate": 1768556953543,
-      "contentHash": "2bb118d715e38a2e16c1519c27a88700",
+      "lastModificationDate": 1769684765527,
+      "contentHash": "4a8ab56052c99d7b0b88475e08789087",
       "sourceName": "contracts/FryReef.sol",
       "solcConfig": {
         "version": "0.8.24",
@@ -852,7 +853,8 @@
       },
       "imports": [
         "./EggNFT.sol",
-        "./FishNFT.sol"
+        "./FishNFT.sol",
+        "@openzeppelin/contracts/access/Ownable.sol"
       ],
       "versionPragmas": [
         "^0.8.24"
@@ -862,8 +864,8 @@
       ]
     },
     "C:\\Users\\Oleksandr\\Desktop\\projects\\personal\\based-repo\\contracts\\FishNFT.sol": {
-      "lastModificationDate": 1768561466785,
-      "contentHash": "c51c2995f3aa4c46b20be7636acceb03",
+      "lastModificationDate": 1769679911066,
+      "contentHash": "a819920ae6753addc38e3ddf94ed13fe",
       "sourceName": "contracts/FishNFT.sol",
       "solcConfig": {
         "version": "0.8.24",
@@ -899,7 +901,8 @@
       "imports": [
         "@openzeppelin/contracts/token/ERC721/ERC721.sol",
         "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol",
-        "@openzeppelin/contracts/access/Ownable.sol"
+        "@openzeppelin/contracts/access/Ownable.sol",
+        "@openzeppelin/contracts/utils/Strings.sol"
       ],
       "versionPragmas": [
         "^0.8.24"

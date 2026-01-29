@@ -208,6 +208,34 @@ export const fryReefAbi = [
     outputs: [],
     stateMutability: "nonpayable",
   },
+  // Active/Inactive Fish
+  {
+    type: "function",
+    name: "getActiveFishCount",
+    inputs: [{ name: "_user", type: "address" }],
+    outputs: [
+      { name: "activeFishCount", type: "uint256" },
+      { name: "totalFishCount", type: "uint256" },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "isFishActive",
+    inputs: [
+      { name: "_user", type: "address" },
+      { name: "_fishId", type: "uint256" },
+    ],
+    outputs: [{ name: "isActive", type: "bool" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getActiveFish",
+    inputs: [{ name: "_user", type: "address" }],
+    outputs: [{ name: "activeFishIds", type: "uint256[]" }],
+    stateMutability: "view",
+  },
   // Constants
   {
     type: "function",
