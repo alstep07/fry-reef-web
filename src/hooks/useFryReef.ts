@@ -1,12 +1,7 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
-import {
-  useAccount,
-  useReadContract,
-  useChainId,
-  useSwitchChain,
-} from "wagmi";
+import { useAccount, useReadContract, useChainId, useSwitchChain } from "wagmi";
 import { useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { base } from "wagmi/chains";
 import {
@@ -119,23 +114,42 @@ export function useFryReef() {
   const refetchAllData = useCallback(() => {
     // Invalidate only specific queries, not everything
     // This prevents cascading invalidations that cause rate limiting
-    queryClient.invalidateQueries({ queryKey: ["readContract", "getUserInfo"] });
-    queryClient.invalidateQueries({ queryKey: ["readContract", "getPendingSpawnDust"] });
-    queryClient.invalidateQueries({ queryKey: ["readContract", "hasCheckedInToday"] });
-    queryClient.invalidateQueries({ queryKey: ["readContract", "hasClaimedStarterPack"] });
-    queryClient.invalidateQueries({ queryKey: ["readContract", "getReefCapacity"] });
-    queryClient.invalidateQueries({ queryKey: ["readContract", "getExpansionCost"] });
-    
+    queryClient.invalidateQueries({
+      queryKey: ["readContract", "getUserInfo"],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["readContract", "getPendingSpawnDust"],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["readContract", "hasCheckedInToday"],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["readContract", "hasClaimedStarterPack"],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["readContract", "getReefCapacity"],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["readContract", "getExpansionCost"],
+    });
+
     // Emit custom event for useFish to invalidate its queries
     window.dispatchEvent(new Event("fish:invalidate"));
-    
+
     // Refetch immediately without delay for better UX
     refetchUserInfo();
     refetchCheckedInToday();
     refetchStarterPack();
     refetchReefCapacity();
     refetchExpansionCost();
-  }, [queryClient, refetchUserInfo, refetchCheckedInToday, refetchStarterPack, refetchReefCapacity, refetchExpansionCost]);
+  }, [
+    queryClient,
+    refetchUserInfo,
+    refetchCheckedInToday,
+    refetchStarterPack,
+    refetchReefCapacity,
+    refetchExpansionCost,
+  ]);
 
   // Create refetch functions object for transaction sync
   const transactionRefetchFunctions = {
@@ -246,45 +260,57 @@ export function useFryReef() {
     });
   }, [contractAddress, collectDustTx]);
 
-  const startIncubation = useCallback(async (eggId: number): Promise<boolean> => {
-    if (!contractAddress) return false;
-    return incubationTx.execute({
-      address: contractAddress,
-      abi: fryReefAbi,
-      functionName: "startIncubation",
-      args: [BigInt(eggId)],
-    });
-  }, [contractAddress, incubationTx]);
+  const startIncubation = useCallback(
+    async (eggId: number): Promise<boolean> => {
+      if (!contractAddress) return false;
+      return incubationTx.execute({
+        address: contractAddress,
+        abi: fryReefAbi,
+        functionName: "startIncubation",
+        args: [BigInt(eggId)],
+      });
+    },
+    [contractAddress, incubationTx],
+  );
 
-  const hatchEgg = useCallback(async (eggId: number): Promise<boolean> => {
-    if (!contractAddress) return false;
-    return hatchTx.execute({
-      address: contractAddress,
-      abi: fryReefAbi,
-      functionName: "hatchEgg",
-      args: [BigInt(eggId)],
-    });
-  }, [contractAddress, hatchTx]);
+  const hatchEgg = useCallback(
+    async (eggId: number): Promise<boolean> => {
+      if (!contractAddress) return false;
+      return hatchTx.execute({
+        address: contractAddress,
+        abi: fryReefAbi,
+        functionName: "hatchEgg",
+        args: [BigInt(eggId)],
+      });
+    },
+    [contractAddress, hatchTx],
+  );
 
-  const layEgg = useCallback(async (fishId: number): Promise<boolean> => {
-    if (!contractAddress) return false;
-    return layEggTx.execute({
-      address: contractAddress,
-      abi: fryReefAbi,
-      functionName: "layEgg",
-      args: [BigInt(fishId)],
-    });
-  }, [contractAddress, layEggTx]);
+  const layEgg = useCallback(
+    async (fishId: number): Promise<boolean> => {
+      if (!contractAddress) return false;
+      return layEggTx.execute({
+        address: contractAddress,
+        abi: fryReefAbi,
+        functionName: "layEgg",
+        args: [BigInt(fishId)],
+      });
+    },
+    [contractAddress, layEggTx],
+  );
 
-  const mergeFish = useCallback(async (fishId1: number, fishId2: number): Promise<boolean> => {
-    if (!contractAddress) return false;
-    return mergeTx.execute({
-      address: contractAddress,
-      abi: fryReefAbi,
-      functionName: "mergeFish",
-      args: [BigInt(fishId1), BigInt(fishId2)],
-    });
-  }, [contractAddress, mergeTx]);
+  const mergeFish = useCallback(
+    async (fishId1: number, fishId2: number): Promise<boolean> => {
+      if (!contractAddress) return false;
+      return mergeTx.execute({
+        address: contractAddress,
+        abi: fryReefAbi,
+        functionName: "mergeFish",
+        args: [BigInt(fishId1), BigInt(fishId2)],
+      });
+    },
+    [contractAddress, mergeTx],
+  );
 
   const expandReef = useCallback(async (): Promise<boolean> => {
     if (!contractAddress) return false;
@@ -296,15 +322,18 @@ export function useFryReef() {
     });
   }, [contractAddress, expandTx]);
 
-  const burnFish = useCallback(async (fishIds: number[]): Promise<boolean> => {
-    if (!contractAddress || fishIds.length === 0) return false;
-    return burnTx.execute({
-      address: contractAddress,
-      abi: fryReefAbi,
-      functionName: "burnFish",
-      args: [fishIds.map((id) => BigInt(id))],
-    });
-  }, [contractAddress, burnTx]);
+  const burnFish = useCallback(
+    async (fishIds: number[]): Promise<boolean> => {
+      if (!contractAddress || fishIds.length === 0) return false;
+      return burnTx.execute({
+        address: contractAddress,
+        abi: fryReefAbi,
+        functionName: "burnFish",
+        args: [fishIds.map((id) => BigInt(id))],
+      });
+    },
+    [contractAddress, burnTx],
+  );
 
   // Switch network helper
   const switchToBase = useCallback(async () => {
@@ -320,12 +349,19 @@ export function useFryReef() {
     const handleTransactionSuccess = (event: Event) => {
       const customEvent = event as CustomEvent;
       const type = customEvent.detail?.type;
-      
+
       // Refetch user info for these transactions
-      if (["check_in", "claim_starter_pack", "collect_dust", "expand_reef"].includes(type)) {
+      if (
+        [
+          "check_in",
+          "claim_starter_pack",
+          "collect_dust",
+          "expand_reef",
+        ].includes(type)
+      ) {
         refetchUserInfo();
       }
-      
+
       // Refetch reef capacity on expansion
       if (type === "expand_reef") {
         refetchReefCapacity();
@@ -334,7 +370,11 @@ export function useFryReef() {
     };
 
     window.addEventListener("transaction:success", handleTransactionSuccess);
-    return () => window.removeEventListener("transaction:success", handleTransactionSuccess);
+    return () =>
+      window.removeEventListener(
+        "transaction:success",
+        handleTransactionSuccess,
+      );
   }, [refetchUserInfo, refetchReefCapacity, refetchExpansionCost]);
 
   return {
@@ -373,7 +413,15 @@ export function useFryReef() {
 
     // Reef expansion
     reefCapacity: reefCapacityData ? Number(reefCapacityData) : 3,
-    expansionCost: expansionCostData ? Number(expansionCostData) : null,
+    // Check if expansion cost is max uint256 (no more expansions available)
+    expansionCost: expansionCostData
+      ? expansionCostData >=
+        BigInt(
+          "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        )
+        ? null
+        : Number(expansionCostData)
+      : null,
     expandReef,
     expandTx,
     refetchReefCapacity,
