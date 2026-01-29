@@ -3,9 +3,9 @@ import { createPublicClient, http, getContract } from "viem";
 import { base } from "viem/chains";
 import { fishNftAbi, eggNftAbi } from "@/contracts";
 
-// Contract addresses on Base mainnet
-const FISH_NFT_ADDRESS = "0xC73cB204010FF33Be2216766167f87e4BaeC0B6B";
-const EGG_NFT_ADDRESS = "0x9Fa8dCcAb21aF36A9f06d78C80c5dB58BF9d4dE0";
+// Contract addresses on Base mainnet - from environment variables
+const FISH_NFT_ADDRESS = process.env.NEXT_PUBLIC_FISH_NFT_ADDRESS!;
+const EGG_NFT_ADDRESS = process.env.NEXT_PUBLIC_EGG_NFT_ADDRESS!;
 
 const RARITY_NAMES = ["Common", "Rare", "Epic", "Legendary", "Mythic"];
 const DUST_PER_DAY = [6, 12, 18, 32, 48];

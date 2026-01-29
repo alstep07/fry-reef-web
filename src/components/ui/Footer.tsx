@@ -16,12 +16,20 @@ export function Footer() {
             FAQ
           </Link>
           <a
+            href="https://opensea.io/collection/fryreef-fish-774329671"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-slate-400 transition hover:text-white"
+          >
+            Secondary Market
+          </a>
+          <a
             href="https://www.notion.so/FryReef-Roadmap-2bdde4de81e4804c9b87ea83d0a730d5"
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-slate-400 transition hover:text-white"
           >
-            Whitepaper
+            Roadmap
           </a>
           <a
             href="https://x.com/ReefFry"

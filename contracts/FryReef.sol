@@ -3,13 +3,14 @@ pragma solidity ^0.8.24;
 
 import "./EggNFT.sol";
 import "./FishNFT.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title FryReef
  * @notice Main game contract: check-in, starter pack, resources
  * @dev Manages Pearl Shards, Spawn Dust, daily check-ins, and starter pack
  */
-contract FryReef {
+contract FryReef is Ownable {
     // ============ Contracts ============
     EggNFT public eggNFT;
     FishNFT public fishNFT;
@@ -68,7 +69,82 @@ contract FryReef {
     event FishBurned(address indexed user, uint256 fishId, FishNFT.Rarity rarity, uint256 spawnDustReward);
 
     // ============ Constructor ============
-    constructor(address _eggNFT, address _fishNFT) {
+    constructor(address _eggNFT, address _fishNFT) Ownable(msg.sender) {
+        eggNFT = EggNFT(_eggNFT);
+        fishNFT = FishNFT(_fishNFT);
+    }
+
+    // ============ Admin (Migration) ============
+
+    /**
+     * @notice Restore user data from old contract (migration only)
+     * @dev Only callable by owner during migration period
+     */
+    function restoreUserData(
+        address _user,
+        uint256 _pearlShards,
+        uint256 _spawnDust,
+        uint256 _reefCapacity,
+        uint256 _currentStreak,
+        uint256 _totalCheckIns,
+        uint256 _lastCheckIn,
+        bool _starterPackClaimed
+    ) external onlyOwner {
+        require(_user != address(0), "Invalid user address");
+        
+        users[_user] = UserInfo({
+            lastCheckIn: _lastCheckIn,
+            currentStreak: _currentStreak,
+            totalCheckIns: _totalCheckIns,
+            pearlShards: _pearlShards,
+            spawnDust: _spawnDust,
+            reefCapacity: _reefCapacity == 0 ? INITIAL_REEF_CAPACITY : _reefCapacity,
+            starterPackClaimed: _starterPackClaimed
+        });
+
+        emit ResourcesUpdated(_user, _pearlShards, _spawnDust);
+    }
+
+    /**
+     * @notice Batch restore multiple users (gas efficient)
+     */
+    function batchRestoreUserData(
+        address[] calldata _users,
+        UserInfo[] calldata _userInfos
+    ) external onlyOwner {
+        require(_users.length == _userInfos.length, "Array length mismatch");
+        
+        for (uint256 i = 0; i < _users.length; i++) {
+            require(_users[i] != address(0), "Invalid user address");
+            users[_users[i]] = _userInfos[i];
+            emit ResourcesUpdated(_users[i], _userInfos[i].pearlShards, _userInfos[i].spawnDust);
+        }
+    }
+
+    /**
+     * @notice Mint fish with specific rarity (migration only)
+     * @dev Only callable by owner during migration
+     */
+    function migrationMintFish(address _to, FishNFT.Rarity _rarity) external onlyOwner {
+        require(_to != address(0), "Invalid address");
+        fishNFT.mergeMint(_to, _rarity);
+    }
+
+    /**
+     * @notice Mint egg (migration only)
+     * @dev Only callable by owner during migration
+     */
+    function migrationMintEgg(address _to) external onlyOwner {
+        require(_to != address(0), "Invalid address");
+        eggNFT.mint(_to);
+    }
+
+    /**
+     * @notice Update NFT contract addresses (emergency only)
+     * @dev Only callable by owner, for deployment fixes
+     */
+    function updateNFTContracts(address _eggNFT, address _fishNFT) external onlyOwner {
+        require(_eggNFT != address(0) && _fishNFT != address(0), "Invalid addresses");
         eggNFT = EggNFT(_eggNFT);
         fishNFT = FishNFT(_fishNFT);
     }
@@ -196,6 +272,7 @@ contract FryReef {
         require(user.spawnDust >= EGG_LAYING_COST, "Not enough Spawn Dust");
         require(fishNFT.ownerOf(_fishId) == msg.sender, "Not fish owner");
         require(fishNFT.canLayEgg(_fishId), "Fish cannot lay egg yet (24h cooldown)");
+        require(isFishActive(msg.sender, _fishId), "Fish is inactive (expand reef capacity)");
 
         user.spawnDust -= EGG_LAYING_COST;
         fishNFT.updateLastEggLaidAt(_fishId);
@@ -207,22 +284,33 @@ contract FryReef {
     // ============ Spawn Dust Collection ============
 
     /**
-     * @notice Collect Spawn Dust from all owned fish
+     * @notice Collect Spawn Dust from all active fish (within reef capacity)
      */
     function collectSpawnDust() external {
         UserInfo storage user = users[msg.sender];
         
-        uint256 totalDust = fishNFT.collectAllSpawnDust(msg.sender);
+        // Get only active fish IDs
+        uint256[] memory activeFishIds = getActiveFish(msg.sender);
+        
+        // Collect dust only from active fish
+        uint256 totalDust = fishNFT.collectSpawnDustFromFish(activeFishIds);
         user.spawnDust += totalDust;
 
         emit ResourcesUpdated(msg.sender, user.pearlShards, user.spawnDust);
     }
 
     /**
-     * @notice Get pending Spawn Dust for a user
+     * @notice Get pending Spawn Dust for a user (only from active fish)
      */
     function getPendingSpawnDust(address _user) external view returns (uint256) {
-        return fishNFT.getPendingSpawnDust(_user);
+        uint256[] memory activeFishIds = getActiveFish(_user);
+        uint256 totalDust = 0;
+        
+        for (uint256 i = 0; i < activeFishIds.length; i++) {
+            totalDust += fishNFT.getPendingDustForFish(activeFishIds[i]);
+        }
+        
+        return totalDust;
     }
 
     // ============ Merge (Fish → Fish) ============
@@ -457,6 +545,55 @@ contract FryReef {
      */
     function canLayEgg(uint256 _fishId) external view returns (bool) {
         return fishNFT.canLayEgg(_fishId);
+    }
+
+    /**
+     * @notice Get active fish count for user (fish that fit in reef capacity)
+     * @param _user The user address
+     * @return activeFishCount Number of active fish
+     * @return totalFishCount Total number of fish owned
+     */
+    function getActiveFishCount(address _user) external view returns (uint256 activeFishCount, uint256 totalFishCount) {
+        totalFishCount = fishNFT.balanceOf(_user);
+        uint256 capacity = users[_user].reefCapacity == 0 ? INITIAL_REEF_CAPACITY : users[_user].reefCapacity;
+        activeFishCount = totalFishCount > capacity ? capacity : totalFishCount;
+        return (activeFishCount, totalFishCount);
+    }
+
+    /**
+     * @notice Check if specific fish is active (within reef capacity)
+     * @param _user The user address
+     * @param _fishId The fish token ID
+     * @return isActive True if fish is active and producing
+     */
+    function isFishActive(address _user, uint256 _fishId) public view returns (bool) {
+        uint256 totalFish = fishNFT.balanceOf(_user);
+        uint256 capacity = users[_user].reefCapacity == 0 ? INITIAL_REEF_CAPACITY : users[_user].reefCapacity;
+        
+        // Check if fish is within first N tokens (active slots)
+        for (uint256 i = 0; i < capacity && i < totalFish; i++) {
+            if (fishNFT.tokenOfOwnerByIndex(_user, i) == _fishId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @notice Get list of active fish IDs for user
+     * @param _user The user address
+     * @return activeFishIds Array of active fish token IDs
+     */
+    function getActiveFish(address _user) public view returns (uint256[] memory) {
+        uint256 totalFish = fishNFT.balanceOf(_user);
+        uint256 capacity = users[_user].reefCapacity == 0 ? INITIAL_REEF_CAPACITY : users[_user].reefCapacity;
+        uint256 activeFishCount = totalFish > capacity ? capacity : totalFish;
+        
+        uint256[] memory activeFishIds = new uint256[](activeFishCount);
+        for (uint256 i = 0; i < activeFishCount; i++) {
+            activeFishIds[i] = fishNFT.tokenOfOwnerByIndex(_user, i);
+        }
+        return activeFishIds;
     }
 
     // ============ Internal ============

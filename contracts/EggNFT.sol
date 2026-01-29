@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  * @title EggNFT
@@ -49,6 +50,26 @@ contract EggNFT is ERC721, ERC721Enumerable, Ownable {
         require(gameContract == address(0), "Game contract already set");
         require(_gameContract != address(0), "Invalid address");
         gameContract = _gameContract;
+    }
+
+    /**
+     * @notice Returns the contract-level metadata URI for OpenSea
+     */
+    function contractURI() public pure returns (string memory) {
+        return "https://fry-reef.vercel.app/api/collection/egg";
+    }
+
+    /**
+     * @notice Returns the token metadata URI for OpenSea
+     */
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+        require(_exists(tokenId), "Token does not exist");
+        return string(abi.encodePacked(
+            "https://fry-reef.vercel.app/api/token/base/",
+            Strings.toHexString(uint160(address(this)), 20),
+            "/",
+            Strings.toString(tokenId)
+        ));
     }
 
     // ============ Minting ============
@@ -148,6 +169,13 @@ contract EggNFT is ERC721, ERC721Enumerable, Ownable {
         override(ERC721, ERC721Enumerable)
         returns (address)
     {
+        address from = _ownerOf(tokenId);
+        
+        // Block transfers (except minting and burning)
+        if (from != address(0) && to != address(0)) {
+            revert("Eggs are non-transferable");
+        }
+        
         return super._update(to, tokenId, auth);
     }
 
