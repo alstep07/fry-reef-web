@@ -129,6 +129,18 @@ export function BurgerMenu() {
               FAQ
             </Link>
             <a
+              href="https://opensea.io/collection/fryreef-fish"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-2 px-4 py-3 text-sm text-slate-400 hover:text-white hover:bg-white/5 transition"
+            >
+              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 90 90">
+                <path d="M45 0C20.151 0 0 20.151 0 45s20.151 45 45 45 45-20.151 45-45S69.849 0 45 0zm23.071 48.064L48.214 71.929c-.357.357-.928.357-1.286 0L27.071 52.071c-.357-.357-.357-.928 0-1.286L46.929 31.929c.357-.357.928-.357 1.286 0l19.857 19.857c.357.357.357.928 0 1.286v-.008z"/>
+              </svg>
+              Marketplace
+            </a>
+            <a
               href="https://www.notion.so/FryReef-Roadmap-2bdde4de81e4804c9b87ea83d0a730d5"
               target="_blank"
               rel="noopener noreferrer"
