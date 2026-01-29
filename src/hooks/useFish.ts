@@ -173,6 +173,15 @@ export function useFish() {
       // Get cached info first
       const cachedInfo = previousFishInfoRef.current.get(tokenIdNum);
 
+      // Debug logging
+      if (process.env.NODE_ENV === "development" && tokenIdNum) {
+        console.log(`[useFish] Fish #${tokenIdNum}:`, {
+          hasValidInfo: hasInfoResult,
+          hasCachedInfo: !!cachedInfo,
+          cachedRarity: cachedInfo?.rarity,
+        });
+      }
+
       if (hasInfoResult) {
         const result = infoResult.result as
           | {
@@ -208,12 +217,31 @@ export function useFish() {
           // New data is valid, use and cache it
           info = newInfo;
           previousFishInfoRef.current.set(tokenIdNum, info);
+
+          if (process.env.NODE_ENV === "development" && tokenIdNum) {
+            console.log(`[useFish] Fish #${tokenIdNum}: Using NEW data`, {
+              rarity: info.rarity,
+              mintedAt: info.mintedAt.toString(),
+            });
+          }
         } else if (cachedInfo) {
           // New data is invalid, use cached
           info = cachedInfo;
+
+          if (process.env.NODE_ENV === "development" && tokenIdNum) {
+            console.log(
+              `[useFish] Fish #${tokenIdNum}: Using CACHED data (new data invalid)`,
+            );
+          }
         } else {
           // No cache, have to use new data even if it looks invalid
           info = newInfo;
+
+          if (process.env.NODE_ENV === "development" && tokenIdNum) {
+            console.log(
+              `[useFish] Fish #${tokenIdNum}: Using INVALID data (no cache)`,
+            );
+          }
         }
       } else {
         // No result, use cached data if available
