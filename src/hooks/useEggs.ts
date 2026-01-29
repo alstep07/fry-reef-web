@@ -20,6 +20,7 @@ export function useEggs() {
   const { address } = useAccount();
   const queryClient = useQueryClient();
   const eggLoadingStartRef = useRef<Map<number, number>>(new Map());
+  const previousEggInfoRef = useRef<Map<number, EggInfo>>(new Map());
   const LOADING_TIMEOUT = 8000;
 
   const contractAddress = EGG_NFT_ADDRESS
@@ -27,7 +28,11 @@ export function useEggs() {
     : undefined;
 
   // Get egg balance
-  const { data: balance, isFetched: isBalanceFetched } = useReadContract({
+  const {
+    data: balance,
+    isFetched: isBalanceFetched,
+    isLoading: isBalanceLoading,
+  } = useReadContract({
     address: contractAddress,
     abi: eggNftAbi,
     functionName: "balanceOf",
@@ -35,6 +40,8 @@ export function useEggs() {
     chainId: DEFAULT_CHAIN_ID,
     query: {
       enabled: !!address && !!contractAddress,
+      staleTime: 4000,
+      refetchInterval: 10000, // Poll every 10s to detect new eggs (slower than data polling)
     },
   });
 
@@ -49,16 +56,21 @@ export function useEggs() {
     chainId: DEFAULT_CHAIN_ID,
   }));
 
-  const { data: tokenIdsData, isFetched: isTokenIdsFetched } = useReadContracts({
-    contracts: tokenIdContracts,
-    query: {
-      enabled: eggCount > 0 && !!address,
+  const { data: tokenIdsData, isFetched: isTokenIdsFetched } = useReadContracts(
+    {
+      contracts: tokenIdContracts,
+      query: {
+        enabled: eggCount > 0 && !!address,
+      },
     },
-  });
+  );
 
-  const tokenIds = tokenIdsData
-    ?.map((result) => (result.status === "success" ? Number(result.result) : null))
-    .filter((id): id is number => id !== null) || [];
+  const tokenIds =
+    tokenIdsData
+      ?.map((result) =>
+        result.status === "success" ? Number(result.result) : null,
+      )
+      .filter((id): id is number => id !== null) || [];
 
   // Get ALL egg data in ONE request with polling
   const eggDataContracts = tokenIds.flatMap((tokenId) => [
@@ -85,15 +97,16 @@ export function useEggs() {
     },
   ]);
 
-  const { data: eggDataResults, isFetched: isEggDataFetched } = useReadContracts({
-    contracts: eggDataContracts,
-    query: {
-      enabled: tokenIds.length > 0,
-      refetchInterval: 5000, // Poll all data every 5 seconds
-      staleTime: 4000,
-      placeholderData: keepPreviousData,
-    },
-  });
+  const { data: eggDataResults, isFetched: isEggDataFetched } =
+    useReadContracts({
+      contracts: eggDataContracts,
+      query: {
+        enabled: tokenIds.length > 0,
+        refetchInterval: 5000, // Poll every 5s for incubation timer updates
+        staleTime: 4000,
+        placeholderData: keepPreviousData,
+      },
+    });
 
   // Parse egg data
   const eggs: EggWithInfo[] = tokenIds.map((tokenId, index) => {
@@ -109,13 +122,17 @@ export function useEggs() {
     const loadingStartTime = eggLoadingStartRef.current.get(tokenId) || now;
     const hasBeenLoadingTooLong = now - loadingStartTime > LOADING_TIMEOUT;
 
-    const hasValidInfo = infoResult?.status === "success" && infoResult?.result !== undefined;
+    const hasValidInfo =
+      infoResult?.status === "success" && infoResult?.result !== undefined;
     const isInfoLoaded = hasValidInfo || hasBeenLoadingTooLong;
 
     let info: EggInfo;
     if (hasValidInfo && infoResult?.result) {
       const result = infoResult.result;
-      if (Array.isArray(result) || (typeof result === 'object' && '0' in result)) {
+      if (
+        Array.isArray(result) ||
+        (typeof result === "object" && "0" in result)
+      ) {
         const arr = result as readonly [bigint, bigint, boolean];
         info = {
           mintedAt: BigInt(arr[0] ?? 0),
@@ -123,22 +140,45 @@ export function useEggs() {
           isIncubating: Boolean(arr[2]),
         };
       } else {
-        const obj = result as { mintedAt?: bigint; incubationStartedAt?: bigint; isIncubating?: boolean };
+        const obj = result as {
+          mintedAt?: bigint;
+          incubationStartedAt?: bigint;
+          isIncubating?: boolean;
+        };
         info = {
           mintedAt: BigInt(obj.mintedAt ?? 0),
           incubationStartedAt: BigInt(obj.incubationStartedAt ?? 0),
           isIncubating: Boolean(obj.isIncubating),
         };
       }
+
+      // Cache the info for this egg
+      if (info.mintedAt > BigInt(0)) {
+        previousEggInfoRef.current.set(tokenId, info);
+      }
     } else {
-      info = { mintedAt: BigInt(0), incubationStartedAt: BigInt(0), isIncubating: false };
+      // Use cached info if available to prevent flickering
+      const cachedInfo = previousEggInfoRef.current.get(tokenId);
+      if (cachedInfo) {
+        info = cachedInfo;
+      } else {
+        info = {
+          mintedAt: BigInt(0),
+          incubationStartedAt: BigInt(0),
+          isIncubating: false,
+        };
+      }
     }
 
     return {
       tokenId,
       info,
-      canHatch: canHatchResult?.status === "success" ? Boolean(canHatchResult.result) : false,
-      timeUntilHatch: timeResult?.status === "success" ? Number(timeResult.result ?? 0) : 0,
+      canHatch:
+        canHatchResult?.status === "success"
+          ? Boolean(canHatchResult.result)
+          : false,
+      timeUntilHatch:
+        timeResult?.status === "success" ? Number(timeResult.result ?? 0) : 0,
       isInfoLoaded,
     };
   });
@@ -152,29 +192,55 @@ export function useEggs() {
     const handleTransactionSuccess = (event: Event) => {
       const customEvent = event as CustomEvent;
       const type = customEvent.detail?.type;
-      
+
       if (["lay_egg", "hatch_egg", "start_incubation"].includes(type)) {
         queryClient.invalidateQueries({
           queryKey: ["readContract"],
           exact: false,
         });
         eggLoadingStartRef.current.clear();
+        // Clear cache on transactions that modify eggs
+        if (["lay_egg", "hatch_egg"].includes(type)) {
+          previousEggInfoRef.current.clear();
+        }
       }
     };
 
+    const handleEggsInvalidate = () => {
+      queryClient.invalidateQueries({
+        queryKey: ["readContract"],
+        exact: false,
+      });
+      eggLoadingStartRef.current.clear();
+      previousEggInfoRef.current.clear();
+    };
+
     window.addEventListener("transaction:success", handleTransactionSuccess);
-    return () => window.removeEventListener("transaction:success", handleTransactionSuccess);
+    window.addEventListener("eggs:invalidate", handleEggsInvalidate);
+
+    return () => {
+      window.removeEventListener(
+        "transaction:success",
+        handleTransactionSuccess,
+      );
+      window.removeEventListener("eggs:invalidate", handleEggsInvalidate);
+    };
   }, [queryClient]);
 
   useEffect(() => {
     eggLoadingStartRef.current.clear();
+    previousEggInfoRef.current.clear();
   }, [address]);
 
   return {
     eggs,
     eggCount,
     refetch,
-    isLoading: !isBalanceFetched || (eggCount > 0 && !isTokenIdsFetched) || (tokenIds.length > 0 && !isEggDataFetched),
+    isLoading:
+      isBalanceLoading ||
+      !isBalanceFetched ||
+      (eggCount > 0 && !isTokenIdsFetched) ||
+      (tokenIds.length > 0 && !isEggDataFetched),
     refetchEggInfo: refetch,
     refetchTimeUntilHatch: refetch,
   };

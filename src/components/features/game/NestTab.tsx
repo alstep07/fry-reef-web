@@ -398,7 +398,7 @@ export function NestTab({ onGoToReef }: NestTabProps) {
               />
             </div>
             <p className="text-sm text-slate-400">
-              Claim your starter pack or breed fish to get eggs!
+              Breed fish to get eggs!
             </p>
           </div>
         ) : (

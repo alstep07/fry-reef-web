@@ -239,104 +239,102 @@ export function GameDashboard() {
       </div>
 
       {/* Tab Content */}
-      <div className={activeTab === "checkin" ? "" : "hidden"}>
-        {activeTab === "checkin" && (
-          <div className="rounded-2xl border border-white/5 bg-white/5 p-6 sm:p-8 backdrop-blur-sm">
-            <h2 className="mb-6 sm:mb-7 text-lg sm:text-xl font-semibold text-white">
-              Daily Check-in
-            </h2>
+      {activeTab === "checkin" && (
+        <div className="rounded-2xl border border-white/5 bg-white/5 p-6 sm:p-8 backdrop-blur-sm">
+          <h2 className="mb-6 sm:mb-7 text-lg sm:text-xl font-semibold text-white">
+            Daily Check-in
+          </h2>
 
-            <div className="mb-7 sm:mb-8 space-y-4 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400">Current Streak:</span>
-                <span className="font-semibold text-white">
-                  {currentStreak > 0 ? (
-                    <>
-                      {currentStreak} day{currentStreak !== 1 ? "s" : ""}
-                      <span className="ml-1.5 text-xs font-normal text-slate-400">
-                        (
-                        {currentStreak % DAILY_CHECKIN.streakForReward ||
-                          DAILY_CHECKIN.streakForReward}
-                        /{DAILY_CHECKIN.streakForReward})
-                      </span>
-                    </>
-                  ) : (
-                    "0 days"
-                  )}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400">Total Check-ins:</span>
-                <span className="font-semibold text-white">{totalCheckIns}</span>
-              </div>
-              {currentStreak > 0 && (
-                <div className="mt-4 sm:mt-5">
-                  <div className="h-1.5 sm:h-2 overflow-hidden rounded-full bg-white/10">
-                    <div
-                      className="h-full transition-all"
-                      style={{
-                        width: `${
-                          ((currentStreak % DAILY_CHECKIN.streakForReward) /
-                            DAILY_CHECKIN.streakForReward) *
-                          100
-                        }%`,
-                        background: theme === "light"
-                          ? "linear-gradient(90deg, #38bdf8 0%, #0ea5e9 50%, #0284c7 100%)"
-                          : "linear-gradient(90deg, #E8D5E2 0%, #F5E6EA 30%, #FFFFFF 50%, #E0F4F8 70%, #D4E5ED 100%)",
-                      }}
-                    />
-                  </div>
-                  <p className="mt-2.5 sm:mt-3 text-xs sm:text-sm text-slate-400">
-                    {currentStreak % DAILY_CHECKIN.streakForReward === 0
-                      ? "Pearl Shard Rewarded 🎉"
-                      : `${
-                          DAILY_CHECKIN.streakForReward -
-                          (currentStreak % DAILY_CHECKIN.streakForReward)
-                        } days until next Pearl Shard`}
-                  </p>
+          <div className="mb-7 sm:mb-8 space-y-4 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">Current Streak:</span>
+              <span className="font-semibold text-white">
+                {currentStreak > 0 ? (
+                  <>
+                    {currentStreak} day{currentStreak !== 1 ? "s" : ""}
+                    <span className="ml-1.5 text-xs font-normal text-slate-400">
+                      (
+                      {currentStreak % DAILY_CHECKIN.streakForReward ||
+                        DAILY_CHECKIN.streakForReward}
+                      /{DAILY_CHECKIN.streakForReward})
+                    </span>
+                  </>
+                ) : (
+                  "0 days"
+                )}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">Total Check-ins:</span>
+              <span className="font-semibold text-white">{totalCheckIns}</span>
+            </div>
+            {currentStreak > 0 && (
+              <div className="mt-4 sm:mt-5">
+                <div className="h-1.5 sm:h-2 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full transition-all"
+                    style={{
+                      width: `${
+                        ((currentStreak % DAILY_CHECKIN.streakForReward) /
+                          DAILY_CHECKIN.streakForReward) *
+                        100
+                      }%`,
+                      background: theme === "light"
+                        ? "linear-gradient(90deg, #38bdf8 0%, #0ea5e9 50%, #0284c7 100%)"
+                        : "linear-gradient(90deg, #E8D5E2 0%, #F5E6EA 30%, #FFFFFF 50%, #E0F4F8 70%, #D4E5ED 100%)",
+                    }}
+                  />
                 </div>
-              )}
-            </div>
-
-            <div className="flex justify-center">
-              <button
-                onClick={handleCheckIn}
-                disabled={
-                  checkedInToday ||
-                  isCheckingIn ||
-                  isLoading ||
-                  !isOnCorrectNetwork
-                }
-                className="cursor-pointer rounded-full bg-baseBlue px-5 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base font-medium text-white shadow-lg transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:bg-slate-600 disabled:shadow-none"
-              >
-                {checkedInToday
-                  ? "✓ Checked in today"
-                  : isCheckingIn || isLoading
-                  ? "Checking in..."
-                  : "Check-in"}
-              </button>
-            </div>
-
-            {checkInTx.error && (
-              <p className="mt-4 sm:mt-5 text-center text-[10px] sm:text-xs text-red-400">
-                Transaction failed. Please try again.
-              </p>
+                <p className="mt-2.5 sm:mt-3 text-xs sm:text-sm text-slate-400">
+                  {currentStreak % DAILY_CHECKIN.streakForReward === 0
+                    ? "Pearl Shard Rewarded 🎉"
+                    : `${
+                        DAILY_CHECKIN.streakForReward -
+                        (currentStreak % DAILY_CHECKIN.streakForReward)
+                      } days until next Pearl Shard`}
+                </p>
+              </div>
             )}
           </div>
-        )}
-      </div>
 
-      <div className={activeTab === "nest" ? "" : "hidden"}>
+          <div className="flex justify-center">
+            <button
+              onClick={handleCheckIn}
+              disabled={
+                checkedInToday ||
+                isCheckingIn ||
+                isLoading ||
+                !isOnCorrectNetwork
+              }
+              className="cursor-pointer rounded-full bg-baseBlue px-5 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base font-medium text-white shadow-lg transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:bg-slate-600 disabled:shadow-none"
+            >
+              {checkedInToday
+                ? "✓ Checked in today"
+                : isCheckingIn || isLoading
+                ? "Checking in..."
+                : "Check-in"}
+            </button>
+          </div>
+
+          {checkInTx.error && (
+            <p className="mt-4 sm:mt-5 text-center text-[10px] sm:text-xs text-red-400">
+              Transaction failed. Please try again.
+            </p>
+          )}
+        </div>
+      )}
+
+      {activeTab === "nest" && (
         <NestTab onGoToReef={() => setActiveTab("reef")} />
-      </div>
+      )}
 
-      <div className={activeTab === "reef" ? "" : "hidden"}>
+      {activeTab === "reef" && (
         <ReefTab onGoToNest={() => setActiveTab("nest")} />
-      </div>
+      )}
 
-      <div className={activeTab === "evolution" ? "" : "hidden"}>
+      {activeTab === "evolution" && (
         <EvolutionTab onGoToReef={() => setActiveTab("reef")} />
-      </div>
+      )}
 
       {/* Streak Reward Modal */}
       <StreakRewardModal

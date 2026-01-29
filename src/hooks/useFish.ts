@@ -37,7 +37,11 @@ export function useFish() {
     : undefined;
 
   // Get fish IDs owned by user
-  const { data: fishIds, isLoading: isLoadingIds } = useReadContract({
+  const {
+    data: fishIds,
+    isLoading: isLoadingIds,
+    isFetched: isFishIdsFetched,
+  } = useReadContract({
     address: contractAddress,
     abi: fishNftAbi,
     functionName: "getFishByOwner",
@@ -45,6 +49,8 @@ export function useFish() {
     chainId: base.id,
     query: {
       enabled: !!address && !!contractAddress,
+      staleTime: 4000,
+      refetchInterval: 10000, // Poll every 10s to detect new fish (slower than data polling)
     },
   });
 
@@ -75,8 +81,10 @@ export function useFish() {
   });
 
   // Extract activeFishCount from tuple [activeFishCount, totalFishCount]
-  const activeFishCount = activeFishCountData 
-    ? (Array.isArray(activeFishCountData) ? activeFishCountData[0] : activeFishCountData)
+  const activeFishCount = activeFishCountData
+    ? Array.isArray(activeFishCountData)
+      ? activeFishCountData[0]
+      : activeFishCountData
     : undefined;
 
   const fishIdsArray = (fishIds as bigint[]) || [];
@@ -110,7 +118,7 @@ export function useFish() {
     contracts: fishDataContracts,
     query: {
       enabled: fishIdsArray.length > 0 && !!contractAddress && !!fryReefAddress,
-      refetchInterval: 5000, // Poll all data every 5 seconds
+      refetchInterval: 5000, // Poll every 5s for dust/time updates
       staleTime: 4000,
       placeholderData: keepPreviousData,
     },
@@ -162,6 +170,9 @@ export function useFish() {
       const hasInfoResult =
         infoResult?.status === "success" && infoResult?.result !== undefined;
 
+      // Get cached info first
+      const cachedInfo = previousFishInfoRef.current.get(tokenIdNum);
+
       if (hasInfoResult) {
         const result = infoResult.result as
           | {
@@ -172,15 +183,16 @@ export function useFish() {
             }
           | [number, bigint, bigint, bigint];
 
+        let newInfo: FishInfo;
         if (Array.isArray(result)) {
-          info = {
+          newInfo = {
             rarity: Number(result[0] ?? 0),
             mintedAt: BigInt(result[1] ?? 0),
             lastDustCollectedAt: BigInt(result[2] ?? 0),
             lastEggLaidAt: BigInt(result[3] ?? 0),
           };
         } else {
-          info = {
+          newInfo = {
             rarity: Number(result.rarity ?? 0),
             mintedAt: BigInt(result.mintedAt ?? 0),
             lastDustCollectedAt: BigInt(result.lastDustCollectedAt ?? 0),
@@ -188,14 +200,27 @@ export function useFish() {
           };
         }
 
-        // Cache the info for this fish
-        previousFishInfoRef.current.set(tokenIdNum, info);
+        // Validate new data - if it looks invalid, keep cached data
+        const isValidNewData =
+          newInfo.mintedAt > BigInt(0) && newInfo.rarity !== undefined;
+
+        if (isValidNewData) {
+          // New data is valid, use and cache it
+          info = newInfo;
+          previousFishInfoRef.current.set(tokenIdNum, info);
+        } else if (cachedInfo) {
+          // New data is invalid, use cached
+          info = cachedInfo;
+        } else {
+          // No cache, have to use new data even if it looks invalid
+          info = newInfo;
+        }
       } else {
-        // Use cached info if available, otherwise use defaults
-        const cachedInfo = previousFishInfoRef.current.get(tokenIdNum);
+        // No result, use cached data if available
         if (cachedInfo) {
           info = cachedInfo;
         } else {
+          // No cache, use defaults
           info = {
             rarity: 0,
             mintedAt: BigInt(0),
@@ -264,12 +289,26 @@ export function useFish() {
       }
     };
 
+    const handleFishInvalidate = () => {
+      queryClient.invalidateQueries({
+        queryKey: ["readContract"],
+        exact: false,
+      });
+      fishLoadingStartRef.current.clear();
+      previousFishInfoRef.current.clear();
+      previousTimeValuesRef.current.clear();
+    };
+
     window.addEventListener("transaction:success", handleTransactionSuccess);
-    return () =>
+    window.addEventListener("fish:invalidate", handleFishInvalidate);
+
+    return () => {
       window.removeEventListener(
         "transaction:success",
         handleTransactionSuccess,
       );
+      window.removeEventListener("fish:invalidate", handleFishInvalidate);
+    };
   }, [queryClient]);
 
   // Clean up old fish loading timers
@@ -295,7 +334,10 @@ export function useFish() {
     fish,
     fishCount: fishIdsArray.length,
     totalPendingDust: totalPendingDust ? Number(totalPendingDust as bigint) : 0,
-    isLoading: isLoadingIds || isLoadingData,
+    isLoading:
+      isLoadingIds ||
+      !isFishIdsFetched ||
+      (fishIdsArray.length > 0 && isLoadingData),
     refetch,
     refetchInfo: refetch,
     refetchDust: refetch,
