@@ -168,51 +168,20 @@ export function useEggs() {
         };
       }
 
-      // STRICT validation - Coinbase Wallet проблема
+      // Валидация данных - простая логика
       const isValidNewData = newInfo.mintedAt > BigInt(0);
 
-      // Если есть кэш, проверяем что новые данные не хуже
-      // ВАЖНО: если яйцо инкубируется в кэше, не принимаем isIncubating: false
-      const isNewDataAcceptable =
-        !cachedInfo ||
-        (isValidNewData &&
-          newInfo.mintedAt >= cachedInfo.mintedAt &&
-          // Если было инкубируется, новые данные тоже должны показывать инкубацию
-          (!cachedInfo.isIncubating ||
-            newInfo.isIncubating ||
-            newInfo.incubationStartedAt > BigInt(0)));
-
-      if (isValidNewData && isNewDataAcceptable) {
-        // Новые данные валидны и приемлемы
+      // Кэш только для защиты от полностью невалидных данных (mintedAt = 0)
+      if (isValidNewData) {
+        // Новые данные валидны - используем и кэшируем
         info = newInfo;
         previousEggInfoRef.current.set(tokenId, info);
-
-        if (process.env.NODE_ENV === "development") {
-          console.log(`[useEggs] Egg #${tokenId}: NEW data`, {
-            isIncubating: info.isIncubating,
-            incubationStartedAt: info.incubationStartedAt.toString(),
-          });
-        }
       } else if (cachedInfo) {
-        // Новые данные невалидны или неприемлемы - используем кэш
+        // Новые данные невалидны (mintedAt = 0) - используем кэш
         info = cachedInfo;
-
-        if (process.env.NODE_ENV === "development") {
-          console.log(`[useEggs] Egg #${tokenId}: CACHED data`, {
-            reason: !isValidNewData ? "invalid" : "worse than cache",
-            newIsIncubating: newInfo.isIncubating,
-            cachedIsIncubating: cachedInfo.isIncubating,
-          });
-        }
       } else {
-        // Нет кэша - используем новые, но не кэшируем если невалидны
+        // Нет кэша и данные невалидны - используем что есть
         info = newInfo;
-
-        if (process.env.NODE_ENV === "development") {
-          console.log(`[useEggs] Egg #${tokenId}: UNCACHED (first load)`, {
-            mintedAt: newInfo.mintedAt.toString(),
-          });
-        }
       }
     } else {
       // No result, use cached data if available
@@ -288,8 +257,8 @@ export function useEggs() {
   }, [address]);
 
   // Оптимистичный isLoading - показываем данные если они есть
-  const hasAnyData = eggs.some(e => e.info.mintedAt > BigInt(0));
-  
+  const hasAnyData = eggs.some((e) => e.info.mintedAt > BigInt(0));
+
   return {
     eggs,
     eggCount,

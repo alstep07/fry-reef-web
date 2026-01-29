@@ -257,6 +257,17 @@ export function NestTab({ onGoToReef }: NestTabProps) {
     },
   });
 
+  // Force refetch on component mount to ensure fresh data
+  useEffect(() => {
+    if (address && eggCount > 0) {
+      // Small delay to let initial queries complete
+      const timer = setTimeout(() => {
+        refetch();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [address, eggCount, refetch]);
+
   // Show modal when we have fish info
   useEffect(() => {
     if (fishInfo && hatchedFishId !== null) {
@@ -284,15 +295,17 @@ export function NestTab({ onGoToReef }: NestTabProps) {
         // Emit event to invalidate egg cache - egg state changed
         window.dispatchEvent(new Event("eggs:invalidate"));
 
-        // Multiple refetch attempts to ensure state updates
+        // Агрессивные попытки refetch для Coinbase Wallet
         const doRefetch = () => {
           refetch();
           refetchUserInfo();
         };
-        // First attempt after 2s
-        setTimeout(doRefetch, 2000);
-        // Backup attempt after 5s
+
+        // Множественные попытки refetch для Coinbase Wallet
+        setTimeout(doRefetch, 1000);
+        setTimeout(doRefetch, 2500);
         setTimeout(doRefetch, 5000);
+        setTimeout(doRefetch, 8000);
       }
     },
     [startIncubation, refetch, refetchUserInfo]

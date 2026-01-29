@@ -136,16 +136,6 @@ export function useFish() {
         ? Number(activeFishCount as bigint)
         : fishIdsArray.length;
 
-    // Debug logging
-    if (fishIdsArray.length > 0) {
-      console.log("[useFish] Debug:", {
-        fishCount: fishIdsArray.length,
-        activeFishCountRaw: activeFishCount,
-        activeCount,
-        fishIds: fishIdsArray.map((id) => Number(id)),
-      });
-    }
-
     return fishIdsArray.map((id, index) => {
       const baseIdx = index * 3;
       const infoResult = fishDataResults?.[baseIdx];
@@ -176,15 +166,6 @@ export function useFish() {
 
       // Get cached info first
       const cachedInfo = previousFishInfoRef.current.get(tokenIdNum);
-
-      // Debug logging
-      if (process.env.NODE_ENV === "development" && tokenIdNum) {
-        console.log(`[useFish] Fish #${tokenIdNum}:`, {
-          hasValidInfo: hasInfoResult,
-          hasCachedInfo: !!cachedInfo,
-          cachedRarity: cachedInfo?.rarity,
-        });
-      }
 
       if (hasInfoResult) {
         const result = infoResult.result as
@@ -225,33 +206,12 @@ export function useFish() {
           // Новые данные валидны и приемлемы - используем и кэшируем
           info = newInfo;
           previousFishInfoRef.current.set(tokenIdNum, info);
-
-          if (process.env.NODE_ENV === "development") {
-            console.log(`[useFish] Fish #${tokenIdNum}: NEW data`, {
-              rarity: info.rarity,
-              mintedAt: info.mintedAt.toString(),
-            });
-          }
         } else if (cachedInfo) {
           // Новые данные невалидны ИЛИ хуже кэша - используем кэш
           info = cachedInfo;
-
-          if (process.env.NODE_ENV === "development") {
-            console.log(
-              `[useFish] Fish #${tokenIdNum}: CACHED data (new invalid)`,
-              { newMintedAt: newInfo.mintedAt.toString() },
-            );
-          }
         } else {
-          // Нет кэша - используем новые данные, НО НЕ кэшируем если невалидны
+          // Нет кэша - используем новые данные
           info = newInfo;
-
-          if (process.env.NODE_ENV === "development") {
-            console.log(
-              `[useFish] Fish #${tokenIdNum}: UNCACHED (first load)`,
-              { mintedAt: newInfo.mintedAt.toString() },
-            );
-          }
         }
       } else {
         // No result, use cached data if available
