@@ -25,6 +25,7 @@ interface FishCardProps {
   isLoading: boolean;
   canLayEgg: boolean;
   isReleaseMode?: boolean;
+  isActive?: boolean; // Whether fish is active (within reef capacity)
 }
 
 function FishCard({
@@ -38,6 +39,7 @@ function FishCard({
   isLoading,
   canLayEgg,
   isReleaseMode,
+  isActive = true, // Default to true for backwards compatibility
 }: FishCardProps) {
   const config = RARITY_CONFIG[rarity];
   const fishImage = getFishImage(rarity);
@@ -69,12 +71,15 @@ function FishCard({
 
   return (
     <div
-      className={`group relative flex flex-col rounded-xl sm:rounded-2xl border-2 p-3 sm:p-4 backdrop-blur-sm transition ${isSelected
-        ? "border-red-600/70 bg-red-600/10"
-        : isReleaseMode && onSelect
+      className={`group relative flex flex-col rounded-xl sm:rounded-2xl border-2 p-3 sm:p-4 backdrop-blur-sm transition ${
+        !isActive
+          ? "border-amber-500/30 bg-amber-500/5 opacity-70"
+          : isSelected
+          ? "border-red-600/70 bg-red-600/10"
+          : isReleaseMode && onSelect
           ? "border-white/10 bg-white/5 cursor-pointer hover:border-white/20"
           : "border-white/10 bg-white/5"
-        }`}
+      }`}
       onClick={isReleaseMode && onSelect ? () => onSelect(tokenId) : undefined}
     >
       {/* Rarity glow */}
@@ -91,6 +96,19 @@ function FishCard({
       <span className="absolute top-3 left-3 rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] text-slate-400">
         #{tokenId}
       </span>
+
+      {/* Inactive badge */}
+      {!isActive && (
+        <div 
+          className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-amber-500/20 border border-amber-500/40 px-2 py-0.5"
+          title="This fish doesn't fit in your reef. Expand capacity to activate."
+        >
+          <svg className="h-3 w-3 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <span className="text-[9px] font-semibold text-amber-400 uppercase">Inactive</span>
+        </div>
+      )}
 
       {/* Selected indicator */}
       {isSelected && (
@@ -111,8 +129,8 @@ function FishCard({
         </div>
       )}
 
-      {/* Pending dust - top right with floating animation */}
-      {pendingDust > 0 && (
+      {/* Pending dust - top right with floating animation (only for active fish) */}
+      {isActive && pendingDust > 0 && (
         <span className="absolute top-3 right-3 animate-float rounded-full px-1.5 py-1 text-[10px] font-medium text-amber-400">
           +{pendingDust} ✨
         </span>
@@ -161,13 +179,15 @@ function FishCard({
               )}
               <button
                 onClick={() => onLayEgg(tokenId)}
-                disabled={isLoading || !canLayEgg || !canLayEggByTime}
-                className={`relative flex w-full cursor-pointer items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-medium text-white transition overflow-hidden ${canLayEggByTime && canLayEgg
+                disabled={isLoading || !canLayEgg || !canLayEggByTime || !isActive}
+                className={`relative flex w-full cursor-pointer items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-medium text-white transition overflow-hidden ${canLayEggByTime && canLayEgg && isActive
                   ? "bg-purple-500/80 hover:bg-purple-500"
                   : "bg-slate-600/60 hover:bg-slate-600/80"
                   } disabled:cursor-not-allowed`}
                 title={
-                  !canLayEgg
+                  !isActive
+                    ? "Expand reef capacity to activate this fish"
+                    : !canLayEgg
                     ? `Need ${EGG_LAYING.spawnDustCost} Spawn Dust`
                     : !canLayEggByTime
                       ? `Cooldown: ${formatTime(timeUntilNextEgg)}`
@@ -261,6 +281,8 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
 
   const totalDustPerDay = useMemo(() => {
     return fish.reduce((total, f) => {
+      // Only count active fish
+      if (!f.isActive) return total;
       const rarity = CONTRACT_RARITY_MAP[f.info.rarity] || Rarity.Common;
       const config = RARITY_CONFIG[rarity];
       return total + config.spawnDustPerDay;
@@ -538,7 +560,7 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
           </div>
 
           {/* Progress Bar */}
-          <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden relative mb-3">
+          <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden relative">
             {reefCapacity > 0 && (
               <>
                 {isReleaseMode && selectedFishForRelease.length > 0 ? (
@@ -583,6 +605,22 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
               </>
             )}
           </div>
+
+          {/* Warning for inactive fish */}
+          {fishCount > reefCapacity && !isReleaseMode && (
+            <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5">
+              <p className="text-xs text-amber-400 flex items-start gap-2">
+                <svg className="h-4 w-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>
+                  You have <strong>{fishCount - reefCapacity} inactive fish</strong>. 
+                  They don't produce Spawn Dust and can't lay eggs. 
+                  Expand your reef capacity or release some fish to make them active.
+                </span>
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Fish Grid */}
@@ -635,6 +673,7 @@ export function ReefTab({ onGoToNest }: ReefTabProps) {
                     isLoading={isLayingEgg}
                     canLayEgg={hasEnoughDust}
                     isReleaseMode={isReleaseMode}
+                    isActive={f.isActive}
                   />
                 );
               })}

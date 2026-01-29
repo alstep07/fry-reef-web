@@ -13,6 +13,7 @@ export interface FishWithInfo {
   pendingDust: number;
   timeUntilNextEgg: number;
   isInfoLoaded: boolean;
+  isActive: boolean; // Whether fish is active (within reef capacity)
 }
 
 export function useFish() {
@@ -59,6 +60,21 @@ export function useFish() {
     },
   });
 
+  // Get active fish count (within reef capacity)
+  const {
+    data: activeFishCount,
+  } = useReadContract({
+    address: fryReefAddress,
+    abi: fryReefAbi,
+    functionName: "getActiveFishCount",
+    args: address ? [address] : undefined,
+    chainId: base.id,
+    query: {
+      enabled: !!address && !!fryReefAddress,
+      refetchInterval: 5000,
+    },
+  });
+
   const fishIdsArray = (fishIds as bigint[]) || [];
 
   // Get ALL fish data in ONE request with polling
@@ -101,6 +117,8 @@ export function useFish() {
 
   // Combine data
   const fish: FishWithInfo[] = useMemo(() => {
+    const activeCount = activeFishCount ? Number(activeFishCount as bigint) : fishIdsArray.length;
+    
     return fishIdsArray.map((id, index) => {
       const baseIdx = index * 3;
       const infoResult = fishDataResults?.[baseIdx];
@@ -117,6 +135,9 @@ export function useFish() {
       const hasBeenLoadingTooLong = now - loadingStartTime > LOADING_TIMEOUT;
 
       const isInfoLoaded = (infoResult?.status === "success" && infoResult?.result !== undefined) || hasBeenLoadingTooLong;
+      
+      // Fish is active if its index is within active count (based on tokenOfOwnerByIndex order)
+      const isActive = index < activeCount;
 
       let info: FishInfo;
       if (infoResult?.result) {
@@ -172,9 +193,10 @@ export function useFish() {
         pendingDust,
         timeUntilNextEgg,
         isInfoLoaded,
+        isActive,
       };
     });
-  }, [fishIdsArray, fishDataResults]);
+  }, [fishIdsArray, fishDataResults, activeFishCount]);
 
   const refetch = () => {
     // Handled by wagmi automatically
