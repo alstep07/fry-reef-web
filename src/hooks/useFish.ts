@@ -61,7 +61,8 @@ export function useFish() {
   });
 
   // Get active fish count (within reef capacity)
-  const { data: activeFishCount } = useReadContract({
+  // Note: getActiveFishCount returns [activeFishCount, totalFishCount]
+  const { data: activeFishCountData } = useReadContract({
     address: fryReefAddress,
     abi: fryReefAbi,
     functionName: "getActiveFishCount",
@@ -72,6 +73,11 @@ export function useFish() {
       refetchInterval: 5000,
     },
   });
+
+  // Extract activeFishCount from tuple [activeFishCount, totalFishCount]
+  const activeFishCount = activeFishCountData 
+    ? (Array.isArray(activeFishCountData) ? activeFishCountData[0] : activeFishCountData)
+    : undefined;
 
   const fishIdsArray = (fishIds as bigint[]) || [];
 
@@ -113,9 +119,20 @@ export function useFish() {
   // Combine data
   const fish: FishWithInfo[] = useMemo(() => {
     // Default to all fish being active if activeFishCount is not loaded yet
-    const activeCount = activeFishCount !== undefined && activeFishCount !== null
-      ? Number(activeFishCount as bigint)
-      : fishIdsArray.length;
+    const activeCount =
+      activeFishCount !== undefined && activeFishCount !== null
+        ? Number(activeFishCount as bigint)
+        : fishIdsArray.length;
+
+    // Debug logging
+    if (fishIdsArray.length > 0) {
+      console.log("[useFish] Debug:", {
+        fishCount: fishIdsArray.length,
+        activeFishCountRaw: activeFishCount,
+        activeCount,
+        fishIds: fishIdsArray.map((id) => Number(id)),
+      });
+    }
 
     return fishIdsArray.map((id, index) => {
       const baseIdx = index * 3;
