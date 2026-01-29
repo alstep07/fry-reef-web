@@ -6,4 +6,6 @@
 export * from "./dailyCheckIn";
 export * from "./fishNft";
 export * from "./eggNft";
-export * from "./fryReef";
+
+// Export only FryReef-specific items to avoid conflicts
+export { FRYREEF_ADDRESS, isFryReefConfigured, fryReefAbi } from "./fryReef";

@@ -13,10 +13,10 @@ const DUST_PER_DAY = [6, 12, 18, 32, 48];
 // OpenSea metadata standard endpoint
 export async function GET(
   request: NextRequest,
-  { params }: { params: { contract: string; tokenId: string } },
+  { params }: { params: Promise<{ contract: string; tokenId: string }> },
 ) {
   try {
-    const { contract, tokenId } = params;
+    const { contract, tokenId } = await params;
     const contractAddress = contract.toLowerCase();
 
     // Create public client for Base
@@ -33,8 +33,10 @@ export async function GET(
         client,
       });
 
-      const fishInfo = await fishContract.read.getFishInfo([BigInt(tokenId)]);
-      const rarity = Number(fishInfo[0]); // rarity enum
+      const fishInfo = (await fishContract.read.getFishInfo([
+        BigInt(tokenId),
+      ])) as any;
+      const rarity = Number(fishInfo.rarity); // rarity enum
       const rarityName = RARITY_NAMES[rarity];
       const productionRate = DUST_PER_DAY[rarity];
 
@@ -69,8 +71,10 @@ export async function GET(
         client,
       });
 
-      const eggInfo = await eggContract.read.getEggInfo([BigInt(tokenId)]);
-      const isIncubating = eggInfo[2]; // isIncubating boolean
+      const eggInfo = (await eggContract.read.getEggInfo([
+        BigInt(tokenId),
+      ])) as any;
+      const isIncubating = eggInfo.isIncubating; // isIncubating boolean
       const status = isIncubating ? "Incubating" : "Ready to Incubate";
 
       return Response.json({
