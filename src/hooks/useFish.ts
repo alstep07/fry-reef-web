@@ -4,7 +4,11 @@ import { useMemo, useRef, useEffect } from "react";
 import { useAccount, useReadContract, useReadContracts } from "wagmi";
 import { base } from "wagmi/chains";
 import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
-import { fishNftAbi, FISH_NFT_ADDRESS, type FishInfo } from "@/contracts/fishNft";
+import {
+  fishNftAbi,
+  FISH_NFT_ADDRESS,
+  type FishInfo,
+} from "@/contracts/fishNft";
 import { fryReefAbi, FRYREEF_ADDRESS } from "@/contracts/fryReef";
 
 export interface FishWithInfo {
@@ -33,10 +37,7 @@ export function useFish() {
     : undefined;
 
   // Get fish IDs owned by user
-  const {
-    data: fishIds,
-    isLoading: isLoadingIds,
-  } = useReadContract({
+  const { data: fishIds, isLoading: isLoadingIds } = useReadContract({
     address: contractAddress,
     abi: fishNftAbi,
     functionName: "getFishByOwner",
@@ -48,9 +49,7 @@ export function useFish() {
   });
 
   // Get total pending spawn dust for user
-  const {
-    data: totalPendingDust,
-  } = useReadContract({
+  const { data: totalPendingDust } = useReadContract({
     address: fryReefAddress,
     abi: fryReefAbi,
     functionName: "getPendingSpawnDust",
@@ -62,9 +61,7 @@ export function useFish() {
   });
 
   // Get active fish count (within reef capacity)
-  const {
-    data: activeFishCount,
-  } = useReadContract({
+  const { data: activeFishCount } = useReadContract({
     address: fryReefAddress,
     abi: fryReefAbi,
     functionName: "getActiveFishCount",
@@ -103,10 +100,7 @@ export function useFish() {
     },
   ]);
 
-  const {
-    data: fishDataResults,
-    isLoading: isLoadingData,
-  } = useReadContracts({
+  const { data: fishDataResults, isLoading: isLoadingData } = useReadContracts({
     contracts: fishDataContracts,
     query: {
       enabled: fishIdsArray.length > 0 && !!contractAddress && !!fryReefAddress,
@@ -118,8 +112,11 @@ export function useFish() {
 
   // Combine data
   const fish: FishWithInfo[] = useMemo(() => {
-    const activeCount = activeFishCount ? Number(activeFishCount as bigint) : fishIdsArray.length;
-    
+    // Default to all fish being active if activeFishCount is not loaded yet
+    const activeCount = activeFishCount !== undefined && activeFishCount !== null
+      ? Number(activeFishCount as bigint)
+      : fishIdsArray.length;
+
     return fishIdsArray.map((id, index) => {
       const baseIdx = index * 3;
       const infoResult = fishDataResults?.[baseIdx];
@@ -128,28 +125,35 @@ export function useFish() {
 
       const tokenIdNum = Number(id);
       const now = Date.now();
-      
+
       if (!fishLoadingStartRef.current.has(tokenIdNum)) {
         fishLoadingStartRef.current.set(tokenIdNum, now);
       }
-      const loadingStartTime = fishLoadingStartRef.current.get(tokenIdNum) || now;
+      const loadingStartTime =
+        fishLoadingStartRef.current.get(tokenIdNum) || now;
       const hasBeenLoadingTooLong = now - loadingStartTime > LOADING_TIMEOUT;
 
-      const isInfoLoaded = (infoResult?.status === "success" && infoResult?.result !== undefined) || hasBeenLoadingTooLong;
-      
+      const isInfoLoaded =
+        (infoResult?.status === "success" &&
+          infoResult?.result !== undefined) ||
+        hasBeenLoadingTooLong;
+
       // Fish is active if its index is within active count (based on tokenOfOwnerByIndex order)
       const isActive = index < activeCount;
 
       let info: FishInfo;
-      const hasInfoResult = infoResult?.status === "success" && infoResult?.result !== undefined;
-      
+      const hasInfoResult =
+        infoResult?.status === "success" && infoResult?.result !== undefined;
+
       if (hasInfoResult) {
-        const result = infoResult.result as {
-          rarity?: number;
-          mintedAt?: bigint;
-          lastDustCollectedAt?: bigint;
-          lastEggLaidAt?: bigint;
-        } | [number, bigint, bigint, bigint];
+        const result = infoResult.result as
+          | {
+              rarity?: number;
+              mintedAt?: bigint;
+              lastDustCollectedAt?: bigint;
+              lastEggLaidAt?: bigint;
+            }
+          | [number, bigint, bigint, bigint];
 
         if (Array.isArray(result)) {
           info = {
@@ -166,7 +170,7 @@ export function useFish() {
             lastEggLaidAt: BigInt(result.lastEggLaidAt ?? 0),
           };
         }
-        
+
         // Cache the info for this fish
         previousFishInfoRef.current.set(tokenIdNum, info);
       } else {
@@ -184,13 +188,15 @@ export function useFish() {
         }
       }
 
-      const pendingDust = dustResult?.status === "success" && dustResult.result
-        ? Number(dustResult.result as bigint)
-        : 0;
+      const pendingDust =
+        dustResult?.status === "success" && dustResult.result
+          ? Number(dustResult.result as bigint)
+          : 0;
 
       const timeResultValue = timeResult?.result;
-      const hasTimeResult = timeResultValue !== undefined && timeResultValue !== null;
-      
+      const hasTimeResult =
+        timeResultValue !== undefined && timeResultValue !== null;
+
       let timeUntilNextEgg: number;
       if (hasTimeResult) {
         timeUntilNextEgg = Number(timeResultValue as bigint);
@@ -219,8 +225,16 @@ export function useFish() {
     const handleTransactionSuccess = (event: Event) => {
       const customEvent = event as CustomEvent;
       const type = customEvent.detail?.type;
-      
-      if (["lay_egg", "hatch_egg", "merge_fish", "burn_fish", "collect_dust"].includes(type)) {
+
+      if (
+        [
+          "lay_egg",
+          "hatch_egg",
+          "merge_fish",
+          "burn_fish",
+          "collect_dust",
+        ].includes(type)
+      ) {
         queryClient.invalidateQueries({
           queryKey: ["readContract"],
           exact: false,
@@ -234,15 +248,19 @@ export function useFish() {
     };
 
     window.addEventListener("transaction:success", handleTransactionSuccess);
-    return () => window.removeEventListener("transaction:success", handleTransactionSuccess);
+    return () =>
+      window.removeEventListener(
+        "transaction:success",
+        handleTransactionSuccess,
+      );
   }, [queryClient]);
 
   // Clean up old fish loading timers
   useEffect(() => {
-    const currentFishIds = new Set(fishIdsArray.map(id => Number(id)));
+    const currentFishIds = new Set(fishIdsArray.map((id) => Number(id)));
     const timerKeys = Array.from(fishLoadingStartRef.current.keys());
-    
-    timerKeys.forEach(key => {
+
+    timerKeys.forEach((key) => {
       if (!currentFishIds.has(key)) {
         fishLoadingStartRef.current.delete(key);
       }
