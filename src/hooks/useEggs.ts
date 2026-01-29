@@ -105,8 +105,9 @@ export function useEggs() {
         refetchInterval: 5000, // Poll every 5s for incubation timer updates
         staleTime: 4000,
         placeholderData: keepPreviousData,
-        retry: 3, // Retry 3 times if RPC fails (Coinbase Wallet fix)
-        retryDelay: 1000, // Wait 1s between retries
+        retry: 2, // Уменьшили с 3 до 2 (меньше задержек)
+        retryDelay: 500, // Уменьшили с 1000ms до 500ms
+        structuralSharing: false, // Отключаем для производительности
       },
     });
 
@@ -286,15 +287,17 @@ export function useEggs() {
     previousEggInfoRef.current.clear();
   }, [address]);
 
+  // Оптимистичный isLoading - показываем данные если они есть
+  const hasAnyData = eggs.some(e => e.info.mintedAt > BigInt(0));
+  
   return {
     eggs,
     eggCount,
     refetch,
     isLoading:
-      isBalanceLoading ||
-      !isBalanceFetched ||
-      (eggCount > 0 && !isTokenIdsFetched) ||
-      (tokenIds.length > 0 && !isEggDataFetched),
+      (isBalanceLoading && !isBalanceFetched) || // Только первая загрузка баланса
+      (eggCount > 0 && !isTokenIdsFetched) || // Загрузка ID
+      (tokenIds.length > 0 && !isEggDataFetched && !hasAnyData), // Загрузка данных только если их нет
     refetchEggInfo: refetch,
     refetchTimeUntilHatch: refetch,
   };

@@ -121,8 +121,10 @@ export function useFish() {
       refetchInterval: 5000, // Poll every 5s for dust/time updates
       staleTime: 4000,
       placeholderData: keepPreviousData,
-      retry: 3, // Retry 3 times if RPC fails (Coinbase Wallet fix)
-      retryDelay: 1000, // Wait 1s between retries
+      retry: 2, // Уменьшили с 3 до 2 (меньше задержек)
+      retryDelay: 500, // Уменьшили с 1000ms до 500ms
+      // Multicall batching для ускорения
+      structuralSharing: false, // Отключаем для производительности
     },
   });
 
@@ -366,14 +368,17 @@ export function useFish() {
     previousFishInfoRef.current.clear();
   }, [address]);
 
+  // Оптимистичный isLoading - показываем данные если они есть
+  // Даже если идёт загрузка новых данных
+  const hasAnyData = fish.some(f => f.info.mintedAt > BigInt(0));
+  
   return {
     fish,
     fishCount: fishIdsArray.length,
     totalPendingDust: totalPendingDust ? Number(totalPendingDust as bigint) : 0,
     isLoading:
-      isLoadingIds ||
-      !isFishIdsFetched ||
-      (fishIdsArray.length > 0 && isLoadingData),
+      (isLoadingIds && !isFishIdsFetched) || // Только первая загрузка ID
+      (fishIdsArray.length > 0 && isLoadingData && !hasAnyData), // Загрузка данных только если их вообще нет
     refetch,
     refetchInfo: refetch,
     refetchDust: refetch,
