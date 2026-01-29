@@ -127,14 +127,27 @@ export function useEggs() {
     const isInfoLoaded = hasValidInfo || hasBeenLoadingTooLong;
 
     let info: EggInfo;
+    const cachedInfo = previousEggInfoRef.current.get(tokenId);
+    
+    // Debug logging
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[useEggs] Egg #${tokenId}:`, {
+        hasValidInfo,
+        hasCachedInfo: !!cachedInfo,
+        cachedIsIncubating: cachedInfo?.isIncubating,
+      });
+    }
+    
     if (hasValidInfo && infoResult?.result) {
       const result = infoResult.result;
+      let newInfo: EggInfo;
+
       if (
         Array.isArray(result) ||
         (typeof result === "object" && "0" in result)
       ) {
         const arr = result as readonly [bigint, bigint, boolean];
-        info = {
+        newInfo = {
           mintedAt: BigInt(arr[0] ?? 0),
           incubationStartedAt: BigInt(arr[1] ?? 0),
           isIncubating: Boolean(arr[2]),
@@ -145,20 +158,44 @@ export function useEggs() {
           incubationStartedAt?: bigint;
           isIncubating?: boolean;
         };
-        info = {
+        newInfo = {
           mintedAt: BigInt(obj.mintedAt ?? 0),
           incubationStartedAt: BigInt(obj.incubationStartedAt ?? 0),
           isIncubating: Boolean(obj.isIncubating),
         };
       }
 
-      // Cache the info for this egg
-      if (info.mintedAt > BigInt(0)) {
+      // Validate new data - mintedAt should always be positive for existing eggs
+      const isValidNewData = newInfo.mintedAt > BigInt(0);
+
+      if (isValidNewData) {
+        // New data is valid, use and cache it
+        info = newInfo;
         previousEggInfoRef.current.set(tokenId, info);
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[useEggs] Egg #${tokenId}: Using NEW data`, {
+            isIncubating: info.isIncubating,
+            incubationStartedAt: info.incubationStartedAt.toString(),
+          });
+        }
+      } else if (cachedInfo) {
+        // New data is invalid, use cached
+        info = cachedInfo;
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[useEggs] Egg #${tokenId}: Using CACHED data (new data invalid)`);
+        }
+      } else {
+        // No cache, have to use new data even if it looks invalid
+        info = newInfo;
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[useEggs] Egg #${tokenId}: Using INVALID data (no cache)`);
+        }
       }
     } else {
-      // Use cached info if available to prevent flickering
-      const cachedInfo = previousEggInfoRef.current.get(tokenId);
+      // No result, use cached data if available
       if (cachedInfo) {
         info = cachedInfo;
       } else {
@@ -199,10 +236,8 @@ export function useEggs() {
           exact: false,
         });
         eggLoadingStartRef.current.clear();
-        // Clear cache on transactions that modify eggs
-        if (["lay_egg", "hatch_egg"].includes(type)) {
-          previousEggInfoRef.current.clear();
-        }
+        // Clear cache on transactions that modify eggs (including incubation state)
+        previousEggInfoRef.current.clear();
       }
     };
 
