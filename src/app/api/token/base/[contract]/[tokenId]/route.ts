@@ -43,8 +43,8 @@ export async function GET(
       return Response.json({
         name: `FryReef Fish #${tokenId}`,
         description: `A ${rarityName} rarity fish from FryReef that produces ${productionRate} Spawn Dust per day. Breed, merge, and evolve your fish to build the ultimate reef!`,
-        image: `https://fryreef.com/images/fish/${rarityName.toLowerCase()}.webp`,
-        external_url: `https://fryreef.com`,
+        image: `https://fry-reef.vercel.app/images/fish/${rarityName.toLowerCase()}.webp`,
+        external_url: `https://fry-reef.vercel.app`,
         attributes: [
           {
             trait_type: "Rarity",
@@ -80,8 +80,8 @@ export async function GET(
       return Response.json({
         name: `FryReef Egg #${tokenId}`,
         description: `A fish egg from FryReef. Incubate for 24 hours to hatch into a fish with random rarity (Common to Mythic)!`,
-        image: `https://fryreef.com/images/egg/egg.png`,
-        external_url: `https://fryreef.com`,
+        image: `https://fry-reef.vercel.app/images/egg/egg.png`,
+        external_url: `https://fry-reef.vercel.app`,
         attributes: [
           {
             trait_type: "Status",
