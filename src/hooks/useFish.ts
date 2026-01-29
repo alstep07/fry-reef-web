@@ -20,6 +20,7 @@ export function useFish() {
   const { address } = useAccount();
   const queryClient = useQueryClient();
   const previousTimeValuesRef = useRef<Map<number, number>>(new Map());
+  const previousFishInfoRef = useRef<Map<number, FishInfo>>(new Map());
   const fishLoadingStartRef = useRef<Map<number, number>>(new Map());
   const LOADING_TIMEOUT = 8000;
 
@@ -140,7 +141,9 @@ export function useFish() {
       const isActive = index < activeCount;
 
       let info: FishInfo;
-      if (infoResult?.result) {
+      const hasInfoResult = infoResult?.status === "success" && infoResult?.result !== undefined;
+      
+      if (hasInfoResult) {
         const result = infoResult.result as {
           rarity?: number;
           mintedAt?: bigint;
@@ -163,13 +166,22 @@ export function useFish() {
             lastEggLaidAt: BigInt(result.lastEggLaidAt ?? 0),
           };
         }
+        
+        // Cache the info for this fish
+        previousFishInfoRef.current.set(tokenIdNum, info);
       } else {
-        info = {
-          rarity: 0,
-          mintedAt: BigInt(0),
-          lastDustCollectedAt: BigInt(0),
-          lastEggLaidAt: BigInt(0),
-        };
+        // Use cached info if available, otherwise use defaults
+        const cachedInfo = previousFishInfoRef.current.get(tokenIdNum);
+        if (cachedInfo) {
+          info = cachedInfo;
+        } else {
+          info = {
+            rarity: 0,
+            mintedAt: BigInt(0),
+            lastDustCollectedAt: BigInt(0),
+            lastEggLaidAt: BigInt(0),
+          };
+        }
       }
 
       const pendingDust = dustResult?.status === "success" && dustResult.result
@@ -214,6 +226,10 @@ export function useFish() {
           exact: false,
         });
         fishLoadingStartRef.current.clear();
+        // Clear fish info cache on transactions that modify fish
+        if (["hatch_egg", "merge_fish", "burn_fish"].includes(type)) {
+          previousFishInfoRef.current.clear();
+        }
       }
     };
 
@@ -237,6 +253,7 @@ export function useFish() {
   useEffect(() => {
     fishLoadingStartRef.current.clear();
     previousTimeValuesRef.current.clear();
+    previousFishInfoRef.current.clear();
   }, [address]);
 
   return {
