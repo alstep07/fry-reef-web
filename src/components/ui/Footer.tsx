@@ -29,7 +29,7 @@ export function Footer() {
             rel="noopener noreferrer"
             className="text-sm text-slate-400 transition hover:text-white"
           >
-            Whitepaper
+            Roadmap
           </a>
           <a
             href="https://x.com/ReefFry"
