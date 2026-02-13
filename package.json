@@ -20,6 +20,7 @@
     "@tanstack/react-query": "^5.90.11",
     "@walletconnect/ethereum-provider": "^2.23.0",
     "next": "^15.5.7",
+    "ox": "^0.12.1",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "viem": "^2.40.3",

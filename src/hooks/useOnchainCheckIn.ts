@@ -17,6 +17,7 @@ import {
   type UserInfo,
 } from "@/contracts/dailyCheckIn";
 import { DEFAULT_CHAIN_ID } from "@/lib/contracts";
+import { DATA_SUFFIX } from "@/lib/builderCode";
 
 export function useOnchainCheckIn(address?: string) {
   const { address: connectedAddress, chainId: currentChainId } = useAccount();
@@ -95,6 +96,7 @@ export function useOnchainCheckIn(address?: string) {
         abi: dailyCheckInAbi,
         functionName: "checkIn",
         chainId: DEFAULT_CHAIN_ID,
+        ...(DATA_SUFFIX && { dataSuffix: DATA_SUFFIX }),
       });
     } catch (error) {
       console.error("Check-in error:", error);

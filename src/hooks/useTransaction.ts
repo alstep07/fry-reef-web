@@ -13,6 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { Abi } from "viem";
 import type { TransactionType } from "@/lib/transactionSync";
 import { waitForTransactionSync, syncTransactionData } from "@/lib/transactionSync";
+import { DATA_SUFFIX } from "@/lib/builderCode";
 
 const TARGET_CHAIN_ID = base.id;
 
@@ -112,11 +113,12 @@ export function useTransaction(options?: UseTransactionOptions) {
         // Reset and start pending
         setState({ status: "pending", hash: null, error: null });
 
-        // Send transaction
+        // Send transaction (with Builder Code attribution if configured)
         const hash = await walletClient.writeContract({
           ...params,
           chain: base,
           account: address,
+          ...(DATA_SUFFIX && { dataSuffix: DATA_SUFFIX }),
         } as Parameters<typeof walletClient.writeContract>[0]);
 
         setState({ status: "confirming", hash, error: null });
